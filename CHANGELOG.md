@@ -1010,6 +1010,7 @@ _Living section — regenerated 2026-07-19 from all 306 cycle commits (bump 2c62
 - **Combos**: deleting a provider connection now clears the combo steps that referenced it — `connectionId` and `allowedConnectionIds` entries pointing at the removed connection were left behind, so combo routing kept trying a connection that no longer existed ([#8865](https://github.com/diegosouzapw/OmniRoute/pull/8865)) — thanks @HouMinXi
 - **Auto routing**: `auto/<family>` combos (`auto/glm`, `auto/gemini`, `auto/llama`, …) are recognized as built-in auto models again — the family suffix failed the category/tier parser and fell through as an unknown model instead of routing to that family ([#8866](https://github.com/diegosouzapw/OmniRoute/pull/8866)) — thanks @rafaeldrincon
 - **fix(oauth):** wire Test Connection for xAI OAuth (`xai-oauth` / `xao`) so dashboard no longer returns "Provider test not supported" ([#8862](https://github.com/diegosouzapw/OmniRoute/pull/8862)) — thanks @allanvb
+- **Logs**: a failed `auto/<family>` request no longer writes every attempted model into `call_logs.provider` — the logs page builds its quick-filter pills from that column, so one failure produced a giant chip that flooded the filter row. Rejected combo requests are now labelled `auto` (for `auto/*`) or by the combo's own name ([#8867](https://github.com/diegosouzapw/OmniRoute/pull/8867)) — thanks @rafaeldrincon
 ### 📚 Docs
 
 - **docs(quality):** codify retry policy per runner + release-level drift rule (WS5.4/WS5.5) ([#7107](https://github.com/diegosouzapw/OmniRoute/pull/7107))
@@ -1225,6 +1226,7 @@ _Living section — regenerated 2026-07-19 from all 306 cycle commits (bump 2c62
 
 
 
+
 ### 🙌 Contributors
 
 Thanks to everyone whose work landed in v3.8.49:
@@ -1337,7 +1339,7 @@ Thanks to everyone whose work landed in v3.8.49:
 | [@Prudhvivuda](https://github.com/Prudhvivuda) | #8032, #8220, #8250, #8467, #8488 |
 | [@QRcode1337](https://github.com/QRcode1337) | #7034 |
 | [@quanturbo](https://github.com/quanturbo) | #6780 |
-| [@rafaeldrincon](https://github.com/rafaeldrincon) | #8866 |
+| [@rafaeldrincon](https://github.com/rafaeldrincon) | #8866, #8867 |
 | [@rafaumeu](https://github.com/rafaumeu) | #6813, #6979, #6982, #6983, #6987, #6988, #7001, #7808, #7815, #8071, #8113, #8179, #8184, #8185, #8190, #8195, #8196, #8203 |
 | [@RaviTharuma](https://github.com/RaviTharuma) | #7852, #7853, #7855, #7862, #7885, #7972, #7978, #8021, #8022, #8023, #8025, #8027, #8030, #8102, #8124 |
 | [@RCrushMe](https://github.com/RCrushMe) | #8151 |
