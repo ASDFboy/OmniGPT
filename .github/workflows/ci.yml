@@ -1126,7 +1126,8 @@ jobs:
           if FILES=$(node scripts/quality/balance-e2e-shards.mjs "$SHARD" 9); then
             if [ -z "$FILES" ]; then echo "[e2e-balance] shard $SHARD has no files"; exit 0; fi
             echo "[e2e-balance] shard $SHARD runs:"; echo "$FILES"
-            # shellcheck disable=SC2086 — FILES is our own newline-separated path list
+            # FILES is our own newline-separated path list, so word-splitting is intended
+            # shellcheck disable=SC2086,SC2046
             npx playwright test $(echo "$FILES" | tr '\n' ' ') --reporter=line,junit
           else
             echo "[e2e-balance] balancer unavailable — plain --shard fallback"
