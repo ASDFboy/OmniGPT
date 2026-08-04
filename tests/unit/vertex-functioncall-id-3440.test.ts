@@ -38,6 +38,15 @@ function findFunctionCall(result: any): UnknownRecord | undefined {
   return undefined;
 }
 
+function findFunctionCallPart(result: any): UnknownRecord | undefined {
+  for (const content of result.contents ?? []) {
+    for (const part of content.parts ?? []) {
+      if (part?.functionCall) return part as UnknownRecord;
+    }
+  }
+  return undefined;
+}
+
 function findFunctionResponse(result: any): UnknownRecord | undefined {
   for (const content of result.contents ?? []) {
     for (const part of content.parts ?? []) {
@@ -150,6 +159,14 @@ test("#3440 Claude->Gemini: vertex provider omits id from functionCall and funct
     undefined,
     "functionResponse.id must be omitted for Vertex"
   );
+
+  const vertexPart = findFunctionCallPart(result);
+  assert.ok(vertexPart, "expected a functionCall part");
+  assert.equal(
+    vertexPart.thoughtSignature,
+    "SIG_3440",
+    "thoughtSignature must be replayed even for Vertex (only id is stripped)"
+  );
 });
 
 test("#3440 Claude->Gemini: no provider hint PRESERVES id (default, non-vertex)", () => {
@@ -158,4 +175,12 @@ test("#3440 Claude->Gemini: no provider hint PRESERVES id (default, non-vertex)"
     _signatureNamespace: CLAUDE_SIGNATURE_NAMESPACE,
   });
   assert.equal(findFunctionCall(result)?.id, "tu_weather_1");
+
+  const nonVertexPart = findFunctionCallPart(result);
+  assert.ok(nonVertexPart, "expected a functionCall part");
+  assert.equal(
+    nonVertexPart.thoughtSignature,
+    "SIG_3440",
+    "thoughtSignature must be replayed for direct Claude->Gemini path"
+  );
 });
