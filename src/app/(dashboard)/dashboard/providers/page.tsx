@@ -34,7 +34,8 @@ import {
   upsertProviderNodeById,
   loadProviderPageData,
 } from "./providerPageUtils";
-import type { ProviderEntry } from "./providerPageUtils";
+import type { ProviderEntry, OpenRouterProviderStatsEntry } from "./providerPageUtils";
+import { OpenRouterProviderStatsProvider } from "./context/openRouterProviderStatsContext";
 import {
   shouldSyncProviderDisplayMode,
   writeProviderDisplayModePreference,
@@ -200,6 +201,9 @@ export default function ProvidersPage() {
   const [modelSearchQuery, setModelSearchQuery] = useState("");
   const liveModelsByProviderId = useSyncedModelsByProvider();
   const [showFreeOnly, setShowFreeOnly] = useState(false);
+  const [openRouterProviderStats, setOpenRouterProviderStats] = useState<
+    OpenRouterProviderStatsEntry[]
+  >([]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   // #4240: media-category (serviceKind) filter — composes with activeCategory,
   // search and configured-only. null = no serviceKind filter.
@@ -255,6 +259,7 @@ export default function ProvidersPage() {
         if (data.expirations) setExpirations(data.expirations);
         if (data.blockedProviders) setBlockedProviders(data.blockedProviders);
         setCodexGlobalServiceMode(getCodexGlobalServiceMode(data.settings));
+        setOpenRouterProviderStats(data.openRouterProviderStats);
       } catch (error) {
         console.log("Error fetching data:", error);
       } finally {
@@ -812,6 +817,7 @@ export default function ProvidersPage() {
     shouldShowFirstProviderHint(connections.length, searchQuery) && !showAllProviders;
 
   return (
+    <OpenRouterProviderStatsProvider entries={openRouterProviderStats}>
     <div className="flex flex-col gap-6">
       {showFirstProviderHint && (
         <Card padding="lg">
@@ -1814,6 +1820,7 @@ export default function ProvidersPage() {
         </div>
       )}
     </div>
+    </OpenRouterProviderStatsProvider>
   );
 }
 
