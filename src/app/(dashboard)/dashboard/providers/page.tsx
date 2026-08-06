@@ -22,6 +22,7 @@ import useEmailPrivacyStore from "@/store/emailPrivacyStore";
 import { useNotificationStore } from "@/store/notificationStore";
 import { useTranslations } from "next-intl";
 import { useSyncedModelsByProvider } from "./hooks/useSyncedModelsByProvider";
+import { useProviderUrlFilters } from "./hooks/useProviderUrlFilters";
 import {
   buildStaticProviderEntries,
   buildCompatibleProviderGroups,
@@ -30,13 +31,11 @@ import {
   shouldFilterProviderEntriesForDisplayMode,
   shouldShowFirstProviderHint,
   shouldShowProviderSection,
-  syncSearchToUrl,
   upsertProviderNodeById,
   loadProviderPageData,
 } from "./providerPageUtils";
 import type { ProviderEntry } from "./providerPageUtils";
 import {
-  readProviderDisplayModePreference,
   shouldSyncProviderDisplayMode,
   writeProviderDisplayModePreference,
   type ProviderDisplayMode,
@@ -192,7 +191,6 @@ export default function ProvidersPage() {
   const [testingMode, setTestingMode] = useState<string | null>(null);
   const [testResults, setTestResults] = useState<any>(null);
   const [providerDisplayMode, setProviderDisplayMode] = useState<ProviderDisplayMode>("all");
-  const [displayModePreferenceReady, setDisplayModePreferenceReady] = useState(false);
   const [oauthEnvRepairStatus, setOauthEnvRepairStatus] = useState<{
     available: boolean;
     missingCount: number;
@@ -228,21 +226,21 @@ export default function ProvidersPage() {
   const addCcCompatibleLabel = t("addCcCompatible");
   const searchParams = useSearchParams();
 
-  useEffect(() => {
-    setProviderDisplayMode(readProviderDisplayModePreference());
-    setDisplayModePreferenceReady(true);
-  }, []);
-
-  useEffect(() => {
-    const searchFromUrl = searchParams.get("search");
-    if (searchFromUrl) {
-      setSearchQuery(searchFromUrl);
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
-    syncSearchToUrl(searchQuery);
-  }, [searchQuery]);
+  const { displayModePreferenceReady } = useProviderUrlFilters({
+    searchParams,
+    providerDisplayMode,
+    setProviderDisplayMode,
+    searchQuery,
+    setSearchQuery,
+    modelSearchQuery,
+    setModelSearchQuery,
+    activeCategory,
+    setActiveCategory,
+    showFreeOnly,
+    setShowFreeOnly,
+    activeServiceKind,
+    setActiveServiceKind,
+  });
 
   useEffect(() => {
     const fetchData = async () => {
