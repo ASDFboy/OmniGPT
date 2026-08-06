@@ -5,7 +5,6 @@ import {
   tryParseJSON,
   cleanJSONSchemaForAntigravity,
 } from "../helpers/geminiHelper.ts";
-import { DEFAULT_THINKING_GEMINI_SIGNATURE } from "../../config/defaultThinkingSignature.ts";
 import { buildGeminiTools, sanitizeGeminiToolName } from "../helpers/geminiToolsSanitizer.ts";
 import {
   buildGeminiThoughtSignatureKey,
@@ -13,6 +12,7 @@ import {
 } from "../../services/geminiThoughtSignatureStore.ts";
 import { capMaxOutputTokens, capThinkingBudget } from "../../../src/lib/modelCapabilities.ts";
 import { getModelSpec } from "../../../src/shared/constants/modelSpecs.ts";
+import { buildHistoricalToolResultContext } from "./openai-to-gemini/helpers.ts";
 
 /**
  * Direct Claude → Gemini request translator.
@@ -30,11 +30,16 @@ export function claudeToGeminiRequest(model, body, stream, credentials = null) {
   // is scoped to the routed vertex provider only (threaded via credentials._provider).
   const provider = credentials && typeof credentials === "object" ? credentials._provider : null;
   const stripFunctionCallId = provider === "vertex" || provider === "vertex-partner";
-  // Per-connection namespace so cached thought_signatures don't collide across
-  // conversations (#2504). Threaded via credentials._signatureNamespace by the
-  // dispatcher (connectionId) when translateRequest runs the direct path.
+  // Thread the signature namespace so a thinking model's thoughtSignature (cached on the
+  // Gemini→Claude response turn under `<connectionId>:<toolUseId>`) is found and
+  // re-attached on the follow-up Claude→Gemini request. Without this, Claude Desktop
+  // combo turns hit HTTP 400 "missing thought_signature" (#8979 / #2504 parity).
   const signatureNamespace =
-    credentials && typeof credentials === "object" ? credentials._signatureNamespace : null;
+    credentials &&
+    typeof credentials === "object" &&
+    typeof credentials._signatureNamespace === "string"
+      ? credentials._signatureNamespace
+      : null;
   const result: {
     model: string;
     contents: Array<Record<string, unknown>>;
@@ -90,14 +95,30 @@ export function claudeToGeminiRequest(model, body, stream, credentials = null) {
     }
   }
 
-  // ── Build tool_use name lookup (for tool_result matching) ──────
-  const toolUseNames = {};
+  // ── Build tool_use name lookup + resolve thought signatures ────
+  // Standard Gemini rejects signature-less native functionCall parts with
+  // HTTP 400 (#8979). Match the OPENAI→GEMINI "context" policy (#3688): only
+  // emit native functionCall/functionResponse when a real signature is
+  // available; otherwise represent history as context text.
+  const toolUseNames: Record<string, string> = {};
+  const resolvedSignatures = new Map<string, string>();
   if (body.messages && Array.isArray(body.messages)) {
     for (const msg of body.messages) {
       if (msg.role === "assistant" && Array.isArray(msg.content)) {
         for (const block of msg.content) {
           if (block.type === "tool_use" && block.id && block.name) {
             toolUseNames[block.id] = sanitizeToolName(block.name);
+            const clientSignature =
+              (typeof block.thoughtSignature === "string" && block.thoughtSignature) ||
+              (typeof block.thought_signature === "string" && block.thought_signature) ||
+              null;
+            const resolved = resolveGeminiThoughtSignature(
+              buildGeminiThoughtSignatureKey(signatureNamespace, block.id),
+              clientSignature
+            );
+            if (typeof resolved === "string" && resolved.length > 0) {
+              resolvedSignatures.set(block.id, resolved);
+            }
           }
         }
       }
@@ -111,6 +132,7 @@ export function claudeToGeminiRequest(model, body, stream, credentials = null) {
     const omittedToolCallIds = new Set<string>();
     for (const msg of body.messages) {
       const parts = [];
+      let shouldUseEmbeddedSignature = true;
 
       if (Array.isArray(msg.content)) {
         for (const block of msg.content) {
@@ -127,27 +149,28 @@ export function claudeToGeminiRequest(model, body, stream, credentials = null) {
               break;
 
             case "tool_use": {
-              // Gemini 3+ strictly validates thought_signature on every functionCall
-              // part in a multi-turn tool-call batch and returns 400 without it. Resolve
-              // the stored signature captured on the prior Gemini response (keyed by this
-              // tool id) and replay it. When no signature is available (historical tool
-              // calls predating the store), omit the functionCall and convert the matching
-              // tool_result to text — mirrors openai→gemini context mode (#2504).
-              const thoughtSignature = resolveGeminiThoughtSignature(
-                buildGeminiThoughtSignatureKey(signatureNamespace, block.id)
-              );
-              if (thoughtSignature) {
-                parts.push({
-                  thoughtSignature,
-                  functionCall: {
-                    ...(stripFunctionCallId ? {} : { id: block.id }),
-                    name: sanitizeToolName(block.name),
-                    args: block.input || {},
-                  },
-                });
-              } else {
-                omittedToolCallIds.add(block.id);
+              const signatureForToolCall = resolvedSignatures.get(block.id);
+              // Signature-less historical tool_use → omit native functionCall
+              // (context mode). Matching tool_result becomes context text below.
+              if (!signatureForToolCall) {
+                break;
               }
+
+              const embeddedThoughtSignature = shouldUseEmbeddedSignature
+                ? signatureForToolCall
+                : undefined;
+              if (embeddedThoughtSignature) {
+                shouldUseEmbeddedSignature = false;
+              }
+
+              parts.push({
+                ...(embeddedThoughtSignature ? { thoughtSignature: embeddedThoughtSignature } : {}),
+                functionCall: {
+                  ...(stripFunctionCallId ? {} : { id: block.id }),
+                  name: sanitizeToolName(block.name),
+                  args: block.input || {},
+                },
+              });
               break;
             }
 
@@ -164,20 +187,27 @@ export function claudeToGeminiRequest(model, body, stream, credentials = null) {
               } else if (typeof parsedContent !== "object") {
                 parsedContent = { result: parsedContent };
               }
-              if (omittedToolCallIds.has(block.tool_use_id)) {
-                // Matching tool_use was omitted — emit this result as plain text so
-                // Gemini doesn't 400 a bare functionResponse without a matching
-                // functionCall carrying thought_signature.
-                parts.push({ text: JSON.stringify(parsedContent) });
-              } else {
+
+              const toolUseId = block.tool_use_id;
+              const name = toolUseNames[toolUseId] || "unknown";
+
+              // Signature-less history: represent as context text so Gemini 3+
+              // does not reject a native functionResponse without a matching
+              // signed functionCall (#8979 / #3688).
+              if (!resolvedSignatures.has(toolUseId)) {
                 parts.push({
-                  functionResponse: {
-                    ...(stripFunctionCallId ? {} : { id: block.tool_use_id }),
-                    name: toolUseNames[block.tool_use_id] || "unknown",
-                    response: { result: parsedContent },
-                  },
+                  text: buildHistoricalToolResultContext(name, content),
                 });
+                break;
               }
+
+              parts.push({
+                functionResponse: {
+                  ...(stripFunctionCallId ? {} : { id: toolUseId }),
+                  name,
+                  response: { result: parsedContent },
+                },
+              });
               break;
             }
 
@@ -201,7 +231,6 @@ export function claudeToGeminiRequest(model, body, stream, credentials = null) {
       if (parts.length > 0) {
         // Map Claude roles to Gemini roles
         const geminiRole = msg.role === "assistant" ? "model" : "user";
-
         result.contents.push({ role: geminiRole, parts });
       }
     }

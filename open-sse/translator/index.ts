@@ -224,8 +224,12 @@ export function translateRequest(
   // Fix missing tool responses (insert empty tool_result if needed)
   fixMissingToolResponses(result);
 
-  // Strip orphaned tool results (tool_result/role:tool with no matching tool_call)
-  stripOrphanedToolResults(result);
+  // Claude reconciliation preserves orphaned tool output as labelled user text.
+  // Keep the raw result carriers until the target translator can perform that
+  // lossless conversion; other target formats retain the strict orphan filter.
+  if (targetFormat !== FORMATS.CLAUDE) {
+    stripOrphanedToolResults(result);
+  }
 
   // Normalize roles: developer→system unless preserved, system→user for incompatible models.
   // This handles (1) sourceFormat openai with messages containing developer → non-openai target
@@ -256,17 +260,18 @@ export function translateRequest(
     // Check for direct translation path first (e.g., Claude → Gemini)
     const directTranslator = getRequestTranslator(sourceFormat, targetFormat);
     if (directTranslator && sourceFormat !== FORMATS.OPENAI && targetFormat !== FORMATS.OPENAI) {
-      // Thread the routed provider id AND the per-connection signature namespace so
-      // direct target translators can apply the same quirks as the hub path — notably
-      // Claude→Gemini needs _signatureNamespace to replay Gemini 3+ thought_signature
-      // on multi-turn tool calls (#2504, direct-path port).
-      const directHasNs = options?.signatureNamespace != null;
+      // Thread the routed provider id so target translators can apply provider-specific
+      // quirks (e.g. Vertex rejects function_call.id — #3440).
+      // Also thread signatureNamespace so Claude→Gemini can re-attach cached
+      // thoughtSignature on tool-use history (#8979 / #2504 parity with the hub path).
+      const hasNs = options?.signatureNamespace != null;
+      const hasProvider = provider != null;
       const directCredentials =
-        provider != null || directHasNs
+        hasNs || hasProvider
           ? {
               ...(credentials && typeof credentials === "object" ? credentials : {}),
-              ...(provider != null ? { _provider: provider } : {}),
-              ...(directHasNs ? { _signatureNamespace: options.signatureNamespace } : {}),
+              ...(hasProvider ? { _provider: provider } : {}),
+              ...(hasNs ? { _signatureNamespace: options.signatureNamespace } : {}),
             }
           : credentials;
       result = directTranslator(model, result, stream, directCredentials);
