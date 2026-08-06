@@ -137,7 +137,7 @@ function normalizeRuntimeStep(
       : {}),
     weight,
     label,
-    prompt: step.prompt || null,
+    prompt: step.kind === "model" ? step.prompt || null : null,
   } satisfies ResolvedComboTarget;
 }
 
@@ -532,8 +532,6 @@ function hasKnownCompatibleContextLimit(
   const capabilities = getResolvedModelCapabilities(target.modelStr);
   return evaluateContextLimit(capabilities, requirements, target.modelStr) === true;
 }
-
-const HARD_COMPAT_REASONS = new Set(["tools", "vision", "structured_output", "output_tokens"]);
 
 /**
  * #8332: vision is a hard requirement, not a soft preference — a target whose vision
