@@ -161,9 +161,7 @@ export function claudeToGeminiRequest(model, body, stream, credentials = null) {
               }
 
               parts.push({
-                ...(embeddedThoughtSignature
-                  ? { thoughtSignature: embeddedThoughtSignature }
-                  : {}),
+                ...(embeddedThoughtSignature ? { thoughtSignature: embeddedThoughtSignature } : {}),
                 functionCall: {
                   ...(stripFunctionCallId ? {} : { id: block.id }),
                   name: sanitizeToolName(block.name),

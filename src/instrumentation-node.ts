@@ -562,7 +562,10 @@ export async function registerNodejs(): Promise<void> {
         })
         .catch((err: unknown) => {
           const msg = err instanceof Error ? err.message : String(err);
-          console.warn("[STARTUP] OpenRouter provider stats sync failed to start (non-fatal):", msg);
+          console.warn(
+            "[STARTUP] OpenRouter provider stats sync failed to start (non-fatal):",
+            msg
+          );
         }),
 
       // models.dev capability sync: opt-in via Settings > AI (self-gated by

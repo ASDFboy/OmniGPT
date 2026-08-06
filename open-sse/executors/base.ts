@@ -324,7 +324,11 @@ export function stripVersionedToolModelPrefix(tools: unknown): void {
   for (const t of tools as Array<Record<string, unknown>>) {
     if (typeof t.model !== "string") continue;
     const model = t.model;
-    if (typeof t.type === "string" && /^[a-z][a-z0-9_]*_\d{8}$/.test(t.type) && model.includes("/")) {
+    if (
+      typeof t.type === "string" &&
+      /^[a-z][a-z0-9_]*_\d{8}$/.test(t.type) &&
+      model.includes("/")
+    ) {
       t.model = model.split("/").pop();
     } else {
       const prefix = CLAUDE_TOOL_MODEL_PREFIXES.find((candidate) => model.startsWith(candidate));
@@ -1571,7 +1575,8 @@ export class BaseExecutor {
           if (/content[_-]blocked/i.test(wafErrText)) {
             retryAttemptsByUrl[urlIndex] = (retryAttemptsByUrl[urlIndex] ?? 0) + 1;
             const wafAttempt = retryAttemptsByUrl[urlIndex];
-            const wafBackoff = BaseExecutor.WAF_RETRY_CONFIG.delayMs *
+            const wafBackoff =
+              BaseExecutor.WAF_RETRY_CONFIG.delayMs *
               Math.pow(BaseExecutor.WAF_RETRY_CONFIG.backoffMultiplier, wafAttempt - 1);
             log?.debug?.(
               "WAF_RETRY",

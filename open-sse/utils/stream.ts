@@ -687,7 +687,8 @@ export function createSSEStream(options: StreamOptions = {}) {
   // Responses API, Anthropic SSE, and Antigravity/cloudcode terminate on
   // their own protocol events (response.completed / message_stop / last
   // response candidate respectively).
-  const shouldEmitDoneTerminator = !clientExpectsResponsesStream && !clientExpectsClaudeStream && !clientExpectsAntigravityStream;
+  const shouldEmitDoneTerminator =
+    !clientExpectsResponsesStream && !clientExpectsClaudeStream && !clientExpectsAntigravityStream;
 
   let buffer = "";
   let usage: UsageTokenRecord | null = null;

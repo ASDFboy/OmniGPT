@@ -627,6 +627,8 @@ export async function loadProviderPageData(
       ? settingsData.blockedProviders
       : null,
     settings: settingsData ?? null,
-    openRouterProviderStats: Array.isArray(openRouterStatsData?.data) ? openRouterStatsData.data : [],
+    openRouterProviderStats: Array.isArray(openRouterStatsData?.data)
+      ? openRouterStatsData.data
+      : [],
   };
 }

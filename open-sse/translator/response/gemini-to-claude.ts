@@ -108,14 +108,14 @@ export function geminiToClaudeResponse(chunk, state) {
         }
         const fc = part.functionCall;
         const rawToolName = fc.name;
-        const restoredToolName = normalizeToolName(state.toolNameMap?.get(rawToolName) || rawToolName);
+        const restoredToolName = normalizeToolName(
+          state.toolNameMap?.get(rawToolName) || rawToolName
+        );
         const idx = state.contentBlockIndex++;
         const toolId = fc.id || `toolu_${Date.now()}_${idx}`;
 
         const signatureForToolCall =
-          (typeof hasThoughtSig === "string" && hasThoughtSig.length > 0
-            ? hasThoughtSig
-            : null) ||
+          (typeof hasThoughtSig === "string" && hasThoughtSig.length > 0 ? hasThoughtSig : null) ||
           (typeof state.pendingThoughtSignature === "string" &&
           state.pendingThoughtSignature.length > 0
             ? state.pendingThoughtSignature

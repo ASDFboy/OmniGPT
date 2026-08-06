@@ -117,8 +117,7 @@ export function applyCatalogPostFilters(
           ctx.connections.filter((c) => c.provider === provider),
           modelId
         ),
-      gatewayHasConnection: (provider) =>
-        ctx.connections.some((c) => c.provider === provider),
+      gatewayHasConnection: (provider) => ctx.connections.some((c) => c.provider === provider),
       canonicalOwnerHasConnection: (owner) =>
         hasEligibleConnectionForModel(
           ctx.connections.filter((c) => c.provider === owner),
