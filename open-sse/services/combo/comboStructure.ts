@@ -137,7 +137,9 @@ function normalizeRuntimeStep(
       : {}),
     weight,
     label,
-    prompt: step.kind === "model" ? step.prompt || null : null,
+    // `prompt` is a per-step pipeline input and only exists on a model step —
+    // #8894 widened the union with ComboProviderWildcardStep, which has no prompt.
+    prompt: (step.kind === "model" ? step.prompt : null) || null,
   } satisfies ResolvedComboTarget;
 }
 
@@ -533,6 +535,8 @@ function hasKnownCompatibleContextLimit(
   return evaluateContextLimit(capabilities, requirements, target.modelStr) === true;
 }
 
+const HARD_COMPAT_REASONS = new Set(["tools", "vision", "structured_output", "output_tokens"]);
+
 /**
  * #8332: vision is a hard requirement, not a soft preference — a target whose vision
  * support is not confirmed can never succeed on an image_url request. Callers
@@ -615,12 +619,6 @@ export type CompatFilterOptions = {
    */
   failOpen?: boolean;
 };
-
-const HARD_COMPAT_REASONS = new Set(["tools", "vision", "structured_output"]);
-
-function hasHardCapabilityFailure(reasons: string[]): boolean {
-  return reasons.some((reason) => HARD_COMPAT_REASONS.has(reason));
-}
 
 /**
  * Summarize a capability-filter exhaustion for a 400-class combo error (#8488).
@@ -725,7 +723,9 @@ export function filterTargetsByRequestCompatibility(
 
   if (compatible.length === targets.length) return targets;
   if (compatible.length === 0) {
-    const hardRejected = rejected.some((entry) => hasHardCapabilityFailure(entry.reasons));
+    const hardRejected = rejected.some((entry) =>
+      entry.reasons.some((r) => HARD_COMPAT_REASONS.has(r))
+    );
     const failOpen = options?.failOpen === true;
 
     log.debug?.(
