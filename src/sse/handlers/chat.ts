@@ -1287,7 +1287,15 @@ async function handleSingleModelChat(
             );
       preselectedCredentials = null;
 
-      if (!credentials || "allRateLimited" in credentials || !credentials.connectionId) {
+      // #9467: also treat the auth layer's allExpired verdict as a no-credentials
+      // outcome (auth.ts produces it; without this check an all-expired pool fell
+      // through to a connectionless dispatch).
+      if (
+        !credentials ||
+        "allRateLimited" in credentials ||
+        "allExpired" in credentials ||
+        !credentials.connectionId
+      ) {
         if (credentials?.allRateLimited) {
           const retryDecision = getCooldownAwareRetryDecision({
             retryAfter: credentials.retryAfter,
@@ -1316,7 +1324,7 @@ async function handleSingleModelChat(
             requestRetryBudgetLeftMs = Math.max(0, requestRetryBudgetLeftMs - retryDecision.waitMs);
             log.info(
               "COOLDOWN_RETRY",
-              `${provider}/${model} cooldown elapsed — restarting request attempt ${requestRetryAttempt}/${retrySettings.maxRetries}`
+              `${provider}/${model} cooldown elapsed — restarting request attempt ${requestRetryAttempt + 1}/${retrySettings.maxRetries}`
             );
             continue requestAttemptLoop;
           }
@@ -1325,7 +1333,7 @@ async function handleSingleModelChat(
         const breakerFailureStatus = Number(lastStatus ?? credentials?.lastErrorCode);
         if (
           !forceLiveComboTest &&
-          credentials?.allRateLimited &&
+          isAllRateLimited &&
           PROVIDER_BREAKER_FAILURE_STATUSES.has(breakerFailureStatus)
         ) {
           breaker._onFailure();
