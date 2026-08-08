@@ -13136,7 +13136,8 @@
     "hiddenModelsTitle": "Modelos ocultos",
     "modelDisplayName": "Nome de exibição local",
     "modelEnabled": "Ativado localmente",
-    "localStateSaveFailed": "Falha ao guardar as definições locais do Radar"
+    "localStateSaveFailed": "Falha ao guardar as definições locais do Radar",
+    "guidedCombos": "Guided combos"
   },
   "radarSetupPage": {
     "title": "Configuração do Fornecedor",
@@ -13643,5 +13644,22 @@
     "hint": "Quando ativado, os modelos descobertos aparecem nas seleções do provedor em todo o OmniRoute.",
     "updateFailed": "Falha ao atualizar (HTTP {status})",
     "networkError": "Erro de rede — não foi possível atualizar a configuração de exposição do fornecedor"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
   }
 }
