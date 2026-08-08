@@ -42,7 +42,6 @@ test("non-GPT-5.6 models still get max downgraded to xhigh", () => {
     )
   );
   assert.equal(translated.reasoning_effort, "xhigh");
-<<<<<<< HEAD
 });
 
 // ─────────────────────────────────────────────────────────────────────
@@ -61,12 +60,9 @@ test("#9142 Anthropic top-level system prompts must trigger background detection
     "system_prompt_pattern"
   );
 });
-=======
-
 // #9140 — VS Code routes filter out built-in auto models
-const { isUsableChatModel } = await import(
-  "../../src/app/api/v1/vscode/[token]/usableChatModel.ts"
-);
+const { isUsableChatModel } =
+  await import("../../src/app/api/v1/vscode/[token]/usableChatModel.ts");
 
 test("#9140 VS Code listing must accept built-in auto routing entries", () => {
   assert.equal(
@@ -79,28 +75,4 @@ test("#9140 VS Code listing must accept built-in auto routing entries", () => {
     false,
     "operator-created combo should still be rejected"
   );
->>>>>>> origin/release/v3.8.50
-
-
 });
-
-// ── #9160 model discovery: capabilities.effort_tiers ────────────────────────
-
-// #9160: model discovery must ingest capabilities.effort_tiers
-test("#9160 model discovery must ingest capabilities.effort_tiers", () => {
-  assert.deepEqual(
-    detectSupportedThinkingEfforts({
-      capabilities: { effort_tiers: ["low", "medium", "high", "xhigh"] },
-    }),
-    ["low", "medium", "high", "xhigh"]
-  );
-});
-
-test("#9160 capabilities.effort_tiers with duplicate and synonym", () => {
-  assert.deepEqual(
-    detectSupportedThinkingEfforts({
-      capabilities: { effort_tiers: ["low", "low", "max"] },
-    }),
-    ["low", "xhigh"]
-  );
-
