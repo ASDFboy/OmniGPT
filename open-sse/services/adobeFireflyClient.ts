@@ -62,11 +62,35 @@ const DEFAULT_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36";
 const DEFAULT_SEC_CH_UA = '"Not;A=Brand";v="8", "Chromium";v="150", "Google Chrome";v="150"';
 const DEFAULT_POLL_INTERVAL_MS = 3000;
-const DEFAULT_IMAGE_TIMEOUT_MS = 180_000;
+/**
+ * Poll budget for image generate-async. Multi-ref gpt-image / nano jobs commonly
+ * exceed 3 minutes (upload + colligo + render at detailLevel 5). 180s was the
+ * previous default and produced widespread 504s on listing assets with screenshots.
+ */
+export const DEFAULT_IMAGE_TIMEOUT_MS = 300_000;
 const DEFAULT_VIDEO_TIMEOUT_MS = 300_000;
+/** Extra poll budget per uploaded reference blob (large screenshots + image2image). */
+export const ADOBE_FIREFLY_IMAGE_TIMEOUT_PER_REF_MS = 60_000;
+export const ADOBE_FIREFLY_IMAGE_TIMEOUT_MAX_MS = 600_000;
 const FIREFLY_ORIGIN = "https://firefly.adobe.com";
 const FIREFLY_REFERER = "https://firefly.adobe.com/";
 
+/**
+ * Resolve poll timeout: explicit body.timeout_ms wins; else base + per-ref budget.
+ * Covers multi-screenshot listing jobs without unbounded waits.
+ */
+export function adobeFireflyImageTimeoutMs(opts?: {
+  timeoutMs?: number;
+  refCount?: number;
+}): number {
+  const explicit = Number(opts?.timeoutMs);
+  if (Number.isFinite(explicit) && explicit > 0) {
+    return Math.min(ADOBE_FIREFLY_IMAGE_TIMEOUT_MAX_MS, Math.floor(explicit));
+  }
+  const refs = Math.max(0, Math.floor(Number(opts?.refCount) || 0));
+  const budget = DEFAULT_IMAGE_TIMEOUT_MS + refs * ADOBE_FIREFLY_IMAGE_TIMEOUT_PER_REF_MS;
+  return Math.min(ADOBE_FIREFLY_IMAGE_TIMEOUT_MAX_MS, budget);
+}
 const NANO_SIZE_MAP: Record<string, Record<string, { width: number; height: number }>> = {
   "1K": {
     "1:1": { width: 1024, height: 1024 },
@@ -621,7 +645,7 @@ export function buildAdobeImagePayload(opts: {
       },
     };
     if (referenceBlobs.length) {
-      // gpt-image subject references (mask path uses separate mask blob when present).
+      // gpt-image references use the roles/counts validated from discovery.
       payload.generationMetadata = { module: "image2image", submodule: "ff-image-generate" };
       payload.referenceBlobs = referenceBlobs;
       payload.modelSpecificPayload = {};
@@ -1889,7 +1913,7 @@ async function sleep(ms: number): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function pollAdobeJob(opts: {
+export async function pollAdobeJob(opts: {
   pollUrl: string;
   accessToken: string;
   kind: "image" | "video";
@@ -2103,11 +2127,15 @@ export async function adobeFireflyGenerateImage(opts: {
   }
   pollUrl = normalizeAdobePollUrl(pollUrl);
 
+  const pollTimeoutMs = adobeFireflyImageTimeoutMs({
+    timeoutMs: opts.timeoutMs,
+    refCount: opts.references?.length ?? opts.sourceImageIds?.length ?? 0,
+  });
   const { mediaUrl, latest } = await pollAdobeJob({
     pollUrl,
     accessToken: opts.accessToken,
     kind: "image",
-    timeoutMs: opts.timeoutMs && opts.timeoutMs > 0 ? opts.timeoutMs : DEFAULT_IMAGE_TIMEOUT_MS,
+    timeoutMs: pollTimeoutMs,
     fetchImpl,
     log: opts.log,
   });

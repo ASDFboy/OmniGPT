@@ -4,8 +4,13 @@ import { resolvePublicCred } from "../../open-sse/utils/publicCreds.ts";
 import {
   ADOBE_FIREFLY_IMAGE_MODELS,
   ADOBE_FIREFLY_VIDEO_MODELS,
+  ADOBE_FIREFLY_IMAGE_TIMEOUT_MAX_MS,
+  ADOBE_FIREFLY_IMAGE_TIMEOUT_PER_REF_MS,
+  DEFAULT_IMAGE_TIMEOUT_MS,
   adobeFireflyApiKey,
   adobeFireflyBalanceApiKey,
+  adobeFireflyImageTimeoutMs,
+  adobeFireflyMaxImageRefs,
   buildAdobeImagePayload,
   buildAdobePollHeaders,
   buildAdobeSubmitHeaders,
@@ -273,6 +278,16 @@ test("buildAdobeImagePayload attaches referenceBlobs like live adobe_atach_image
     { id: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee", usage: "source" },
   ]);
   assert.equal((gpt.generationMetadata as Record<string, unknown>).module, "image2image");
+});
+
+test("adobeFireflyImageTimeoutMs scales boundedly with reference count", () => {
+  assert.equal(adobeFireflyImageTimeoutMs({ refCount: 0 }), DEFAULT_IMAGE_TIMEOUT_MS);
+  assert.equal(
+    adobeFireflyImageTimeoutMs({ refCount: 2 }),
+    DEFAULT_IMAGE_TIMEOUT_MS + 2 * ADOBE_FIREFLY_IMAGE_TIMEOUT_PER_REF_MS
+  );
+  assert.equal(adobeFireflyImageTimeoutMs({ timeoutMs: 120_000, refCount: 5 }), 120_000);
+  assert.equal(adobeFireflyImageTimeoutMs({ refCount: 99 }), ADOBE_FIREFLY_IMAGE_TIMEOUT_MAX_MS);
 });
 
 test("extractAdobeSourceImageSources reads Media page image fields", () => {
@@ -615,18 +630,7 @@ test("extractAdobeAccountIdFromToken reads user_id claim", () => {
 // --- Handlers (mocked fetch) ----------------------------------------------
 
 function jsonResponse(status: number, body: unknown, headerMap: Record<string, string> = {}) {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    headers: {
-      get: (name: string) => {
-        const key = Object.keys(headerMap).find((k) => k.toLowerCase() === name.toLowerCase());
-        return key ? headerMap[key] : null;
-      },
-    },
-    json: async () => body,
-    text: async () => JSON.stringify(body),
-  } as unknown as Response;
+  return new Response(JSON.stringify(body) ?? null, { status, headers: headerMap });
 }
 
 test("handleAdobeFireflyImageGeneration returns 400 when prompt is missing", async () => {

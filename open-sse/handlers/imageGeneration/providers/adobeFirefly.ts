@@ -15,16 +15,14 @@ import { saveImageErrorResult, saveImageSuccessResult } from "../../imageGenerat
 import {
   AdobeFireflyError,
   adobeFireflyGenerateImage,
+  adobeFireflyImageTimeoutMs,
   resolveAdobeAccessToken,
   resolveAdobeSourceImageReferences,
   resolveAdobeImageModel,
 } from "../../../services/adobeFireflyClient.ts";
 import { getAdobeReferenceUploadLimit } from "../../../services/adobeFireflyModels.ts";
-
-function normalizePositiveNumber(value: unknown, fallback: number): number {
-  const n = Number(value);
-  return Number.isFinite(n) && n > 0 ? n : fallback;
-}
+import { isAdobeFireflyUpscaleModel } from "../../../services/adobeFireflyUpscale.ts";
+import { handleAdobeFireflyImageUpscale } from "../../imageUpscale/adobeFirefly.ts";
 
 export async function handleAdobeFireflyImageGeneration({
   model,
@@ -58,6 +56,19 @@ export async function handleAdobeFireflyImageGeneration({
 }) {
   const startTime = Date.now();
   const prompt = typeof body.prompt === "string" ? body.prompt.trim() : "";
+
+  // Topaz upscalers share adobe-firefly but use /v2/3p-images/upsample (no prompt).
+  if (isAdobeFireflyUpscaleModel(model)) {
+    return handleAdobeFireflyImageUpscale({
+      model,
+      provider,
+      body: body as Record<string, unknown>,
+      credentials,
+      log,
+      fetchImpl,
+    });
+  }
+
   if (!prompt) {
     return saveImageErrorResult({
       provider,
@@ -70,7 +81,6 @@ export async function handleAdobeFireflyImageGeneration({
 
   try {
     const accessToken = await resolveAdobeAccessToken(credentials, fetchImpl);
-    const timeoutMs = normalizePositiveNumber(body.timeout_ms, 180_000);
     const seed =
       typeof body.seed === "number"
         ? body.seed
@@ -100,10 +110,22 @@ export async function handleAdobeFireflyImageGeneration({
       log,
     });
 
+    const explicitTimeout =
+      typeof body.timeout_ms === "number"
+        ? body.timeout_ms
+        : typeof body.timeout_ms === "string" && body.timeout_ms.trim()
+          ? Number(body.timeout_ms)
+          : undefined;
+    const timeoutMs = adobeFireflyImageTimeoutMs({
+      timeoutMs: explicitTimeout,
+      refCount: references.length,
+    });
+
     log?.info?.(
       "IMAGE",
       `${provider}/${model} (adobe-firefly) | prompt: "${prompt.slice(0, 60)}${prompt.length > 60 ? "..." : ""}"` +
-        (references.length ? ` | refs: ${references.length}` : "")
+        (references.length ? ` | refs: ${references.length}` : "") +
+        ` | pollTimeoutMs=${timeoutMs}`
     );
 
     const result = await adobeFireflyGenerateImage({
