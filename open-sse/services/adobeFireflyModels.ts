@@ -494,16 +494,39 @@ export function toRegistryImageModels(): Array<{
   id: string;
   name: string;
   inputModalities: string[];
+  imageRequired?: boolean;
   supportedSizes: string[];
   mediaCapabilities: Record<string, unknown>;
 }> {
-  return getAdobeFireflyFallbackCatalog("image").map((model) => ({
+  const generated = getAdobeFireflyFallbackCatalog("image").map((model) => ({
     id: model.id,
     name: `Firefly ${model.name}`,
     inputModalities: model.inputModalities,
     supportedSizes: model.capabilities.supportedSizes,
     mediaCapabilities: toAdobeMediaCapabilitiesApi(model),
   }));
+  // Upscaling uses a distinct Firefly endpoint and is not returned by the image
+  // generation discovery schema. Keep its two supported Topaz models visible in
+  // the same provider catalog so image clients can select them deliberately.
+  return [
+    ...generated,
+    {
+      id: "topaz-standard",
+      name: "Firefly Topaz Upscale (Standard)",
+      inputModalities: ["image"],
+      imageRequired: true,
+      supportedSizes: [],
+      mediaCapabilities: { input_media_use_cases: ["upscaling"] },
+    },
+    {
+      id: "topaz-bloom",
+      name: "Firefly Topaz Bloom (Creative Upscale)",
+      inputModalities: ["image"],
+      imageRequired: true,
+      supportedSizes: [],
+      mediaCapabilities: { input_media_use_cases: ["upscaling"] },
+    },
+  ];
 }
 
 export function toRegistryVideoModels(): Array<{
