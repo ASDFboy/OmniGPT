@@ -247,6 +247,7 @@
       "tests/unit/no-memory-header.test.ts",
       "tests/unit/noauth-autocombo-lockout-7623.test.ts",
       "tests/unit/non-streaming-sse-terminal-typescan-4459.test.ts",
+      "tests/unit/nvidia-410-model-scope.test.ts",
       "tests/unit/nvidia-passthrough-models-6773.test.ts",
       "tests/unit/nvidia-quota-phase1.test.ts",
       "tests/unit/oauth-providers-config.test.ts",
