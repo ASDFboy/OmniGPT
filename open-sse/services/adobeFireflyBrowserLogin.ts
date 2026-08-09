@@ -23,6 +23,7 @@ import {
   isAdobeUserAccessToken,
   looksLikeAdobeJwt,
 } from "./adobeFireflyClient.ts";
+import { isAdobeFireflyApiUrl, isAdobeLoginCookieDomain } from "./adobeFireflySecurity.ts";
 import { sanitizeErrorMessage } from "../utils/error.ts";
 
 /**
@@ -70,29 +71,11 @@ function loopbackHttpGetJson<T = unknown>(
 }
 
 const FIREFLY_HOME_URL = "https://firefly.adobe.com/";
-const FIREFLY_3P_HOST_SUFFIX = "firefly-3p.ff.adobe.io";
 // Bounded quantifiers (Hard Rule: avoid ReDoS on adversarial Authorization headers).
 const ADOBE_BEARER_REGEX =
   /^Bearer\s+(eyJ[A-Za-z0-9_-]{1,4096}\.[A-Za-z0-9_-]{1,4096}\.[A-Za-z0-9_-]{1,4096})/i;
 const ADOBE_JWT_IN_TEXT_REGEX =
   /eyJ[A-Za-z0-9_-]{1,4096}\.[A-Za-z0-9_-]{1,4096}\.[A-Za-z0-9_-]{1,4096}/g;
-
-function hostnameMatches(hostname: string, expected: string): boolean {
-  const normalized = hostname.toLowerCase().replace(/\.$/, "");
-  return normalized === expected || normalized.endsWith(`.${expected}`);
-}
-
-export function isAdobeFireflyApiUrl(rawUrl: string): boolean {
-  try {
-    return hostnameMatches(new URL(rawUrl).hostname, FIREFLY_3P_HOST_SUFFIX);
-  } catch {
-    return false;
-  }
-}
-
-export function isAdobeLoginCookieDomain(domain: string): boolean {
-  return hostnameMatches(domain.replace(/^\./, ""), "adobelogin.com");
-}
 
 const DEFAULT_LOGIN_TIMEOUT_MS = 300_000;
 const MIN_LOGIN_TIMEOUT_MS = 15_000;

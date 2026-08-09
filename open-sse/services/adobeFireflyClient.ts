@@ -24,6 +24,14 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { resolvePublicCred } from "../utils/publicCreds.ts";
 import { sanitizeErrorMessage } from "../utils/error.ts";
+import {
+  decodeAdobeJwtPayload,
+  findAllAdobeJwts,
+  isExactAdobeJwt,
+  stripAdobeJwts,
+} from "./adobeFireflySecurity.ts";
+
+export { decodeAdobeJwtPayload } from "./adobeFireflySecurity.ts";
 
 export const ADOBE_FIREFLY_IMAGE_SUBMIT_URL =
   "https://firefly-3p.ff.adobe.io/v2/3p-images/generate-async";
@@ -330,33 +338,6 @@ export function adobeFireflyBalanceApiKey(): string {
 }
 
 /** Decode IMS JWT payload (no signature verification — client-side claim read only). */
-const ADOBE_JWT_IN_TEXT_REGEX =
-  /eyJ[A-Za-z0-9_-]{1,4096}\.[A-Za-z0-9_-]{1,4096}\.[A-Za-z0-9_-]{1,4096}/;
-const ADOBE_JWT_IN_TEXT_GLOBAL_REGEX =
-  /eyJ[A-Za-z0-9_-]{1,4096}\.[A-Za-z0-9_-]{1,4096}\.[A-Za-z0-9_-]{1,4096}/g;
-const ADOBE_JWT_EXACT_REGEX =
-  /^eyJ[A-Za-z0-9_-]{1,4096}\.[A-Za-z0-9_-]{1,4096}\.[A-Za-z0-9_-]{1,4096}$/;
-
-export function decodeAdobeJwtPayload(token: string): Record<string, unknown> | null {
-  try {
-    // Do not call extractAdobeCredentialToken here (would recurse via guest checks).
-    let raw = String(token || "")
-      .trim()
-      .replace(/^bearer\s+/i, "")
-      .trim();
-    // If a blob was passed, take the first JWT-shaped segment.
-    const m = raw.match(ADOBE_JWT_IN_TEXT_REGEX);
-    if (m) raw = m[0];
-    const part = raw.split(".")[1];
-    if (!part) return null;
-    const json = Buffer.from(part.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8");
-    const obj = JSON.parse(json);
-    return obj && typeof obj === "object" ? (obj as Record<string, unknown>) : null;
-  } catch {
-    return null;
-  }
-}
-
 /** AdobeID subject for x-account-id on balance / account_cluster calls. */
 export function extractAdobeAccountIdFromToken(token: string): string {
   const payload = decodeAdobeJwtPayload(token);
@@ -448,7 +429,7 @@ export function extractAdobeCredentialToken(raw: string): string {
   if (authMatch?.[1] && looksLikeAdobeJwt(authMatch[1])) return authMatch[1];
 
   // Any eyJ… JWT in the blob (HAR / multi-line). Prefer user AdobeID tokens.
-  const jwtMatches = value.match(ADOBE_JWT_IN_TEXT_GLOBAL_REGEX);
+  const jwtMatches = findAllAdobeJwts(value);
   if (jwtMatches && jwtMatches.length > 0) {
     const sorted = [...jwtMatches].sort((a, b) => b.length - a.length);
     const user = sorted.find((t) => looksLikeAdobeJwt(t) && isAdobeUserAccessToken(t));
@@ -497,14 +478,13 @@ export function extractAdobeCookieHeader(raw: string): string {
       if (/^bearer\s+/i.test(line)) return false;
       if (looksLikeAdobeJwt(line)) return false;
       // Drop standalone eyJ… segments
-      if (ADOBE_JWT_EXACT_REGEX.test(line)) return false;
+      if (isExactAdobeJwt(line)) return false;
       return true;
     })
     .join("; ");
 
   // Also strip inline eyJ JWT tokens that may sit inside a cookie string
-  const noJwt = cleaned
-    .replace(ADOBE_JWT_IN_TEXT_GLOBAL_REGEX, "")
+  const noJwt = stripAdobeJwts(cleaned)
     .replace(/;\s*;/g, ";")
     .replace(/^;\s*|\s*;$/g, "")
     .trim();
@@ -1153,7 +1133,7 @@ export function extractAdobeArpSessionId(cookieOrBlob: string): string {
 
   // JWT + ARP joined by whitespace (single-line PasswordBox paste collapses \n → space)
   // Split on whitespace only — NOT on "=" — so we never treat "aux_sid=…" as a token.
-  const withoutJwt = raw.replace(ADOBE_JWT_IN_TEXT_GLOBAL_REGEX, " ");
+  const withoutJwt = stripAdobeJwts(raw, " ");
   for (const token of withoutJwt.split(/[\s,;"']+/)) {
     let t = token.trim();
     // If this chunk is name=value from a Cookie header, only keep the value when
@@ -2016,7 +1996,7 @@ export async function exchangeAdobeCookieForAccessToken(
       guestAllowed: false,
       fetchImpl,
     });
-    if (authed.ok) {
+    if (authed.ok === true) {
       if (
         isAdobeGuestAccessToken(authed.token) ||
         authed.data.account_type === "guest" ||
@@ -2039,7 +2019,7 @@ export async function exchangeAdobeCookieForAccessToken(
       guestAllowed: true,
       fetchImpl,
     });
-    if (guest.ok) {
+    if (guest.ok === true) {
       if (
         guest.data.account_type === "guest" ||
         guest.data.guestId ||
@@ -2323,7 +2303,7 @@ async function sleep(ms: number): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function pollAdobeJob(opts: {
+export async function pollAdobeJob(opts: {
   pollUrl: string;
   accessToken: string;
   kind: "image" | "video";

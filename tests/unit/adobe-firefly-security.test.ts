@@ -9,7 +9,7 @@ import {
 import {
   isAdobeFireflyApiUrl,
   isAdobeLoginCookieDomain,
-} from "../../open-sse/services/adobeFireflyBrowserLogin.ts";
+} from "../../open-sse/services/adobeFireflySecurity.ts";
 
 function adobeJwt(payload: Record<string, unknown>): string {
   const header = Buffer.from(JSON.stringify({ alg: "none", typ: "JWT" })).toString("base64url");
