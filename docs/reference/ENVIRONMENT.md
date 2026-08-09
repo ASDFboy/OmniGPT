@@ -741,7 +741,7 @@ The logging system writes to both stdout and rotated log files. All configuratio
 | `PROXY_LOGS_TABLE_MAX_ROWS`               | `100000`                   | Max rows in the `proxy_logs` SQLite table before pruning.                         |
 | `APP_LOG_ROTATION_CHECK_INTERVAL_MS`      | `60000` (1 min)            | How often `src/lib/logRotation.ts` re-checks the active log file size.            |
 | `CHAT_LOG_TEXT_LIMIT`                     | `65536`                    | Max string length retained in chat log artifacts (default 64 KB).                 |
-| `CHAT_LOG_ARRAY_TAIL_ITEMS`               | `24`                       | Number of array items retained from the tail when truncating chat log payloads.   |
+| `CHAT_LOG_ARRAY_TAIL_ITEMS`               | `128`                      | Number of array items retained from the tail when truncating chat log payloads.   |
 | `CHAT_LOG_MAX_DEPTH`                      | `6`                        | Max nesting depth before chat log payloads are truncated.                         |
 | `CHAT_LOG_MAX_OBJECT_KEYS`                | `80`                       | Max object keys retained in chat log payloads (0 = unlimited).                    |
 | `CHAT_DEBUG_FILE`                         | `false`                    | When true, `serializeArtifactForStorage` skips size-based truncation. Debug only. |
@@ -1389,3 +1389,31 @@ Used by `src/lib/vncSession/manifest.ts` to configure Docker-based headless Chro
 | `REDIS_BIND_HOST` | `127.0.0.1` | Bind address for the embedded Redis service. |
 | `REDIS_PORT` | `6379` | Port for the embedded Redis service. |
 | `OMNIROUTE_REDIS_BIND_HOST` | – | OmniRoute-scoped override for the embedded Redis bind address. |
+
+---
+
+## 24. Release v3.8.50 additions
+
+These settings were introduced after the previous environment-contract snapshot.
+
+| Variable | Default | Source File | Description |
+| --- | --- | --- | --- |
+| `OMNIROUTE_CHAT_ADMISSION_QUEUE_MS` | `5000` | `src/shared/middleware/chatBodyAdmission.ts` | Maximum wait for a heavyweight chat admission slot before a retryable `503`; `0` restores immediate rejection. |
+| `OMNIROUTE_RUNNOW_TIMEOUT_MS` | `30000` | `src/app/api/jobs/[id]/run-now/route.ts` | Bounds how long a run-now call waits for an in-flight job before starting the queued run. |
+| `CHAT_LOG_MAX_BODY_KB` | `1024` | `src/lib/logEnv.ts` | Maximum request or response body size before log summarization, in KiB. |
+| `ADOBE_FIREFLY_BROWSER_REFRESH` | enabled | `open-sse/services/adobeFireflySession.ts` | Keeps IMS and browser-risk state fresh through account-scoped Chrome CDP sessions; set `0` to disable. |
+| `ADOBE_FIREFLY_SESSION_DISK` | enabled | `open-sse/services/adobeFireflySession.ts` | Persists repaired Adobe sessions under `DATA_DIR`; set `0` for memory-only state. |
+| `ADOBE_FIREFLY_MIN_SUBMIT_GAP_MS` | `12000` | `open-sse/services/adobeFireflySession.ts` | Minimum spacing between Adobe Firefly generate submissions. |
+| `ADOBE_FIREFLY_BATCH_EXTRA_GAP_MS` | `15000` | `open-sse/services/adobeFireflySession.ts` | Extra quiet period after every third successful Adobe submission. |
+| `ADOBE_FIREFLY_CHROME_CDP_PORT` | `9334` | `open-sse/services/adobeFireflyChromeRuntime.ts` | CDP port for the account-scoped Chrome runtime. |
+| `ADOBE_FIREFLY_CHROME_VISIBLE` | `0` | `open-sse/services/adobeFireflyChromeRuntime.ts` | Set `1` to keep the Adobe renewal browser visible; the default parks a headed window off-screen. |
+| `ADOBE_FIREFLY_CHROME_HEADLESS` | `0` | `open-sse/services/adobeFireflyChromeRuntime.ts` | Debug-only true-headless mode; Adobe colligo normally rejects the resulting risk session. |
+| `ADOBE_FIREFLY_CHROME_FORCE_RESTART` | `0` | `open-sse/services/adobeFireflyChromeRuntime.ts` | Set `1` to restart the account-scoped Chrome runtime before renewal. |
+| `ADOBE_FIREFLY_CHROME_PING` | automatic | `open-sse/services/adobeFireflyChromeRuntime.ts` | `1` forces, and `0` disables, the in-page generate probe used to prove the renewed ARP session. |
+| `ADOBE_FIREFLY_LOGIN_WAIT_MS` | context-dependent | `open-sse/services/adobeFireflyChromeRuntime.ts` | Interactive-login wait budget: `0` on background renewal and `300000` on the explicit login flow unless overridden. |
+| `ADOBE_FIREFLY_FORTER_WAIT_MS` | `45000` | `open-sse/services/adobeFireflyChromeRuntime.ts` | Maximum wait for a fresh Forter token during session renewal. |
+| `CHROME_PATH` | auto-detect | `open-sse/services/adobeFireflyChromeRuntime.ts` | Optional absolute Chrome executable used when platform auto-detection is insufficient. |
+| `TELEGRAM_BOT_TOKEN` | _(unset)_ | `src/lib/telegram/config.ts` | BotFather token that enables the inbound webhook and signs Mini App `initData`. |
+| `TELEGRAM_DEFAULT_MODEL` | `auto/chat` | `src/lib/telegram/chatProxy.ts` | Model used for Telegram chat replies. |
+| `TELEGRAM_BOT_API_BASE` | `https://api.telegram.org` | `src/lib/telegram/config.ts` | Bot API base URL override for proxies or self-hosted Bot API servers. |
+| `TELEGRAM_WEBHOOK_TIMEOUT_MS` | `60000` | `src/lib/telegram/config.ts` | Timeout in milliseconds for outbound Bot API calls. |
