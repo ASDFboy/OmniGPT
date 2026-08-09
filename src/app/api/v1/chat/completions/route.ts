@@ -84,6 +84,7 @@ export async function POST(request) {
   // OpenAI/Anthropic reject `text/plain` or missing Content-Type at the edge; matching
   // that behavior prevents a text/plain body from silently reaching provider lookup.
   const contentType = request.headers.get("content-type") ?? "";
+  const requestContentLengthHeader = request.headers.get("content-length");
   if (!contentType.toLowerCase().split(";")[0].trim().startsWith("application/json")) {
     return new Response(
       JSON.stringify({
@@ -114,8 +115,8 @@ export async function POST(request) {
     // Logs only when Content-Length is present so debug noise stays low for
     // typical chat payloads. Opt-in via OMNIROUTE_LOG_REQUEST_SHAPE=1.
     if (process.env.OMNIROUTE_LOG_REQUEST_SHAPE === "1") {
-      const ct = request.headers.get("content-type") ?? "";
-      const cl = request.headers.get("content-length");
+      const ct = contentType;
+      const cl = requestContentLengthHeader;
       if (cl && Number(cl) > 256 * 1024) {
         console.error(`[CHAT-ROUTE] large body content-type="${ct}" content-length=${cl}`);
       }
