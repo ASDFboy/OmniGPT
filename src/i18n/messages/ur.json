@@ -937,7 +937,7 @@
   "disabled": "Disabled",
   "featureFlagOmnirouteEmergencyFallbackDescription": "Route budget-exhausted requests to the emergency free fallback provider/model.",
   "featureFlagArenaEloSyncEnabledDescription": "Enable periodic Arena AI leaderboard ELO sync for model intelligence rankings.",
-  "featureFlagExposeCcDiscoveryAliasesDescription": "__MISSING__:Advertise claude/<provider>/<model> mirror ids on /v1/models so Claude Code gateway model discovery lists non-Claude models. Warning: doubles catalog entries for all clients when enabled globally.",
+  "featureFlagExposeCcDiscoveryAliasesDescription": "__MISSING__:Advertise claude/&lt;provider&gt;/&lt;model&gt; mirror ids on /v1/models so Claude Code gateway model discovery lists non-Claude models. Warning: doubles catalog entries for all clients when enabled globally.",
   "sidebar": {
     "home": "Home",
     "dashboard": "Dashboard",
@@ -1232,7 +1232,9 @@
     "alwaysVisible": "ہمیشہ ظاہر",
     "groupSeparatorLabel": "جدا کار",
     "discovery": "دریافت",
-    "discoverySubtitle": "مفت رسائی کے لیے فراہم کنندگان کو اسکین کریں"
+    "discoverySubtitle": "مفت رسائی کے لیے فراہم کنندگان کو اسکین کریں",
+    "resilienceConnections": "کنکشن مضبوطی",
+    "resilienceConnectionsSubtitle": "کولڈاؤن، بریکر، لاک آؤٹ حالت"
   },
   "webhooks": {
     "title": "ویب ہکس",
@@ -2514,7 +2516,7 @@
       "always": "ہمیشہ"
     },
     "ccDiscoveryInfoButton": "__MISSING__:How to enable discovery in Claude Code",
-    "ccDiscoveryInfoTooltip": "__MISSING__:Advertise non-Claude models under claude/<provider>/<model> mirror ids so Claude Code's gateway model discovery can list them. Doubles catalog entries for all clients when enabled globally.",
+    "ccDiscoveryInfoTooltip": "__MISSING__:Advertise non-Claude models under claude/&lt;provider&gt;/&lt;model&gt; mirror ids so Claude Code's gateway model discovery can list them. Doubles catalog entries for all clients when enabled globally.",
     "ccDiscoveryInfoLink": "__MISSING__:Open Feature Flags",
     "ccOnboardingTitle": "__MISSING__:settings.json for gateway model discovery",
     "ccOnboardingCopy": "__MISSING__:Copy",
@@ -5202,7 +5204,7 @@
     "interceptionLoadError": "انٹرسیپشن کی ترتیبات لوڈ کرنے میں ناکامی: {error}",
     "interceptionSaveError": "انٹرسیپشن کی ترتیبات محفوظ کرنے میں ناکامی: {error}",
     "ccAliasSectionTitle": "__MISSING__:Expose in Claude Code (claude/…)",
-    "ccAliasSectionHint": "__MISSING__:Advertise this provider's models under claude/<provider>/<model> mirror ids so Claude Code's gateway model discovery can list them. Off by default — enabling this doubles catalog entries for all clients.",
+    "ccAliasSectionHint": "__MISSING__:Advertise this provider's models under claude/&lt;provider&gt;/&lt;model&gt; mirror ids so Claude Code's gateway model discovery can list them. Off by default — enabling this doubles catalog entries for all clients.",
     "ccAliasProviderLevelLabel": "__MISSING__:Provider default",
     "ccAliasModelOverridesLabel": "__MISSING__:Per-model overrides",
     "ccAliasModelOverrideAriaLabel": "__MISSING__:Override for {modelId}",
@@ -5619,9 +5621,9 @@
     "totalKeysRotating": "{count, plural, one {1 key rotating} other {# keys rotating}}",
     "unhideModel": "Unhide Model",
     "upstreamProxyProviders": "Upstream Proxy Providers",
-    "validationModelIdHint": "API کلید کی توثیق کے لیے استعمال ہونے والا ماڈل۔ فراہم کنندہ کا پہلا دستیاب ماڈل استعمال کرنے کے لیے خالی چھوڑ دیں۔",
-    "validationModelIdLabel": "توثیقی ماڈل",
-    "validationModelIdPlaceholder": "مثلاً meta-llama/llama-3.1-8b-instruct",
+    "validationModelIdHint": "Validation Model Id Hint",
+    "validationModelIdLabel": "Validation Model Id Label",
+    "validationModelIdPlaceholder": "Validation Model Id Placeholder",
     "vertexServiceAccountPlaceholder": "Paste your Service Account JSON ({\"type\":\"service_account\",\"project_id\":\"…\",\"client_email\":\"…\",\"private_key\":\"…\"}) or an OAuth access_token",
     "webCookieProviders": "Web Cookie Providers",
     "weeklyShort": "Weekly Short",
@@ -12317,5 +12319,99 @@
     "addConnection": "کنکشن شامل کریں",
     "addConnectionDescription": "کیا آپ کے پاس ابھی تک کوئی کنکشن نہیں ہے؟ فراہم کنندہ کے ڈیش بورڈ میں ایک شامل کریں۔",
     "addConnectionLink": "فراہم کنندگان پر جائیں →"
+  },
+  "resilienceConnections": {
+    "title": "کنکشن مضبوطی",
+    "table": {
+      "status": "حیثیت",
+      "provider": "فراہم کنندہ",
+      "connectionId": "کنکشن",
+      "authType": "توثیق",
+      "backoffLevel": "پسپائی",
+      "cooldown": "کولڈاؤن",
+      "lastError": "آخری خرابی",
+      "lockouts": "لاک آؤٹس",
+      "healthy": "صحت مند",
+      "coolingDown": "کولڈاؤن",
+      "circuitOpen": "سرکٹ کھلا",
+      "recovering": "بحال ہو رہا ہے",
+      "degraded": "خراب",
+      "terminal": "ٹرمینل",
+      "unknown": "نامعلوم",
+      "never": "-"
+    },
+    "timeline": {
+      "title": "بریکر منتقلی",
+      "window": "ونڈو",
+      "window1h": "1گھ",
+      "window6h": "6گھ",
+      "window24h": "24گھ",
+      "empty": "منتخب ونڈو میں کوئی منتقلی نہیں",
+      "currentState": "موجودہ حیثیت",
+      "state": {
+        "open": "کھلا",
+        "half_open": "نیم کھلا",
+        "closed": "بند",
+        "degraded": "خراب"
+      },
+      "reason": {
+        "timeout-elapsed": "وقت ختم",
+        "success-recovery": "کامیابی سے بحالی",
+        "manual-reset": "دستی ری سیٹ",
+        "probe-success": "جانچ کامیاب",
+        "recovery": "بحالی",
+        "probe-failed": "جانچ ناکام"
+      }
+    },
+    "detail": {
+      "title": "کنکشن کی تفصیل",
+      "metadata": "میٹا ڈیٹا",
+      "cooldown": "کولڈاؤن",
+      "lastError": "آخری خرابی",
+      "breaker": "سرکٹ بریکر",
+      "lockouts": "ماڈل لاک آؤٹس",
+      "rateLimitedUntil": "تک شرح محدود",
+      "backoffLevel": "پسپائی کی سطح",
+      "remaining": "باقی",
+      "noLockouts": "کوئی فعال لاک آؤٹ نہیں",
+      "provider": "فراہم کنندہ",
+      "id": "ID",
+      "authType": "توثیق کی قسم",
+      "priority": "ترجیح",
+      "isActive": "فعال",
+      "errorCode": "خرابی کوڈ",
+      "lastErrorAt": "آخری خرابی پر",
+      "yes": "ہاں",
+      "no": "نہیں",
+      "close": "بند کریں",
+      "never": "-",
+      "failureCount": "ناکامیوں کی تعداد",
+      "retryAfterMs": "بعد میں دوبارہ کوشش کریں (ms)",
+      "lastFailureKind": "آخری ناکامی کی قسم"
+    },
+    "empty": {
+      "title": "کوئی کنکشن نہیں",
+      "description": "فراہم کنندہ کے کنکشن یہاں ظاہر ہوں گے۔"
+    },
+    "loading": {
+      "title": "لوڈ ہو رہا ہے",
+      "description": "کنکشن مضبوطی کی حیثیت حاصل کی جا رہی ہے..."
+    },
+    "summary": {
+      "total": "{count} کنکشنز",
+      "coolingDown": "{count} کولڈاؤن میں",
+      "unhealthyBreakers": "{count} بریکرز بند نہیں",
+      "capped": "پہلے 1000 دکھائے جا رہے ہیں"
+    },
+    "pollingNote": "نوٹ: اس صفحے کو دیکھنے سے بریکر کی سست بحالی (HALF_OPEN جانچ) شروع ہوتی ہے۔ ہر 30 سیکنڈ میں تازہ کاری۔",
+    "retry": "دوبارہ کوشش کریں",
+    "pollErrorLocalOnly": "یہ صفحہ صرف localhost یا LAN سے قابل رسائی ہے (LOCAL_ONLY)۔",
+    "pollErrorStopped": "پولنگ روک دی گئی: سرور نے درخواست مسترد کر دی (404/403)۔",
+    "pollErrorTransient": "ڈیٹا حاصل کرنے میں خرابی: خودکار طور پر دوبارہ کوشش کی جا رہی ہے۔",
+    "degraded": "جزوی ڈیٹا: غیر دستیاب ذرائع: {sources}",
+    "degraded.source.database": "ڈیٹا بیس",
+    "degraded.source.circuitBreaker": "سرکٹ بریکر",
+    "degraded.source.modelLockouts": "ماڈل لاک آؤٹس",
+    "degraded.source.count": "کنکشنز کی تعداد"
   }
 }

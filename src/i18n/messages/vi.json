@@ -937,7 +937,7 @@
   "disabled": "Đã tắt",
   "featureFlagOmnirouteEmergencyFallbackDescription": "Định tuyến các yêu cầu đã hết ngân sách đến nhà cung cấp/mô hình dự phòng khẩn cấp miễn phí.",
   "featureFlagArenaEloSyncEnabledDescription": "Bật đồng bộ ELO định kỳ từ bảng xếp hạng Arena AI để xếp hạng năng lực của mô hình.",
-  "featureFlagExposeCcDiscoveryAliasesDescription": "Công bố các id phản chiếu claude/<provider>/<model> trên /v1/models để tính năng khám phá mô hình qua gateway của Claude Code liệt kê được các mô hình không phải Claude. Cảnh báo: khi bật ở phạm vi toàn cục, số mục trong danh mục tăng gấp đôi với mọi client.",
+  "featureFlagExposeCcDiscoveryAliasesDescription": "Công bố các id phản chiếu claude/&lt;provider&gt;/&lt;model&gt; trên /v1/models để tính năng khám phá mô hình qua gateway của Claude Code liệt kê được các mô hình không phải Claude. Cảnh báo: khi bật ở phạm vi toàn cục, số mục trong danh mục tăng gấp đôi với mọi client.",
   "sidebar": {
     "home": "Trang chủ",
     "dashboard": "Trang tổng quan",
@@ -1232,7 +1232,9 @@
     "alwaysVisible": "Luôn hiển thị",
     "groupSeparatorLabel": "Dấu phân cách",
     "discovery": "Khám phá",
-    "discoverySubtitle": "Quét các nhà cung cấp để tìm quyền truy cập miễn phí"
+    "discoverySubtitle": "Quét các nhà cung cấp để tìm quyền truy cập miễn phí",
+    "resilienceConnections": "Khả Năng Phục Hồi Kết Nối",
+    "resilienceConnectionsSubtitle": "Cooldown, cầu dao, trạng thái khóa"
   },
   "webhooks": {
     "title": "Webhook",
@@ -2514,7 +2516,7 @@
       "always": "Luôn bật"
     },
     "ccDiscoveryInfoButton": "Cách bật khám phá mô hình trong Claude Code",
-    "ccDiscoveryInfoTooltip": "Công bố các mô hình không phải Claude dưới dạng id phản chiếu claude/<provider>/<model> để tính năng khám phá mô hình qua gateway của Claude Code có thể liệt kê chúng. Khi bật ở phạm vi toàn cục, số mục trong danh mục tăng gấp đôi với mọi client.",
+    "ccDiscoveryInfoTooltip": "Công bố các mô hình không phải Claude dưới dạng id phản chiếu claude/&lt;provider&gt;/&lt;model&gt; để tính năng khám phá mô hình qua gateway của Claude Code có thể liệt kê chúng. Khi bật ở phạm vi toàn cục, số mục trong danh mục tăng gấp đôi với mọi client.",
     "ccDiscoveryInfoLink": "Mở Feature Flags",
     "ccOnboardingTitle": "settings.json cho việc khám phá mô hình qua gateway",
     "ccOnboardingCopy": "Sao chép",
@@ -5204,7 +5206,7 @@
     "interceptionLoadError": "Không thể tải cài đặt chặn: {error}",
     "interceptionSaveError": "Không thể lưu cài đặt chặn: {error}",
     "ccAliasSectionTitle": "Hiển thị trong Claude Code (claude/…)",
-    "ccAliasSectionHint": "Công bố các mô hình của nhà cung cấp này dưới dạng id phản chiếu claude/<provider>/<model> để tính năng khám phá mô hình qua gateway của Claude Code có thể liệt kê chúng. Mặc định tắt — bật lên sẽ nhân đôi số mục trong danh mục với mọi client.",
+    "ccAliasSectionHint": "Công bố các mô hình của nhà cung cấp này dưới dạng id phản chiếu claude/&lt;provider&gt;/&lt;model&gt; để tính năng khám phá mô hình qua gateway của Claude Code có thể liệt kê chúng. Mặc định tắt — bật lên sẽ nhân đôi số mục trong danh mục với mọi client.",
     "ccAliasProviderLevelLabel": "Mặc định của nhà cung cấp",
     "ccAliasModelOverridesLabel": "Ghi đè theo từng mô hình",
     "ccAliasModelOverrideAriaLabel": "Ghi đè cho {modelId}",
@@ -12240,7 +12242,7 @@
     "partnerLinkNote": "Partner link",
     "dismissAriaLabel": "Dismiss"
   },
-  "featureFlagExposeFunctionalGatewayMirrorsDescription": "Công bố các id phản chiếu <gateway-alias>/<model> trên /v1/models cho các mô hình có chủ sở hữu chuẩn không có thông tin xác thực hoạt động nhưng một cổng chuyển tiếp có thông tin xác thực hoạt động định tuyến được chúng. Cảnh báo: khi bật, số mục trong danh mục tăng lên với mọi client.",
+  "featureFlagExposeFunctionalGatewayMirrorsDescription": "Công bố các id phản chiếu &lt;gateway-alias&gt;/&lt;model&gt; trên /v1/models cho các mô hình có chủ sở hữu chuẩn không có thông tin xác thực hoạt động nhưng một cổng chuyển tiếp có thông tin xác thực hoạt động định tuyến được chúng. Cảnh báo: khi bật, số mục trong danh mục tăng lên với mọi client.",
   "radarPage": {
     "title": "Danh mục Radar",
     "subtitle": "Danh mục mô hình miễn phí được làm phong phú bởi trí tuệ cộng đồng",
@@ -12321,5 +12323,99 @@
     "addConnection": "Thêm kết nối",
     "addConnectionDescription": "Chưa có kết nối? Thêm một cái trong bảng điều khiển nhà cung cấp.",
     "addConnectionLink": "Đi đến các nhà cung cấp →"
+  },
+  "resilienceConnections": {
+    "title": "Khả Năng Phục Hồi Kết Nối",
+    "table": {
+      "status": "Trạng Thái",
+      "provider": "Nhà Cung Cấp",
+      "connectionId": "Kết Nối",
+      "authType": "Xác Thực",
+      "backoffLevel": "Trì Hoãn",
+      "cooldown": "Cooldown",
+      "lastError": "Lỗi Gần Nhất",
+      "lockouts": "Khóa",
+      "healthy": "Khỏe Mạnh",
+      "coolingDown": "Cooldown",
+      "circuitOpen": "Mạch Mở",
+      "recovering": "Đang Phục Hồi",
+      "degraded": "Suy Giảm",
+      "terminal": "Kết Thúc",
+      "unknown": "Không Xác Định",
+      "never": "-"
+    },
+    "timeline": {
+      "title": "Chuyển Đổi Cầu Dao",
+      "window": "Cửa Sổ",
+      "window1h": "1g",
+      "window6h": "6g",
+      "window24h": "24g",
+      "empty": "Không có chuyển đổi trong cửa sổ đã chọn",
+      "currentState": "Trạng Thái Hiện Tại",
+      "state": {
+        "open": "Mở",
+        "half_open": "Nửa Mở",
+        "closed": "Đóng",
+        "degraded": "Suy Giảm"
+      },
+      "reason": {
+        "timeout-elapsed": "Hết Thời Gian Chờ",
+        "success-recovery": "Phục Hồi do Thành Công",
+        "manual-reset": "Đặt Lại Thủ Công",
+        "probe-success": "Thăm Dò Thành Công",
+        "recovery": "Phục Hồi",
+        "probe-failed": "Thăm Dò Thất Bại"
+      }
+    },
+    "detail": {
+      "title": "Chi Tiết Kết Nối",
+      "metadata": "Siêu Dữ Liệu",
+      "cooldown": "Cooldown",
+      "lastError": "Lỗi Gần Nhất",
+      "breaker": "Cầu Dao Mạch",
+      "lockouts": "Khóa Mô Hình",
+      "rateLimitedUntil": "Giới Hạn Tốc Độ Đến",
+      "backoffLevel": "Mức Trì Hoãn",
+      "remaining": "Còn Lại",
+      "noLockouts": "Không có khóa hoạt động",
+      "provider": "Nhà Cung Cấp",
+      "id": "ID",
+      "authType": "Loại Xác Thực",
+      "priority": "Ưu Tiên",
+      "isActive": "Hoạt Động",
+      "errorCode": "Mã Lỗi",
+      "lastErrorAt": "Lỗi Gần Nhất Lúc",
+      "yes": "Có",
+      "no": "Không",
+      "close": "Đóng",
+      "never": "-",
+      "failureCount": "Số Lần Thất Bại",
+      "retryAfterMs": "Thử Lại Sau (ms)",
+      "lastFailureKind": "Loại Thất Bại Gần Nhất"
+    },
+    "empty": {
+      "title": "Không có kết nối",
+      "description": "Kết nối nhà cung cấp sẽ hiển thị ở đây."
+    },
+    "loading": {
+      "title": "Đang Tải",
+      "description": "Đang lấy trạng thái khả năng phục hồi kết nối..."
+    },
+    "summary": {
+      "total": "{count} kết nối",
+      "coolingDown": "{count} đang cooldown",
+      "unhealthyBreakers": "{count} cầu dao chưa đóng",
+      "capped": "hiển thị 1000 mục đầu tiên"
+    },
+    "pollingNote": "Lưu ý: xem trang này sẽ kích hoạt phục hồi chậm của cầu dao (thăm dò HALF_OPEN). Làm mới mỗi 30 giây.",
+    "retry": "Thử Lại",
+    "pollErrorLocalOnly": "Trang này chỉ có thể truy cập từ localhost hoặc LAN (LOCAL_ONLY).",
+    "pollErrorStopped": "Đã dừng thăm dò: máy chủ đã từ chối yêu cầu (404/403).",
+    "pollErrorTransient": "Lỗi khi lấy dữ liệu: tự động thử lại.",
+    "degraded": "Dữ liệu một phần: nguồn không khả dụng: {sources}",
+    "degraded.source.database": "Cơ Sở Dữ Liệu",
+    "degraded.source.circuitBreaker": "Cầu Dao Mạch",
+    "degraded.source.modelLockouts": "Khóa Mô Hình",
+    "degraded.source.count": "Số Lượng Kết Nối"
   }
 }

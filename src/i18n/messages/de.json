@@ -937,7 +937,7 @@
   "disabled": "Deaktiviert",
   "featureFlagOmnirouteEmergencyFallbackDescription": "Anfragen mit erschöpftem Budget an den kostenlosen Notfall-Fallback-Anbieter/das Notfall-Fallback-Modell weiterleiten.",
   "featureFlagArenaEloSyncEnabledDescription": "Periodischen ELO-Abgleich der Arena AI-Bestenliste für Modell-Intelligenz-Rankings aktivieren.",
-  "featureFlagExposeCcDiscoveryAliasesDescription": "__MISSING__:Advertise claude/<provider>/<model> mirror ids on /v1/models so Claude Code gateway model discovery lists non-Claude models. Warning: doubles catalog entries for all clients when enabled globally.",
+  "featureFlagExposeCcDiscoveryAliasesDescription": "__MISSING__:Advertise claude/&lt;provider&gt;/&lt;model&gt; mirror ids on /v1/models so Claude Code gateway model discovery lists non-Claude models. Warning: doubles catalog entries for all clients when enabled globally.",
   "sidebar": {
     "home": "Zuhause",
     "dashboard": "Dashboard",
@@ -1232,7 +1232,9 @@
     "alwaysVisible": "Immer sichtbar",
     "groupSeparatorLabel": "Trennlinie",
     "discovery": "Discovery",
-    "discoverySubtitle": "Anbieter auf kostenlosen Zugang scannen"
+    "discoverySubtitle": "Anbieter auf kostenlosen Zugang scannen",
+    "resilienceConnections": "Verbindungsresilienz",
+    "resilienceConnectionsSubtitle": "Cooldown, Schalter, Sperrstatus"
   },
   "webhooks": {
     "title": "Webhooks",
@@ -2514,7 +2516,7 @@
       "always": "Immer"
     },
     "ccDiscoveryInfoButton": "__MISSING__:How to enable discovery in Claude Code",
-    "ccDiscoveryInfoTooltip": "__MISSING__:Advertise non-Claude models under claude/<provider>/<model> mirror ids so Claude Code's gateway model discovery can list them. Doubles catalog entries for all clients when enabled globally.",
+    "ccDiscoveryInfoTooltip": "__MISSING__:Advertise non-Claude models under claude/&lt;provider&gt;/&lt;model&gt; mirror ids so Claude Code's gateway model discovery can list them. Doubles catalog entries for all clients when enabled globally.",
     "ccDiscoveryInfoLink": "__MISSING__:Open Feature Flags",
     "ccOnboardingTitle": "__MISSING__:settings.json for gateway model discovery",
     "ccOnboardingCopy": "__MISSING__:Copy",
@@ -5202,7 +5204,7 @@
     "interceptionLoadError": "Fehler beim Laden der Interzeptionseinstellungen: {error}",
     "interceptionSaveError": "Fehler beim Speichern der Interzeptionseinstellungen: {error}",
     "ccAliasSectionTitle": "__MISSING__:Expose in Claude Code (claude/…)",
-    "ccAliasSectionHint": "__MISSING__:Advertise this provider's models under claude/<provider>/<model> mirror ids so Claude Code's gateway model discovery can list them. Off by default — enabling this doubles catalog entries for all clients.",
+    "ccAliasSectionHint": "__MISSING__:Advertise this provider's models under claude/&lt;provider&gt;/&lt;model&gt; mirror ids so Claude Code's gateway model discovery can list them. Off by default — enabling this doubles catalog entries for all clients.",
     "ccAliasProviderLevelLabel": "__MISSING__:Provider default",
     "ccAliasModelOverridesLabel": "__MISSING__:Per-model overrides",
     "ccAliasModelOverrideAriaLabel": "__MISSING__:Override for {modelId}",
@@ -5619,9 +5621,9 @@
     "totalKeysRotating": "{count, plural, one {1 key rotating} other {# keys rotating}}",
     "unhideModel": "Unhide Model",
     "upstreamProxyProviders": "Upstream Proxy Providers",
-    "validationModelIdHint": "Modell, das zur Überprüfung des API-Schlüssels verwendet wird. Leer lassen, um das erste verfügbare Modell des Anbieters zu verwenden.",
-    "validationModelIdLabel": "Validierungsmodell",
-    "validationModelIdPlaceholder": "z. B. meta-llama/llama-3.1-8b-instruct",
+    "validationModelIdHint": "Validation Model Id Hint",
+    "validationModelIdLabel": "Validation Model Id Label",
+    "validationModelIdPlaceholder": "Validation Model Id Placeholder",
     "vertexServiceAccountPlaceholder": "Paste your Service Account JSON ({\"type\":\"service_account\",\"project_id\":\"…\",\"client_email\":\"…\",\"private_key\":\"…\"}) or an OAuth access_token",
     "webCookieProviders": "Web Cookie Providers",
     "weeklyShort": "Weekly Short",
@@ -12317,5 +12319,99 @@
     "addConnection": "Verbindung hinzufügen",
     "addConnectionDescription": "Haben Sie noch keine Verbindung? Fügen Sie eine im Anbieter-Dashboard hinzu.",
     "addConnectionLink": "Zu den Anbietern →"
+  },
+  "resilienceConnections": {
+    "title": "Verbindungsresilienz",
+    "table": {
+      "status": "Status",
+      "provider": "Anbieter",
+      "connectionId": "Verbindung",
+      "authType": "Auth",
+      "backoffLevel": "Backoff",
+      "cooldown": "Cooldown",
+      "lastError": "Letzter Fehler",
+      "lockouts": "Sperren",
+      "healthy": "Gesund",
+      "coolingDown": "Cooldown",
+      "circuitOpen": "Schaltkreis Offen",
+      "recovering": "Erholung",
+      "degraded": "Beeinträchtigt",
+      "terminal": "Terminal",
+      "unknown": "Unbekannt",
+      "never": "-"
+    },
+    "timeline": {
+      "title": "Schalterübergänge",
+      "window": "Zeitfenster",
+      "window1h": "1h",
+      "window6h": "6h",
+      "window24h": "24h",
+      "empty": "Keine Übergänge im ausgewählten Zeitfenster",
+      "currentState": "Aktueller Status",
+      "state": {
+        "open": "Offen",
+        "half_open": "Halboffen",
+        "closed": "Geschlossen",
+        "degraded": "Beeinträchtigt"
+      },
+      "reason": {
+        "timeout-elapsed": "Zeitüberschreitung",
+        "success-recovery": "Erholung durch Erfolg",
+        "manual-reset": "Manueller Reset",
+        "probe-success": "Sondierung Erfolgreich",
+        "recovery": "Erholung",
+        "probe-failed": "Sondierung Fehlgeschlagen"
+      }
+    },
+    "detail": {
+      "title": "Verbindungsdetail",
+      "metadata": "Metadaten",
+      "cooldown": "Cooldown",
+      "lastError": "Letzter Fehler",
+      "breaker": "Leistungsschalter",
+      "lockouts": "Modellsperren",
+      "rateLimitedUntil": "Ratenbegrenzt Bis",
+      "backoffLevel": "Backoff-Stufe",
+      "remaining": "Verbleibend",
+      "noLockouts": "Keine aktiven Sperren",
+      "provider": "Anbieter",
+      "id": "ID",
+      "authType": "Auth-Typ",
+      "priority": "Priorität",
+      "isActive": "Aktiv",
+      "errorCode": "Fehlercode",
+      "lastErrorAt": "Letzter Fehler Am",
+      "yes": "Ja",
+      "no": "Nein",
+      "close": "Schließen",
+      "never": "-",
+      "failureCount": "Fehleranzahl",
+      "retryAfterMs": "Erneut Versuchen Nach (ms)",
+      "lastFailureKind": "Letzte Fehlerart"
+    },
+    "empty": {
+      "title": "Keine Verbindungen",
+      "description": "Anbieterverbindungen werden hier angezeigt."
+    },
+    "loading": {
+      "title": "Wird geladen",
+      "description": "Verbindungsresilienzstatus wird abgerufen..."
+    },
+    "summary": {
+      "total": "{count} Verbindungen",
+      "coolingDown": "{count} im Cooldown",
+      "unhealthyBreakers": "{count} Schalter nicht geschlossen",
+      "capped": "zeigt die ersten 1000"
+    },
+    "pollingNote": "Hinweis: Das Aufrufen dieser Seite löst die verzögerte Wiederherstellung des Schalters aus (HALF_OPEN-Sondierungen). Aktualisierung alle 30s.",
+    "retry": "Erneut Versuchen",
+    "pollErrorLocalOnly": "Diese Seite ist nur von localhost oder LAN aus zugänglich (LOCAL_ONLY).",
+    "pollErrorStopped": "Abfrage gestoppt: Der Server hat die Anfrage abgelehnt (404/403).",
+    "pollErrorTransient": "Fehler beim Abrufen der Daten: automatischer erneuter Versuch.",
+    "degraded": "Teildaten: nicht verfügbare Quellen: {sources}",
+    "degraded.source.database": "Datenbank",
+    "degraded.source.circuitBreaker": "Leistungsschalter",
+    "degraded.source.modelLockouts": "Modellsperren",
+    "degraded.source.count": "Verbindungsanzahl"
   }
 }
