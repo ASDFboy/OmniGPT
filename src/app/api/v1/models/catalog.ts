@@ -1113,6 +1113,7 @@ async function buildUnifiedModelsResponseCore(
         input_modalities: imgModel.inputModalities || ["text"],
         output_modalities: ["image"],
         ...(imgModel.description ? { description: imgModel.description } : {}),
+        ...(imgModel.mediaCapabilities ? { media_capabilities: imgModel.mediaCapabilities } : {}),
       });
     }
 
@@ -1178,6 +1179,12 @@ async function buildUnifiedModelsResponseCore(
         created: timestamp,
         owned_by: videoModel.provider,
         type: "video",
+        supported_sizes: videoModel.supportedSizes,
+        input_modalities: ["text"],
+        output_modalities: ["video"],
+        ...(videoModel.mediaCapabilities
+          ? { media_capabilities: videoModel.mediaCapabilities }
+          : {}),
       });
     }
 
@@ -1376,7 +1383,7 @@ async function buildUnifiedModelsResponseCore(
           continue;
         }
 
-        // #8958: honor the compatible-provider node prefix (as the synced/custom
+        // #8958/#9034: honor the compatible-provider node prefix (as the synced/custom
         // loops do) so an alias-backed entry publishes `prefix/model` instead of the
         // raw provider-node UUID. Without the providerIdToPrefix lookup, `alias` fell
         // through to `providerKey` (the UUID) and the dedupe below — which only checks

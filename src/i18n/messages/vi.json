@@ -1094,6 +1094,8 @@
     "costsFreeTiersSubtitle": "Hạn mức token miễn phí hàng tháng",
     "freeProviderRankings": "Xếp hạng nhà cung cấp miễn phí",
     "freeProviderRankingsSubtitle": "Các nhà cung cấp miễn phí tốt nhất được xếp hạng theo điểm ELO của mô hình",
+    "radar": "Danh mục Radar",
+    "radarSubtitle": "Danh mục mô hình miễn phí được làm phong phú bởi cộng đồng",
     "costsQuotaShare": "Chia sẻ hạn mức",
     "costsPricing": "Định giá",
     "logsProxy": "Nhật ký proxy",
@@ -1119,6 +1121,7 @@
     "runtime": "Thời gian chạy",
     "consoleLogs": "Nhật ký bảng điều khiển",
     "logsTimeline": "Timeline",
+    "logsTimelineSubtitle": "Dòng thời gian yêu cầu trực quan",
     "globalRouting": "Định tuyến toàn cục",
     "mitmProxy": "MITM Proxy",
     "oneProxy": "1Proxy",
@@ -1164,7 +1167,6 @@
     "logsSubtitle": "Nhật ký ứng dụng",
     "logsProxySubtitle": "Nhật ký lưu lượng proxy",
     "consoleLogsSubtitle": "Đầu ra bảng điều khiển",
-    "logsTimelineSubtitle": "Dòng thời gian yêu cầu trực quan",
     "logsActivitySubtitle": "Nhật ký hoạt động người dùng",
     "healthSubtitle": "Kiểm tra tình trạng hệ thống",
     "costsPricingSubtitle": "Quy tắc định giá theo từng mô hình",
@@ -1231,8 +1233,8 @@
     "groupSeparatorLabel": "Dấu phân cách",
     "discovery": "Khám phá",
     "discoverySubtitle": "Quét các nhà cung cấp để tìm quyền truy cập miễn phí",
-    "radar": "Danh mục Radar",
-    "radarSubtitle": "Danh mục mô hình miễn phí được làm phong phú bởi cộng đồng"
+    "resilienceConnections": "Khả Năng Phục Hồi Kết Nối",
+    "resilienceConnectionsSubtitle": "Cooldown, cầu dao, trạng thái khóa"
   },
   "webhooks": {
     "title": "Webhook",
@@ -2513,6 +2515,14 @@
       "auto": "Tự động",
       "always": "Luôn bật"
     },
+    "ccDiscoveryInfoButton": "Cách bật khám phá mô hình trong Claude Code",
+    "ccDiscoveryInfoTooltip": "Công bố các mô hình không phải Claude dưới dạng id phản chiếu claude/&lt;provider&gt;/&lt;model&gt; để tính năng khám phá mô hình qua gateway của Claude Code có thể liệt kê chúng. Khi bật ở phạm vi toàn cục, số mục trong danh mục tăng gấp đôi với mọi client.",
+    "ccDiscoveryInfoLink": "Mở Feature Flags",
+    "ccOnboardingTitle": "settings.json cho việc khám phá mô hình qua gateway",
+    "ccOnboardingCopy": "Sao chép",
+    "ccOnboardingCopied": "Đã sao chép",
+    "ccOnboardingKeyPlaceholder": "<khóa API OmniRoute của bạn>",
+    "ccOnboardingWindowNote": "Claude Code mặc định coi mọi id mô hình mà nó không nhận ra là có cửa sổ ngữ cảnh 200K. Với mô hình có cửa sổ thực tế khác, hãy thêm CLAUDE_CODE_AUTO_COMPACT_WINDOW ngay bên dưới để việc nén ngữ cảnh tự động không kích hoạt quá sớm.",
     "failedSave": "Không thể lưu",
     "profileSyncTitle": "Tự động đồng bộ hồ sơ CLI",
     "profileSyncDescription": "Sau khi đồng bộ mô hình của nhà cung cấp, tự động tạo lại hồ sơ công cụ CLI từ danh mục trực tiếp. Mặc định tắt — chỉ ghi các file hồ sơ, tuyệt đối không thay đổi cấu hình đang dùng hoặc cấu hình mặc định.",
@@ -2969,15 +2979,7 @@
     "copilotPasteInto": "Dán vào:",
     "copilotReloadInstruction": "Sau đó tải lại VS Code và nhập khóa API khi được yêu cầu.",
     "wireApiChatCompletions": "Chat Completions (/chat/completions)",
-    "wireApiResponses": "Responses API (/responses)",
-    "ccDiscoveryInfoButton": "Cách bật khám phá mô hình trong Claude Code",
-    "ccDiscoveryInfoTooltip": "Công bố các mô hình không phải Claude dưới dạng id phản chiếu claude/&lt;provider&gt;/&lt;model&gt; để tính năng khám phá mô hình qua gateway của Claude Code có thể liệt kê chúng. Khi bật ở phạm vi toàn cục, số mục trong danh mục tăng gấp đôi với mọi client.",
-    "ccDiscoveryInfoLink": "Mở Feature Flags",
-    "ccOnboardingTitle": "settings.json cho việc khám phá mô hình qua gateway",
-    "ccOnboardingCopy": "Sao chép",
-    "ccOnboardingCopied": "Đã sao chép",
-    "ccOnboardingKeyPlaceholder": "<khóa API OmniRoute của bạn>",
-    "ccOnboardingWindowNote": "Claude Code mặc định coi mọi id mô hình mà nó không nhận ra là có cửa sổ ngữ cảnh 200K. Với mô hình có cửa sổ thực tế khác, hãy thêm CLAUDE_CODE_AUTO_COMPACT_WINDOW ngay bên dưới để việc nén ngữ cảnh tự động không kích hoạt quá sớm."
+    "wireApiResponses": "Responses API (/responses)"
   },
   "combos": {
     "title": "Combo",
@@ -5781,6 +5783,7 @@
     "onboardingProviderDescriptions": {
       "360ai": "Lấy khóa API tại ai.360.cn",
       "agentrouter": "Nhận 200 USD tín dụng miễn phí tại https://agentrouter.org/register — không cần thẻ tín dụng.",
+      "unorouter": "Tạo khóa API tại https://unorouter.ai, sau đó dán vào đây dưới dạng Bearer token.",
       "agnes": "Lấy khóa API tại agnes-ai.com",
       "aimlapi": "Gói miễn phí đã tạm dừng (2026) — AI/ML API hiện chỉ tính phí theo mức sử dụng (nạp tối thiểu 20 USD); không còn tín dụng miễn phí định kỳ.",
       "ai21": "10 USD tín dụng dùng thử khi đăng ký (có hiệu lực 3 tháng), không cần thẻ tín dụng",
@@ -5977,8 +5980,7 @@
       "kimi-coding": "Kết nối Kimi Coding bằng luồng OAuth hiện có.",
       "kiro": "Gói miễn phí: 50 tín dụng/tháng (khoảng 25–100 nghìn token). ⚠️ Điều khoản Kiro cấm sử dụng proxy/harness của bên thứ ba.",
       "codex": "Kết nối OpenAI Codex bằng luồng OAuth hiện có.",
-      "qwen": "Kết nối Qwen Code bằng luồng OAuth hiện có.",
-      "unorouter": "Tạo khóa API tại https://unorouter.ai, sau đó dán vào đây dưới dạng Bearer token."
+      "qwen": "Kết nối Qwen Code bằng luồng OAuth hiện có."
     },
     "passthroughModelsDescription": "{provider} chấp nhận ID mô hình gốc của nhà cung cấp. Nhập từ /models hoặc thêm ID tùy chỉnh để định tuyến.",
     "bedrockModelsDescription": "Các mô hình Amazon Bedrock được giới hạn theo vùng AWS. Nhập từ /models hoặc thêm ID mô hình Bedrock được bật trong vùng đã chọn.",
@@ -7811,6 +7813,10 @@
       "minRows": {
         "label": "Số hàng tối thiểu để nén",
         "description": "Số hàng tối thiểu trong một mảng JSON đồng nhất để kích hoạt nén dạng bảng. Mặc định: 8."
+      },
+      "compressToolResults": {
+        "label": "__MISSING__:Proactively truncate long tool results",
+        "description": "__MISSING__:Truncates tool results over 2,000 characters during Lite compression. Emergency overflow protection may still trim content when the context exceeds the model budget."
       },
       "preserveSystemPrompt": {
         "label": "Giữ nguyên prompt hệ thống"
@@ -10191,6 +10197,8 @@
     "copied": "Đã sao chép!",
     "run": "Chạy",
     "running": "Đang chạy...",
+    "loading": "Đang tải...",
+    "retry": "Thử lại",
     "response": "Phản hồi",
     "tunnel": "Đường hầm",
     "send": "Gửi",
@@ -10790,6 +10798,8 @@
     "sourceModel": "Mô hình nguồn (agent gốc)",
     "targetModel": "Mô hình mục tiêu (OmniRoute)",
     "noMappings": "Chưa cấu hình ánh xạ mô hình. Hãy chạy trình hướng dẫn thiết lập để tự động phát hiện mô hình.",
+    "noMappingsDesc": "Chưa cấu hình ánh xạ mô hình nào. Hãy thêm ánh xạ để định tuyến yêu cầu của agent qua OmniRoute.",
+    "addMapping": "Thêm ánh xạ",
     "selectModel": "Chọn…",
     "saveMappings": "Lưu ánh xạ",
     "setupWizard": "Trình hướng dẫn thiết lập",
@@ -10861,9 +10871,7 @@
       "goNow": "Đi ngay",
       "message": "MITM Proxy hiện nằm trong AgentBridge.",
       "title": "Trang này đã được di chuyển"
-    },
-    "noMappingsDesc": "Chưa cấu hình ánh xạ mô hình nào. Hãy thêm ánh xạ để định tuyến yêu cầu của agent qua OmniRoute.",
-    "addMapping": "Thêm ánh xạ"
+    }
   },
   "providerStats": {
     "unknownError": "Lỗi không xác định",
@@ -11733,6 +11741,7 @@
     "danger": "Nguy hiểm",
     "requiresRestart": "Cần khởi động lại",
     "source": "Nguồn",
+    "ccDiscoveryAliasesEnvWarning": "Đang bật qua biến môi trường (EXPOSE_CC_DISCOVERY_ALIASES) — giá trị này ghi đè mọi công tắc trong bảng điều khiển bên dưới.",
     "resetFlag": "Đặt lại {label} về mặc định",
     "reset": "Đặt lại",
     "loadFailed": "Không thể tải cờ tính năng",
@@ -11889,8 +11898,7 @@
       "SKILLS_SANDBOX_NETWORK_ENABLED": {
         "description": "Cho phép môi trường sandbox của kỹ năng truy cập mạng."
       }
-    },
-    "ccDiscoveryAliasesEnvWarning": "Đang bật qua biến môi trường (EXPOSE_CC_DISCOVERY_ALIASES) — giá trị này ghi đè mọi công tắc trong bảng điều khiển bên dưới."
+    }
   },
   "comboControl": {
     "title": "Trung tâm điều khiển combo",
@@ -12319,5 +12327,99 @@
     "addConnection": "Thêm kết nối",
     "addConnectionDescription": "Chưa có kết nối? Thêm một cái trong bảng điều khiển nhà cung cấp.",
     "addConnectionLink": "Đi đến các nhà cung cấp →"
+  },
+  "resilienceConnections": {
+    "title": "Khả Năng Phục Hồi Kết Nối",
+    "table": {
+      "status": "Trạng Thái",
+      "provider": "Nhà Cung Cấp",
+      "connectionId": "Kết Nối",
+      "authType": "Xác Thực",
+      "backoffLevel": "Trì Hoãn",
+      "cooldown": "Cooldown",
+      "lastError": "Lỗi Gần Nhất",
+      "lockouts": "Khóa",
+      "healthy": "Khỏe Mạnh",
+      "coolingDown": "Cooldown",
+      "circuitOpen": "Mạch Mở",
+      "recovering": "Đang Phục Hồi",
+      "degraded": "Suy Giảm",
+      "terminal": "Kết Thúc",
+      "unknown": "Không Xác Định",
+      "never": "-"
+    },
+    "timeline": {
+      "title": "Chuyển Đổi Cầu Dao",
+      "window": "Cửa Sổ",
+      "window1h": "1g",
+      "window6h": "6g",
+      "window24h": "24g",
+      "empty": "Không có chuyển đổi trong cửa sổ đã chọn",
+      "currentState": "Trạng Thái Hiện Tại",
+      "state": {
+        "open": "Mở",
+        "half_open": "Nửa Mở",
+        "closed": "Đóng",
+        "degraded": "Suy Giảm"
+      },
+      "reason": {
+        "timeout-elapsed": "Hết Thời Gian Chờ",
+        "success-recovery": "Phục Hồi do Thành Công",
+        "manual-reset": "Đặt Lại Thủ Công",
+        "probe-success": "Thăm Dò Thành Công",
+        "recovery": "Phục Hồi",
+        "probe-failed": "Thăm Dò Thất Bại"
+      }
+    },
+    "detail": {
+      "title": "Chi Tiết Kết Nối",
+      "metadata": "Siêu Dữ Liệu",
+      "cooldown": "Cooldown",
+      "lastError": "Lỗi Gần Nhất",
+      "breaker": "Cầu Dao Mạch",
+      "lockouts": "Khóa Mô Hình",
+      "rateLimitedUntil": "Giới Hạn Tốc Độ Đến",
+      "backoffLevel": "Mức Trì Hoãn",
+      "remaining": "Còn Lại",
+      "noLockouts": "Không có khóa hoạt động",
+      "provider": "Nhà Cung Cấp",
+      "id": "ID",
+      "authType": "Loại Xác Thực",
+      "priority": "Ưu Tiên",
+      "isActive": "Hoạt Động",
+      "errorCode": "Mã Lỗi",
+      "lastErrorAt": "Lỗi Gần Nhất Lúc",
+      "yes": "Có",
+      "no": "Không",
+      "close": "Đóng",
+      "never": "-",
+      "failureCount": "Số Lần Thất Bại",
+      "retryAfterMs": "Thử Lại Sau (ms)",
+      "lastFailureKind": "Loại Thất Bại Gần Nhất"
+    },
+    "empty": {
+      "title": "Không có kết nối",
+      "description": "Kết nối nhà cung cấp sẽ hiển thị ở đây."
+    },
+    "loading": {
+      "title": "Đang Tải",
+      "description": "Đang lấy trạng thái khả năng phục hồi kết nối..."
+    },
+    "summary": {
+      "total": "{count} kết nối",
+      "coolingDown": "{count} đang cooldown",
+      "unhealthyBreakers": "{count} cầu dao chưa đóng",
+      "capped": "hiển thị 1000 mục đầu tiên"
+    },
+    "pollingNote": "Lưu ý: xem trang này sẽ kích hoạt phục hồi chậm của cầu dao (thăm dò HALF_OPEN). Làm mới mỗi 30 giây.",
+    "retry": "Thử Lại",
+    "pollErrorLocalOnly": "Trang này chỉ có thể truy cập từ localhost hoặc LAN (LOCAL_ONLY).",
+    "pollErrorStopped": "Đã dừng thăm dò: máy chủ đã từ chối yêu cầu (404/403).",
+    "pollErrorTransient": "Lỗi khi lấy dữ liệu: tự động thử lại.",
+    "degraded": "Dữ liệu một phần: nguồn không khả dụng: {sources}",
+    "degraded.source.database": "Cơ Sở Dữ Liệu",
+    "degraded.source.circuitBreaker": "Cầu Dao Mạch",
+    "degraded.source.modelLockouts": "Khóa Mô Hình",
+    "degraded.source.count": "Số Lượng Kết Nối"
   }
 }
