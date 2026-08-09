@@ -591,7 +591,7 @@ test("extractAdobeAccountIdFromToken reads user_id claim", () => {
 // --- Handlers (mocked fetch) ----------------------------------------------
 
 function jsonResponse(status: number, body: unknown, headerMap: Record<string, string> = {}) {
-  return new Response(JSON.stringify(body), { status, headers: headerMap });
+  return new Response(JSON.stringify(body) ?? null, { status, headers: headerMap });
 }
 
 test("handleAdobeFireflyImageGeneration returns 400 when prompt is missing", async () => {
