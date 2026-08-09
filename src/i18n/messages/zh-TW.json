@@ -12337,7 +12337,7 @@
     "title": "連線韌性",
     "table": {
       "status": "狀態",
-      "provider": "供應商",
+      "provider": "提供者",
       "connectionId": "連線",
       "authType": "認證",
       "backoffLevel": "退避",
@@ -12387,7 +12387,7 @@
       "backoffLevel": "退避等級",
       "remaining": "剩餘",
       "noLockouts": "無有效鎖定",
-      "provider": "供應商",
+      "provider": "提供者",
       "id": "ID",
       "authType": "認證類型",
       "priority": "優先順序",
@@ -12404,7 +12404,7 @@
     },
     "empty": {
       "title": "無連線",
-      "description": "供應商連線將顯示於此。"
+      "description": "提供者連線將顯示於此。"
     },
     "loading": {
       "title": "載入中",

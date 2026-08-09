@@ -30,8 +30,13 @@ import {
   isExactAdobeJwt,
   stripAdobeJwts,
 } from "./adobeFireflySecurity.ts";
+import {
+  parseAdobeModelsDiscovery as parseAdobeModelsDiscoveryContract,
+  type AdobeFireflyDiscoveredModel,
+} from "./adobeFireflyModels.ts";
 
 export { decodeAdobeJwtPayload } from "./adobeFireflySecurity.ts";
+export type { AdobeFireflyDiscoveredModel } from "./adobeFireflyModels.ts";
 
 export const ADOBE_FIREFLY_IMAGE_SUBMIT_URL =
   "https://firefly-3p.ff.adobe.io/v2/3p-images/generate-async";
@@ -1333,6 +1338,11 @@ export function buildAdobeUploadHeaders(
  * Supports: image_url, image, images[], image_urls[], input_image(s), reference_images,
  * provider_options.*, and prompt_image fields used by the WinUI Media page.
  */
+export {
+  extractAdobeSourceImageReferences,
+  normalizeAdobeReferenceBlobs,
+} from "./adobeFireflyReferences.ts";
+
 export function extractAdobeSourceImageSources(body: unknown, max = 4): string[] {
   if (!body || typeof body !== "object") return [];
   const b = body as Record<string, unknown>;
@@ -2222,54 +2232,11 @@ export async function fetchAdobeCreditsBalance(
 
 // ── Models discovery ────────────────────────────────────────────────────────
 
-export interface AdobeFireflyDiscoveredModel {
-  modelId: string;
-  modelVersion: string;
-  displayName: string;
-  modality: "image" | "video" | "audio" | "unknown";
-  enabled: boolean;
-  healthStatus?: string;
-}
-
 /**
  * Parse POST /v2/models/discovery response into flat model/version rows.
  */
 export function parseAdobeModelsDiscovery(body: unknown): AdobeFireflyDiscoveredModel[] {
-  const root = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
-  const models = Array.isArray(root.models) ? root.models : [];
-  const out: AdobeFireflyDiscoveredModel[] = [];
-
-  for (const m of models) {
-    if (!m || typeof m !== "object") continue;
-    const rec = m as Record<string, unknown>;
-    const modelId = String(rec.modelId || "").trim();
-    if (!modelId) continue;
-    const versions =
-      rec.modelVersions && typeof rec.modelVersions === "object"
-        ? (rec.modelVersions as Record<string, unknown>)
-        : {};
-    for (const [ver, spec] of Object.entries(versions)) {
-      if (!spec || typeof spec !== "object") continue;
-      const s = spec as Record<string, unknown>;
-      if (s.enabled === false) continue;
-      const mods = Array.isArray(s.outputModality)
-        ? s.outputModality.map((x) => String(x).toLowerCase())
-        : [];
-      let modality: AdobeFireflyDiscoveredModel["modality"] = "unknown";
-      if (mods.includes("image")) modality = "image";
-      else if (mods.includes("video")) modality = "video";
-      else if (mods.includes("audio")) modality = "audio";
-      out.push({
-        modelId,
-        modelVersion: ver,
-        displayName: String(s.modelDisplayName || s.modelCaiDisplayName || ver),
-        modality,
-        enabled: s.enabled !== false,
-        healthStatus: typeof s.healthStatus === "string" ? s.healthStatus : undefined,
-      });
-    }
-  }
-  return out;
+  return parseAdobeModelsDiscoveryContract(body);
 }
 
 export async function discoverAdobeFireflyModels(
