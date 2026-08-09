@@ -367,7 +367,7 @@
     "open-sse/services/adobeFireflyClient.ts": 2385,
     "open-sse/services/claudeCodeCompatible.ts": 1202,
     "open-sse/services/combo.ts": 3648,
-    "open-sse/services/compression/strategySelector.ts": 1060,
+    "open-sse/services/compression/strategySelector.ts": 1061,
     "open-sse/services/rateLimitManager.ts": 1167,
     "open-sse/translator/response/openai-responses.ts": 1224,
     "open-sse/utils/cursorAgentProtobuf.ts": 1505,
