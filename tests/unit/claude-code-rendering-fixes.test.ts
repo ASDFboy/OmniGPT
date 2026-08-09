@@ -38,7 +38,7 @@ test("Responses->Chat: output_item.done emits arguments when no delta chunks wer
   assert.equal(state.toolCallIndex, 1);
 });
 
-test("Responses->Chat: output_item.done does not re-emit arguments already streamed via deltas", () => {
+test("Responses->Chat: output_item.done emits the arguments buffered from deltas exactly once", () => {
   const state = {
     started: true,
     chatId: "chatcmpl-test",
@@ -62,7 +62,8 @@ test("Responses->Chat: output_item.done does not re-emit arguments already strea
 
   const result = openaiResponsesToOpenAIResponse(chunk, state);
 
-  assert.equal(result, null);
+  assert.ok(result);
+  assert.equal(result.choices[0].delta.tool_calls[0].function.arguments, '{"query":"search"}');
   assert.equal(state.toolCallIndex, 1);
 });
 
