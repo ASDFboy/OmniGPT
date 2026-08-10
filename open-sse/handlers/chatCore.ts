@@ -1037,6 +1037,13 @@ export async function handleChatCore({
 
   log?.debug?.("FORMAT", `${sourceFormat} → ${targetFormat} | stream=${stream}`);
 
+  // Preserve original body for cache signature — the body variable is mutated
+  // multiple times below (sanitization, memory/skills injection) before the
+  // cache store path runs at Phase 9.1 (non-streaming) / Phase 9.2 (streaming).
+  // Without this snapshot, the write-time signature differs from the read-time
+  // one, producing 0% hit rate. (#cache-signature-asymmetry)
+  const bodyForCacheWrite = body;
+
   // ── Phase 9.1: Semantic cache check (temp=0, any streaming mode) ──
   const cacheHit = await checkSemanticCache({
     semanticCacheEnabled,
@@ -4568,7 +4575,7 @@ export async function handleChatCore({
     // ── Phase 9.1: Cache store (non-streaming, temp=0) ──
     storeSemanticCacheResponse({
       enabled: semanticCacheEnabled,
-      body,
+      body: bodyForCacheWrite,
       headers: clientRawRequest?.headers,
       translatedResponse,
       model,
@@ -4922,7 +4929,7 @@ export async function handleChatCore({
       enabled: semanticCacheEnabled,
       streamStatus,
       streamResponseBody,
-      body,
+      body: bodyForCacheWrite,
       headers: clientRawRequest?.headers,
       model,
       apiKeyId: apiKeyInfo?.id ?? undefined,
