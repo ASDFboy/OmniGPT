@@ -73,6 +73,7 @@ import { TinyCmsExecutor } from "./tinycms.ts";
 import { HyperAgentExecutor } from "./hyperagent.ts";
 import { XaiExecutor } from "./xai.ts";
 import { PromptQlExecutor } from "./promptql.ts";
+import { ConolWebExecutor } from "./conol-web.ts";
 
 const executors = {
   antigravity: new AntigravityExecutor(),
@@ -209,6 +210,9 @@ const executors = {
   xai: new XaiExecutor(),
   "xai-oauth": new XaiExecutor("xai-oauth"),
   xao: new XaiExecutor("xai-oauth"),
+  qw: new QwenWebExecutor(), // Alias
+  "conol-web": new ConolWebExecutor(),
+  cnl: new ConolWebExecutor(), // Alias
 };
 
 const defaultCache = new Map();
@@ -306,3 +310,4 @@ export { XaiExecutor } from "./xai.ts";
 export { MoonshotExecutor } from "./moonshot.ts";
 export { CheaperInferenceExecutor } from "./cheaperinference.ts";
 export { PromptQlExecutor } from "./promptql.ts";
+export { ConolWebExecutor } from "./conol-web.ts";
