@@ -113,6 +113,7 @@ export interface ResolveComboTargetPipelineDeps {
    */
   buildAutoCandidates: ResolveAutoStrategyDeps["buildAutoCandidates"];
   hiddenModelsByProvider?: HiddenModelsByProvider;
+  clientManagedResponsesContext?: boolean;
 }
 
 export interface ResolvedComboTargetPipeline {
@@ -723,7 +724,9 @@ export async function resolveComboTargetPipeline(
 
   orderedTargets = await applyRequestTagRouting(orderedTargets, body, log);
 
-  const overflow = getKnownContextOverflow(orderedTargets, body);
+  const overflow = getKnownContextOverflow(orderedTargets, body, {
+    clientManagedResponsesContext: deps.clientManagedResponsesContext,
+  });
   if (overflow) {
     return { earlyResponse: buildContextOverflowResponse(overflow, orderedTargets, log) };
   }
