@@ -763,9 +763,13 @@ async function buildUnifiedModelsResponseCore(
           staticModelId: model.id,
           syncedModelIds: syncedForProvider ? [...syncedForProvider] : [],
         });
+        const hasDeclaredEffortTiers =
+          Array.isArray(model.supportedThinkingEfforts) &&
+          model.supportedThinkingEfforts.length > 0;
         if (
           coveredBySynced &&
-          (exclusiveListing || !isRegisteredEffortVariant(providerModels, model.id))
+          (exclusiveListing ||
+            (!isRegisteredEffortVariant(providerModels, model.id) && !hasDeclaredEffortTiers))
         )
           continue;
         if (!providerSupportsModel(canonicalProviderId, model.id)) continue;
@@ -776,6 +780,18 @@ async function buildUnifiedModelsResponseCore(
 
         const visionFields =
           getVisionCapabilityFields(aliasId) || getVisionCapabilityFields(model.id);
+        const thinkingFields = getThinkingCapabilityFields(
+          canonicalProviderId,
+          model.id,
+          model.supportsReasoning,
+          model.supportedThinkingEfforts,
+          // Skip the canonical fallback for static models without declared tiers —
+          // otherwise the catalog synthesizes unresolvable `<prefix>/<model>-{tier}`
+          // ids for every static reasoning model across all providers (#9485 review).
+          !hasDeclaredEffortTiers
+        );
+        const thinkingCapabilities =
+          Object.keys(thinkingFields).length > 0 ? { capabilities: thinkingFields } : {};
         if (includeAlias) {
           models.push({
             id: aliasId,
@@ -786,6 +802,8 @@ async function buildUnifiedModelsResponseCore(
             root: model.id,
             parent: null,
             ...(visionFields || {}),
+            ...thinkingFields,
+            ...thinkingCapabilities,
           });
         }
         if (
@@ -806,6 +824,8 @@ async function buildUnifiedModelsResponseCore(
             root: model.id,
             parent: includeAlias ? aliasId : null,
             ...(providerVisionFields || {}),
+            ...thinkingFields,
+            ...thinkingCapabilities,
           });
         }
       }
