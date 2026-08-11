@@ -1865,7 +1865,13 @@ export async function handleComboChat({
               isProxyUnreachable: structuredError?.code === "proxy_unreachable",
             })
           ) {
-            recordProviderFailure(provider, log, targetWithConnection.connectionId, profile);
+            const isQueueTimeout =
+              errorText.includes("RATE_LIMIT_QUEUE_TIMEOUT") ||
+              errorText.includes("RATE_LIMIT_QUEUE_WEDGED");
+            recordProviderFailure(provider, log, targetWithConnection.connectionId, profile, {
+              isQueueTimeout,
+              isNetworkError: structuredError?.code === "proxy_unreachable",
+            });
           }
 
           const quotaExhausted = await isQuotaExhaustionResponse(
