@@ -174,6 +174,7 @@ export type ResolvedComboTarget = {
   label: string | null;
   prompt?: string | null;
   failoverBeforeRetry?: unknown;
+  fallbackOnlyOnQuotaExhaustion?: boolean;
   trafficType?: "production" | "shadow";
   /**
    * Fingerprint-based account pin resolved from a combo builder composite
@@ -200,6 +201,7 @@ export type ResolvedComboRefTarget = {
   comboName: string;
   weight: number;
   label: string | null;
+  fallbackOnlyOnQuotaExhaustion?: boolean;
 };
 
 export type ResolvedComboUnit = ResolvedComboTarget | ResolvedComboRefTarget;
