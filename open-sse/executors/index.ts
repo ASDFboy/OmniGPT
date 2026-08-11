@@ -69,6 +69,7 @@ import { MimocodeExecutor } from "./mimocode.ts";
 import { GrokCliExecutor } from "./grok-cli.ts";
 import { CodeBuddyCnExecutor } from "./codebuddy-cn.ts";
 import { ZenmuxFreeExecutor } from "./zenmux-free.ts";
+import { TinyCmsExecutor } from "./tinycms.ts";
 import { HyperAgentExecutor } from "./hyperagent.ts";
 import { XaiExecutor } from "./xai.ts";
 import { PromptQlExecutor } from "./promptql.ts";
@@ -199,6 +200,8 @@ const executors = {
   "codebuddy-cn": new CodeBuddyCnExecutor(),
   cbcn: new CodeBuddyCnExecutor(), // Alias for codebuddy-cn
   "zenmux-free": new ZenmuxFreeExecutor(),
+  "tinycms-web": new TinyCmsExecutor(),
+  tcw: new TinyCmsExecutor(), // Alias
   hyperagent: new HyperAgentExecutor(),
   ha: new HyperAgentExecutor(), // Alias
   zmf: new ZenmuxFreeExecutor(), // Alias for zenmux-free
@@ -297,6 +300,7 @@ export { MimocodeExecutor } from "./mimocode.ts";
 export { GrokCliExecutor } from "./grok-cli.ts";
 export { CodeBuddyCnExecutor } from "./codebuddy-cn.ts";
 export { ZenmuxFreeExecutor } from "./zenmux-free.ts";
+export { TinyCmsExecutor } from "./tinycms.ts";
 export { HyperAgentExecutor } from "./hyperagent.ts";
 export { XaiExecutor } from "./xai.ts";
 export { MoonshotExecutor } from "./moonshot.ts";
