@@ -1753,7 +1753,9 @@
     "tools": "Ferramentas",
     "agentBridge": "Agent Bridge",
     "trafficInspector": "Inspector de Tráfego",
-    "usage": "Uso"
+    "usage": "Uso",
+    "radar": "Radar",
+    "setup": "Configuração"
   },
   "home": {
     "quickStart": "Início Rápido",
