@@ -753,6 +753,7 @@ The logging system writes to both stdout and rotated log files. All configuratio
 | `CHAT_LOG_ARRAY_TAIL_ITEMS`               | `128`                      | Number of array items retained from the tail when truncating chat log payloads.   |
 | `CHAT_LOG_MAX_DEPTH`                      | `6`                        | Max nesting depth before chat log payloads are truncated.                         |
 | `CHAT_LOG_MAX_OBJECT_KEYS`                | `80`                       | Max object keys retained in chat log payloads (0 = unlimited).                    |
+| `CHAT_LOG_MAX_BODY_KB`                    | `1024`                     | Whole request/response body size (KB) before it's replaced by a bare summary instead of the full clone. Raise this if long agentic conversations show a placeholder instead of the real messages in the dashboard. |
 | `CHAT_DEBUG_FILE`                         | `false`                    | When true, `serializeArtifactForStorage` skips size-based truncation. Debug only. |
 
 ---
@@ -1446,7 +1447,6 @@ These settings were introduced after the previous environment-contract snapshot.
 | `OMNIROUTE_CHAT_VIRTUAL_TTL_MS` | `60000` (60 s) | `src/shared/middleware/chatBodyAdmission.ts` | Per-connection virtual admission lanes (#9654): idle-lane eviction TTL. |
 | `OMNIROUTE_CHAT_VIRTUAL_MAX_SESSIONS` | `64` | `src/shared/middleware/chatBodyAdmission.ts` | Per-connection virtual admission lanes (#9654): max concurrent sessions (lanes). |
 | `OMNIROUTE_RUNNOW_TIMEOUT_MS` | `30000` | `src/app/api/jobs/[id]/run-now/route.ts` | Bounds how long a run-now call waits for an in-flight job before starting the queued run. |
-| `CHAT_LOG_MAX_BODY_KB` | `1024` | `src/lib/logEnv.ts` | Maximum request or response body size before log summarization, in KiB. |
 | `ADOBE_FIREFLY_BROWSER_REFRESH` | enabled | `open-sse/services/adobeFireflySession.ts` | Keeps IMS and browser-risk state fresh through account-scoped Chrome CDP sessions; set `0` to disable. |
 | `ADOBE_FIREFLY_SESSION_DISK` | enabled | `open-sse/services/adobeFireflySession.ts` | Persists repaired Adobe sessions under `DATA_DIR`; set `0` for memory-only state. |
 | `ADOBE_FIREFLY_MIN_SUBMIT_GAP_MS` | `12000` | `open-sse/services/adobeFireflySession.ts` | Minimum spacing between Adobe Firefly generate submissions. |
