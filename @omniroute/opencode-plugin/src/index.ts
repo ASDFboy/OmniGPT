@@ -4256,6 +4256,7 @@ export function buildStaticProviderEntry(
   rawAutoCombos?: OmniRouteRawAutoCombo[]
 ): OmniRouteStaticProviderEntry {
   const models: Record<string, OmniRouteStaticModelEntry> = {};
+  const rawModelKeys = new Set<string>();
 
   // usableOnly filter — compute once when feature enabled AND we have
   // connection data to filter against. Soft-fail (empty connections list)
@@ -4412,7 +4413,9 @@ export function buildStaticProviderEntry(
     // provider prefix (`<providerId>/<raw-id>`) is unreachable. Keys are the
     // raw id verbatim; ids that already contain `/` (e.g. `cc/claude-opus-4-7`)
     // keep it because the slash is part of the upstream model id itself.
-    models[raw.id] = entry;
+    const key = raw.id;
+    models[key] = entry;
+    rawModelKeys.add(key);
   }
 
   // Combo entries → stripped LCD shape. Each combo is keyed as
@@ -4609,8 +4612,9 @@ export function buildStaticProviderEntry(
       // (`opencode-omniroute/opencode-omniroute/<slug>`), and `parseModel()`
       // resolves credentials for the nonexistent provider `opencode-omniroute`
       // instead of `omniroute`. See #7976.
-      models[buildComboKey(combo, usedComboKeys, opts.omnirouteProviderId).split("/").pop()!] =
-        entry;
+      const key = buildComboKey(combo, usedComboKeys, opts.omnirouteProviderId).split("/").pop()!;
+      models[key] = entry;
+      rawModelKeys.delete(key);
 
       // Make this combo's resolved entry available to parent combos
       // that reference it via combo-ref. Use the friendly name since
@@ -4645,8 +4649,10 @@ export function buildStaticProviderEntry(
       // Use the variant as the key: "auto", "auto/coding", etc.
       const key = autoComboModelId(autoCombo.variant);
       if (models[key]) {
-        // Collision with a raw model or DB combo — auto combo wins (log once)
-        if (!reportedCollisions.has(key)) {
+        // `/v1/models` mirrors auto combos under the same stable id. Replacing
+        // that expected raw twin is silent; every other collision still warns.
+        const isExpectedRawTwin = autoCombo.id === key && rawModelKeys.has(key);
+        if (!isExpectedRawTwin && !reportedCollisions.has(key)) {
           reportedCollisions.add(key);
           console.warn(
             `[omniroute-plugin] auto combo key "${key}" collides with an existing model; auto combo wins.`
@@ -4654,6 +4660,7 @@ export function buildStaticProviderEntry(
         }
       }
       models[key] = entry;
+      rawModelKeys.delete(key);
     }
   }
 
