@@ -85,7 +85,6 @@ export type CompatModelRow = {
   normalizeToolCallId?: boolean;
   preserveOpenAIDeveloperRole?: boolean;
   isHidden?: boolean;
-  isDeleted?: boolean;
   upstreamHeaders?: Record<string, string>;
   compatByProtocol?: CompatByProtocolMap;
   /** #2905: per-model upstream wire-format override. */ targetFormat?: string;
@@ -504,7 +503,7 @@ export function getDisplayModelAlias(modelId: string, alias?: string | null): st
 }
 
 function readActiveHiddenFlag(row: CompatModelRow | undefined): boolean | undefined {
-  if (!row || row.isDeleted === true) return undefined;
+  if (!row) return undefined;
   if (Object.prototype.hasOwnProperty.call(row, "isHidden")) {
     return Boolean(row.isHidden);
   }
