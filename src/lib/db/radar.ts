@@ -362,7 +362,8 @@ function normalizeRadarIdentity(
 }
 
 function normalizeDisplayName(value: unknown): string | null | undefined {
-  if (value === undefined || value === null) return value;
+  if (value === undefined) return undefined;
+  if (value === null) return null;
   if (typeof value !== "string") return undefined;
   const normalized = value.trim();
   if (

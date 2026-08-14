@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import {
   NEWS_DISMISS_EVENT,
-  NEWS_DISMISS_STORAGE_KEY,
+  NEWS_DISMISS_STORAGE_NAME,
   fetchNewsPayload,
   parseDismissedNewsIds,
   selectActiveNews,
@@ -23,7 +23,7 @@ function subscribeToDismissals(callback: () => void) {
 
 function readDismissedIds(): string {
   try {
-    return localStorage.getItem(NEWS_DISMISS_STORAGE_KEY) ?? "";
+    return localStorage.getItem(NEWS_DISMISS_STORAGE_NAME) ?? "";
   } catch {
     return "";
   }
@@ -64,7 +64,7 @@ export default function NewsBanner() {
   const dismiss = () => {
     dismissedIds.add(announcement.id);
     try {
-      localStorage.setItem(NEWS_DISMISS_STORAGE_KEY, serializeDismissedNewsIds(dismissedIds));
+      localStorage.setItem(NEWS_DISMISS_STORAGE_NAME, serializeDismissedNewsIds(dismissedIds));
     } catch {
       // Storage is optional; the next announcement fetch remains functional.
     }

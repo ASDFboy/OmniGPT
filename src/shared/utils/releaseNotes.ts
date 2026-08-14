@@ -6,7 +6,7 @@ export const CHANGELOG_RAW_URL =
   "https://raw.githubusercontent.com/diegosouzapw/OmniRoute/main/CHANGELOG.md";
 export const CHANGELOG_GITHUB_URL =
   "https://github.com/diegosouzapw/OmniRoute/blob/main/CHANGELOG.md";
-export const NEWS_DISMISS_STORAGE_KEY = "omniroute-news-dismissed-v2";
+export const NEWS_DISMISS_STORAGE_NAME = "omniroute-news-dismissed-v2";
 export const NEWS_DISMISS_EVENT = "omniroute:news-dismissed";
 
 const NEWS_ID_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,78}[a-z0-9])?$/;
@@ -31,19 +31,21 @@ const httpsUrlSchema = z
     return url.protocol === "https:" && !url.username && !url.password;
   }, "Announcement links must use HTTPS without embedded credentials");
 
-const localizedTextMapSchema = z.record(localizedTextSchema).superRefine((value, context) => {
-  if (!value.en) {
-    context.addIssue({ code: z.ZodIssueCode.custom, message: "English copy is required" });
-  }
-  for (const locale of Object.keys(value)) {
-    if (!LOCALE_PATTERN.test(locale)) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `Invalid locale: ${locale}`,
-      });
+const localizedTextMapSchema = z
+  .record(z.string(), localizedTextSchema)
+  .superRefine((value, context) => {
+    if (!value.en) {
+      context.addIssue({ code: z.ZodIssueCode.custom, message: "English copy is required" });
     }
-  }
-});
+    for (const locale of Object.keys(value)) {
+      if (!LOCALE_PATTERN.test(locale)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Invalid locale: ${locale}`,
+        });
+      }
+    }
+  });
 
 const newsFeedItemSchema = z
   .object({

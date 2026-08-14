@@ -25,7 +25,7 @@ import {
 import { requireManagementAuth } from "@/lib/api/requireManagementAuth";
 import { isPaidModelTarget } from "@/shared/utils/freeModels";
 import { getAuditRequestContext, logAuditEvent } from "@/lib/compliance";
-import { isAuthRequired } from "@/shared/utils/apiAuth";
+import { isAuthRequired, isDashboardSessionAuthenticated } from "@/shared/utils/apiAuth";
 import { isCliTokenAuthValid } from "@/lib/middleware/cliTokenAuth";
 import { extractApiKey } from "@/sse/services/auth";
 import { getApiKeyMetadata } from "@/lib/db/apiKeys";
