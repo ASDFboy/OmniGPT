@@ -376,7 +376,7 @@ Four rules, in order of precedence:
    version does not bring it back.
 
 The editable fields and tombstones are persisted in
-`radar_local_model_state` (migration `143_radar_local_model_state.sql`). The public DB
+`radar_local_model_state` (migration `153_radar_local_model_state.sql`). The public DB
 adapter (`src/lib/db/radar.ts`) converts those rows into the `localOverrides` map and
 `tombstones` set used by `applyFeed()`; production `getRadarCatalog()` loads that state
 after the flag, cache, and schema gates pass. Only `displayName` and `enabled` are

@@ -13253,17 +13253,17 @@
     "pollErrorLocalOnly": "Tämä sivu on käytettävissä vain localhostista tai LAN-verkosta (LOCAL_ONLY).",
     "pollErrorStopped": "Kysely pysäytetty: palvelin hylkäsi pyynnön (404/403).",
     "pollErrorTransient": "Virhe tietojen haussa: yritetään automaattisesti uudelleen.",
-    "degraded": "Osittaiset tiedot: käyttökelvottomat lähteet: {sources}",
-    "degraded.source.database": "Tietokanta",
-    "degraded.source.circuitBreaker": "Piirikatkaisija",
-    "degraded.source.modelLockouts": "Mallilukitukset",
-    "degraded.source.count": "Yhteyksien Määrä"
+    "degraded": {
+      "message": "Osittaiset tiedot: käyttökelvottomat lähteet: {sources}",
+      "source": {
+        "database": "Tietokanta",
+        "circuitBreaker": "Piirikatkaisija",
+        "modelLockouts": "Mallilukitukset",
+        "count": "Yhteyksien Määrä"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "Hylkää pyynnöt ennen lähettämistä, kun kohdemallilta puuttuu vaadittuja ominaisuuksia (näkö, työkalut, jäsennelty ulostulo, kontekstikkelu). Suojaa suorat yhden tarjoajan pyynnöt, jotka ohittavat yhdistelmäkerroksen yhteensopivuussuodattimen.",
-  "capabilityFilter.visionMismatch": "Palveluntarjoaja ei tue näkymää tälle kuvapyynnölle",
-  "capabilityFilter.toolsMismatch": "Toimittaja ei tue työkalun kutsumista",
-  "capabilityFilter.structuredOutputMismatch": "Palveluntarjoaja ei tue jäsenneltyä tulostusta",
-  "capabilityFilter.contextWindowMismatch": "Pyyntö ylittää tarjoajan kontekstin ikkunan",
   "publicSystem": {
     "notFound": {
       "title": "Sivua ei löytynyt",
@@ -13676,5 +13676,11 @@
     "noExpiry": "No announced expiry",
     "openOffer": "View offer",
     "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "Palveluntarjoaja ei tue näkymää tälle kuvapyynnölle",
+    "toolsMismatch": "Toimittaja ei tue työkalun kutsumista",
+    "structuredOutputMismatch": "Palveluntarjoaja ei tue jäsenneltyä tulostusta",
+    "contextWindowMismatch": "Pyyntö ylittää tarjoajan kontekstin ikkunan"
   }
 }

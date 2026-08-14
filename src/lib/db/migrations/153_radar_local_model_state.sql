@@ -1,4 +1,4 @@
--- 143_radar_local_model_state.sql
+-- 153_radar_local_model_state.sql
 -- Operator-owned Radar catalog state.
 --
 -- Overrides are intentionally limited to display_name and enabled. A

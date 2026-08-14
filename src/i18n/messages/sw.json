@@ -13253,17 +13253,17 @@
     "pollErrorLocalOnly": "Ukurasa huu unafikiwa tu kutoka localhost au LAN (LOCAL_ONLY).",
     "pollErrorStopped": "Uchunguzi umesimamishwa: seva ilikataa ombi (404/403).",
     "pollErrorTransient": "Hitilafu katika kupata data: inajaribu tena kiotomatiki.",
-    "degraded": "Data isiyokamilika: vyanzo visivyopatikana: {sources}",
-    "degraded.source.database": "Hifadhidata",
-    "degraded.source.circuitBreaker": "Kivunja Mzunguko",
-    "degraded.source.modelLockouts": "Kufuli za Mfano",
-    "degraded.source.count": "Idadi ya Miunganisho"
+    "degraded": {
+      "message": "Data isiyokamilika: vyanzo visivyopatikana: {sources}",
+      "source": {
+        "database": "Hifadhidata",
+        "circuitBreaker": "Kivunja Mzunguko",
+        "modelLockouts": "Kufuli za Mfano",
+        "count": "Idadi ya Miunganisho"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "kataa maombi kabla ya kutuma wakati mfano wa lengo hauna uwezo unaohitajika (maono, zana, matokeo yaliyoandikwa, dirisha la muktadha). Inalinda maombi ya moja kwa moja kutoka kwa mtoa huduma mmoja ambayo yanapita chujio cha ulinganifu wa safu ya mchanganyiko.",
-  "capabilityFilter.visionMismatch": "Mtoa huduma haitoi msaada wa kuona kwa ombi hili la picha",
-  "capabilityFilter.toolsMismatch": "Mtoa huduma haitoi msaada wa kuita zana",
-  "capabilityFilter.structuredOutputMismatch": "Mtoa huduma haitoi matokeo yaliyoandikwa kwa muundo",
-  "capabilityFilter.contextWindowMismatch": "Omba inazidi dirisha la muktadha wa mtoa huduma",
   "publicSystem": {
     "notFound": {
       "title": "Ukurasa haukupatikana",
@@ -13676,5 +13676,11 @@
     "noExpiry": "No announced expiry",
     "openOffer": "View offer",
     "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "Mtoa huduma haitoi msaada wa kuona kwa ombi hili la picha",
+    "toolsMismatch": "Mtoa huduma haitoi msaada wa kuita zana",
+    "structuredOutputMismatch": "Mtoa huduma haitoi matokeo yaliyoandikwa kwa muundo",
+    "contextWindowMismatch": "Omba inazidi dirisha la muktadha wa mtoa huduma"
   }
 }

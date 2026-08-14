@@ -13253,17 +13253,17 @@
     "pollErrorLocalOnly": "Bu səhifə yalnız localhost və ya LAN-dan əlçatandır (LOCAL_ONLY).",
     "pollErrorStopped": "Sorğu dayandırıldı: server sorğunu rədd etdi (404/403).",
     "pollErrorTransient": "Məlumat alarkən xəta: avtomatik yenidən cəhd edilir.",
-    "degraded": "Qismən məlumat: əlçatmaz mənbələr: {sources}",
-    "degraded.source.database": "Verilənlər Bazası",
-    "degraded.source.circuitBreaker": "Dövrə Açarı",
-    "degraded.source.modelLockouts": "Model Blokları",
-    "degraded.source.count": "Bağlantı Sayı"
+    "degraded": {
+      "message": "Qismən məlumat: əlçatmaz mənbələr: {sources}",
+      "source": {
+        "database": "Verilənlər Bazası",
+        "circuitBreaker": "Dövrə Açarı",
+        "modelLockouts": "Model Blokları",
+        "count": "Bağlantı Sayı"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "Tələb olunan imkanlar (görmə, alətlər, strukturlaşdırılmış çıxış, kontekst pəncərəsi) olmayan hədəf modelində göndərilmədən əvvəl tələbləri rədd edin. Kombinasiya qatının uyğunluq filtrini keçən birbaşa tək təminatçı tələblərini qoruyur.",
-  "capabilityFilter.visionMismatch": "Təchizatçı bu şəkil tələbi üçün görünüşü dəstəkləmir",
-  "capabilityFilter.toolsMismatch": "Təchizatçı alət çağırışını dəstəkləmir",
-  "capabilityFilter.structuredOutputMismatch": "Təchizatçı strukturlaşdırılmış çıxışı dəstəkləmir",
-  "capabilityFilter.contextWindowMismatch": "Sorğu təminatçının kontekst pəncərəsini aşır",
   "publicSystem": {
     "notFound": {
       "title": "Səhifə tapılmadı",
@@ -13676,5 +13676,11 @@
     "noExpiry": "No announced expiry",
     "openOffer": "View offer",
     "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "Təchizatçı bu şəkil tələbi üçün görünüşü dəstəkləmir",
+    "toolsMismatch": "Təchizatçı alət çağırışını dəstəkləmir",
+    "structuredOutputMismatch": "Təchizatçı strukturlaşdırılmış çıxışı dəstəkləmir",
+    "contextWindowMismatch": "Sorğu təminatçının kontekst pəncərəsini aşır"
   }
 }

@@ -40,7 +40,7 @@ test.after(() => {
   delete process.env.RADAR_ENABLED;
 });
 
-test("migration 143 creates the closed local model state schema", () => {
+test("migration 153 creates the closed local model state schema", () => {
   const db = core.getDbInstance();
   const columns = db.prepare("PRAGMA table_info(radar_local_model_state)").all() as Array<{
     name: string;
@@ -49,6 +49,31 @@ test("migration 143 creates the closed local model state schema", () => {
   assert.deepEqual(
     columns.map((column) => column.name),
     ["provider", "model_id", "display_name", "enabled", "tombstoned", "updated_at"]
+  );
+});
+
+test("legacy Radar migration 143 is rehomed before the canonical API-key migration runs", () => {
+  const db = core.getDbInstance();
+  db.prepare("DELETE FROM _omniroute_migrations WHERE version IN ('143', '153')").run();
+  db.prepare(
+    "INSERT INTO _omniroute_migrations (version, name) VALUES ('143', 'radar_local_model_state')"
+  ).run();
+
+  core.resetDbInstance();
+  const reopened = core.getDbInstance();
+  const rows = reopened
+    .prepare("SELECT version, name FROM _omniroute_migrations WHERE version IN ('143', '153')")
+    .all() as Array<{ version: string; name: string }>;
+
+  assert.deepEqual(rows, [
+    { version: "143", name: "api_key_cache_default_mode" },
+    { version: "153", name: "radar_local_model_state" },
+  ]);
+  assert.equal(
+    reopened
+      .prepare("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'table' AND name = ?")
+      .get("radar_local_model_state")?.count,
+    1
   );
 });
 

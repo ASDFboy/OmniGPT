@@ -13,7 +13,7 @@
  *     (`GET /v1/referrals/latest` — a separate, always-current artifact from
  *     the catalog feed, see `src/lib/radar/referralsSync.ts`).
  *
- * Tables (migration 143):
+ * Tables (migration 153):
  *   - radar_local_model_state: operator-owned display/enabled overrides and
  *     deletion tombstones, keyed by provider + model ID.
  *

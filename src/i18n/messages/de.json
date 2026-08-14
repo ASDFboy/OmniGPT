@@ -13253,17 +13253,17 @@
     "pollErrorLocalOnly": "Diese Seite ist nur von localhost oder LAN aus zugänglich (LOCAL_ONLY).",
     "pollErrorStopped": "Abfrage gestoppt: Der Server hat die Anfrage abgelehnt (404/403).",
     "pollErrorTransient": "Fehler beim Abrufen der Daten: automatischer erneuter Versuch.",
-    "degraded": "Teildaten: nicht verfügbare Quellen: {sources}",
-    "degraded.source.database": "Datenbank",
-    "degraded.source.circuitBreaker": "Leistungsschalter",
-    "degraded.source.modelLockouts": "Modellsperren",
-    "degraded.source.count": "Verbindungsanzahl"
+    "degraded": {
+      "message": "Teildaten: nicht verfügbare Quellen: {sources}",
+      "source": {
+        "database": "Datenbank",
+        "circuitBreaker": "Leistungsschalter",
+        "modelLockouts": "Modellsperren",
+        "count": "Verbindungsanzahl"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "Lehnen Sie Anfragen ab, bevor sie versendet werden, wenn das Zielmodell über die erforderlichen Funktionen (Vision, Werkzeuge, strukturierte Ausgabe, Kontextfenster) nicht verfügt. Schützt direkte Einzelanbieteranfragen, die den Kombo-Schicht-Kompatibilitätsfilter umgehen.",
-  "capabilityFilter.visionMismatch": "Der Anbieter unterstützt die Vision für diese Bildanfrage nicht",
-  "capabilityFilter.toolsMismatch": "Der Anbieter unterstützt keinen Toolaufruf",
-  "capabilityFilter.structuredOutputMismatch": "Der Anbieter unterstützt keine strukturierten Ausgaben",
-  "capabilityFilter.contextWindowMismatch": "Anfrage überschreitet das Kontextfenster des Anbieters",
   "publicSystem": {
     "notFound": {
       "title": "Seite nicht gefunden",
@@ -13676,5 +13676,11 @@
     "noExpiry": "Kein Ablaufdatum angegeben",
     "openOffer": "Angebot ansehen",
     "trialDays": "{days, plural, one {# Tag} other {# Tage}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "Der Anbieter unterstützt die Vision für diese Bildanfrage nicht",
+    "toolsMismatch": "Der Anbieter unterstützt keinen Toolaufruf",
+    "structuredOutputMismatch": "Der Anbieter unterstützt keine strukturierten Ausgaben",
+    "contextWindowMismatch": "Anfrage überschreitet das Kontextfenster des Anbieters"
   }
 }

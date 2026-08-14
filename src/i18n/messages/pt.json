@@ -13260,17 +13260,9 @@
         "modelLockouts": "Bloqueios de Modelo",
         "count": "Contagem de Ligações"
       }
-    },
-    "degraded.source.database": "Database",
-    "degraded.source.circuitBreaker": "Circuit Breaker",
-    "degraded.source.modelLockouts": "Model Lockouts",
-    "degraded.source.count": "Connection Count"
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "Rejeitar pedidos antes do envio quando o modelo de destino não tiver as capacidades necessárias (visão, ferramentas, saída estruturada, janela de contexto). Protege pedidos diretos de um único fornecedor que contornam o filtro de compatibilidade da camada combinada.",
-  "capabilityFilter.visionMismatch": "Provider does not support vision for this image request",
-  "capabilityFilter.toolsMismatch": "Provider does not support tool calling",
-  "capabilityFilter.structuredOutputMismatch": "Provider does not support structured output",
-  "capabilityFilter.contextWindowMismatch": "Request exceeds provider context window",
   "publicSystem": {
     "notFound": {
       "title": "Página não encontrada",
@@ -13683,5 +13675,11 @@
     "noExpiry": "Sem validade anunciada",
     "openOffer": "Ver oferta",
     "trialDays": "{days, plural, one {# dia} other {# dias}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "Provider does not support vision for this image request",
+    "toolsMismatch": "Provider does not support tool calling",
+    "structuredOutputMismatch": "Provider does not support structured output",
+    "contextWindowMismatch": "Request exceeds provider context window"
   }
 }
