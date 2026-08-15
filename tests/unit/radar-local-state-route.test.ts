@@ -145,6 +145,31 @@ test("strict schemas reject arbitrary fields, empty patches, and control charact
   }
 });
 
+test("PATCH e PUT rejeitam o corpo pelo byte real antes de materializar JSON excessivo", async () => {
+  process.env.RADAR_ENABLED = "true";
+  const headers = await authHeaders();
+  const oversizedBody = JSON.stringify({
+    provider: "groq",
+    modelId: "model",
+    enabled: true,
+    padding: "x".repeat(16 * 1024),
+  });
+
+  for (const [method, handler] of [
+    ["PATCH", route.PATCH],
+    ["PUT", route.PUT],
+  ] as const) {
+    const response = await handler(
+      new Request("http://localhost:20128/api/radar/local-model-state", {
+        method,
+        headers: { "Content-Type": "application/json", ...headers },
+        body: oversizedBody,
+      })
+    );
+    assert.equal(response.status, 413, method);
+  }
+});
+
 test("GET returns no-store local state for restore controls", async () => {
   process.env.RADAR_ENABLED = "true";
   const response = await route.GET(request("GET", undefined, await authHeaders()));

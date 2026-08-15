@@ -66,7 +66,7 @@
 | 🌐 Providers              |   291   |   **339**   | more queued |
 | 🧠 Documented models      |  500+   |  **1200+**  |      —      |
 | 🖼️ Modality Bridge        |    —    |  🆕 vision  |    video    |
-| 📡 Radar free catalog     |    —    |      —      |   🔭 next   |
+| 📡 Radar free catalog     |    —    |  🆕 opt-in  |      —      |
 | ⚖️ Quota-aware scheduling |    —    |      —      |   🔭 next   |
 | 📊 Quota telemetry        |    —    |      —      |   🔭 next   |
 

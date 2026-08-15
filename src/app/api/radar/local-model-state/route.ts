@@ -16,6 +16,10 @@ import {
 import { isAuthenticated } from "@/shared/utils/apiAuth";
 import { CORS_HEADERS, handleCorsOptions } from "@/shared/utils/cors";
 import { isFeatureFlagEnabled } from "@/shared/utils/featureFlags";
+import {
+  readRequestBodyWithLimit,
+  RequestBodyTooLargeError,
+} from "@/shared/middleware/bodySizeGuard";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -72,11 +76,19 @@ async function authorize(request: Request): Promise<NextResponse | null> {
   return null;
 }
 
-async function readJson(request: Request): Promise<unknown | null> {
+const RADAR_LOCAL_STATE_BODY_LIMIT_BYTES = 4 * 1024;
+type ReadJsonResult =
+  { ok: true; value: unknown } | { ok: false; status: 400 | 413; message: string };
+
+async function readJson(request: Request): Promise<ReadJsonResult> {
   try {
-    return await request.json();
-  } catch {
-    return null;
+    const bytes = await readRequestBodyWithLimit(request, RADAR_LOCAL_STATE_BODY_LIMIT_BYTES);
+    const raw = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    return { ok: true, value: JSON.parse(raw) as unknown };
+  } catch (cause: unknown) {
+    return cause instanceof RequestBodyTooLargeError
+      ? { ok: false, status: 413, message: "Request body too large" }
+      : { ok: false, status: 400, message: "Invalid request body" };
   }
 }
 
@@ -106,7 +118,9 @@ export async function PATCH(request: Request): Promise<NextResponse> {
   const authError = await authorize(request);
   if (authError) return authError;
 
-  const parsed = overrideSchema.safeParse(await readJson(request));
+  const body = await readJson(request);
+  if (!body.ok) return error(body.status, body.message);
+  const parsed = overrideSchema.safeParse(body.value);
   if (!parsed.success) return error(400, "Invalid Radar local override");
 
   try {
@@ -129,7 +143,9 @@ export async function PUT(request: Request): Promise<NextResponse> {
   const authError = await authorize(request);
   if (authError) return authError;
 
-  const parsed = tombstoneSchema.safeParse(await readJson(request));
+  const body = await readJson(request);
+  if (!body.ok) return error(body.status, body.message);
+  const parsed = tombstoneSchema.safeParse(body.value);
   if (!parsed.success) return error(400, "Invalid Radar tombstone");
 
   try {

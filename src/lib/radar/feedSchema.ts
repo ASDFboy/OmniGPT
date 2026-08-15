@@ -103,9 +103,22 @@ const MetadataEvidenceUrlSchema = z
     }
   });
 
+const SetupKeyUrlSchema = z
+  .string()
+  .url()
+  .superRefine((value, ctx) => {
+    const parsed = new URL(value);
+    if (parsed.protocol !== "https:" || parsed.username || parsed.password || parsed.port) {
+      ctx.addIssue({
+        code: "custom",
+        message: "setup key URL must use credential-free HTTPS on the default port",
+      });
+    }
+  });
+
 const SetupSchema = z
   .object({
-    keyUrl: z.string().url().nullable(),
+    keyUrl: SetupKeyUrlSchema.nullable(),
     steps: z.array(RadarLocalizedTextSchema),
   })
   .nullable();
