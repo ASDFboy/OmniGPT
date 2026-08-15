@@ -118,11 +118,18 @@ upstream/service level, so one unhealthy provider does not slow down every reque
 - `HALF_OPEN`: reset timeout has elapsed; allow a probe request. Success closes the
   breaker, failure opens it again.
 
-**Defaults** (`open-sse/config/constants.ts`):
+**Defaults** (`open-sse/config/constants.ts` → `PROVIDER_PROFILES`). Two thresholds live side by
+side — do not confuse them:
 
-- OAuth providers: threshold `3`, reset timeout `60s`.
-- API-key providers: threshold `5`, reset timeout `30s`.
-- Local providers: threshold `2`, reset timeout `15s`.
+| Profile | `providerFailureThreshold` (whole provider) | `providerCooldownMs` | `circuitBreakerThreshold` (one connection) | `circuitBreakerReset` |
+| ------- | ------------------------------------------: | -------------------: | -----------------------------------------: | --------------------: |
+| OAuth   |                                        `10` |               `5min` |                                        `8` |                 `60s` |
+| API key |                                        `15` |              `10min` |                                       `12` |                 `30s` |
+| Local   |                                         `2` |               `1min` |                                        `2` |                 `15s` |
+
+The provider-level thresholds were scaled up for deployments with 500+ connections (OAuth was
+`3`, API key was `5`); every default is overridable through the `OMNIROUTE_PROVIDER_BREAKER_*`
+and `OMNIROUTE_CIRCUIT_BREAKER_*` env vars.
 
 Only provider-level failure statuses should trip the provider breaker:
 
