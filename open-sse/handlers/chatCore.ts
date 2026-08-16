@@ -3932,6 +3932,28 @@ export async function handleChatCore({
           console.warn(
             `[provider] Node ${errorConnectionId} project routing error (${statusCode}) — not banning`
           );
+        } else if (errorType === PROVIDER_ERROR_TYPES.GEO_BLOCKED) {
+          // Google regional-availability refusal (e.g. "User location is not
+          // supported for the API use."). Account-independent and non-terminal:
+          // exclude the connection for the cooldown window so routing moves to
+          // other accounts instead of re-selecting this one on every request,
+          // and never mark it banned/expired. It becomes usable again once
+          // egress is routed through a supported-region proxy.
+          const geoCooldownMs = COOLDOWN_MS.geoBlocked ?? 24 * 60 * 60 * 1000;
+          await updateProviderConnection(errorConnectionId, {
+            lastErrorType: errorType,
+            lastError: message,
+            errorCode: statusCode,
+          });
+          try {
+            const { setConnectionRateLimitUntil } = await import("@/lib/db/providers");
+            setConnectionRateLimitUntil(errorConnectionId, Date.now() + geoCooldownMs);
+          } catch {
+            // DB write failure must never break the fallback loop
+          }
+          console.warn(
+            `[provider] Node ${errorConnectionId} geo-blocked (${statusCode}) — excluded for ${Math.ceil(geoCooldownMs / 1000)}s, trying other accounts`
+          );
         } else if (errorType === PROVIDER_ERROR_TYPES.MODEL_NOT_FOUND) {
           // 404 — model/endpoint does not exist upstream. Lock the model so the
           // retry/backoff loop stops hammering the dead endpoint (which would
