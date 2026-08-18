@@ -311,6 +311,7 @@ export async function createEmbeddingResponse(
       connectionId:
         ((credentials as { connectionId?: string } | null)?.connectionId) ||
         options.connectionId ||
+        connectionIdForProxy ||
         null,
     });
 
