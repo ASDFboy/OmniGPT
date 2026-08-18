@@ -327,7 +327,9 @@ serialized broker response to 32 MiB. A private temporary directory is removed
 in `finally`. OmniRoute does not bundle FFmpeg and does not accept a custom
 executable path. Before captioning, the bridge applies a conservative visual
 deduplication pass: each JPEG is reduced to a 16×16 grayscale buffer and is
-compared only with the last frame retained. The first and final timeline frames
+compared only with the last frame retained, using a fixed similarity threshold
+of 0.04 — a deliberate constant chosen for predictability, not a runtime
+setting. The first and final timeline frames
 are always retained; comparator or decoder errors fail open and keep coverage.
 The output metadata reports how many frames were dropped.
 
@@ -352,13 +354,23 @@ An advanced caller may provide an already-authorized `audioTranscript` track
 for the same video. The fusion seam runs visual and audio observations under
 one deadline and abort signal, orders them on a common timeline, collapses
 exact duplicates, and reports a partial result when only one side succeeds.
-The default Video Bridge path does not invoke speech-to-text or download a
-second media copy; without that explicit track, it remains video-only.
+An invalid `audioTranscript` degrades to that partial result — the visual
+description is kept and the audio branch records a sanitized failure code —
+instead of failing the whole video. Per-branch availability, the partial flag,
+and the sanitized failure codes are preserved in the described result, in the
+guardrail metadata (`audioFusionRuns`/`audioFusionPartials`/
+`audioFusionFailureCodes`), in the result-cache metadata, and in the bridge
+fusion counters. The default Video Bridge path does not invoke speech-to-text
+or download a second media copy; without that explicit track, it remains
+video-only.
 
 The internal `/api/modality-bridge/video/drilldown` lifecycle is a separate,
 loopback/token-authenticated cache. It stores at most 16 JPEG frames per entry,
 keeps entries isolated by session and video reference, expires them after ten
 minutes, and supports bounded `start`/`end` reads or explicit session deletion.
+Besides the per-entry limits, the cache enforces a global 256 MiB decoded-byte
+budget: least-recently-used entries are evicted until new content fits, and an
+entry larger than the whole budget is rejected outright.
 It only slices materialized frames and cannot increase the cost of the primary
 video request.
 
@@ -372,7 +384,11 @@ include the JPEG bytes, prompt, timestamp, and effective model; only successful
 captions are cached. Cache entries retain the actual successful producer model,
 including a fallback model; the bridge reports `mixed` when different frames
 were produced by different models. A cache hit reuses that producer identity
-instead of relabeling it as the requested routing plan.
+instead of relabeling it as the requested routing plan. The whole-video result
+cache is keyed on every input that changes the output — prompt, effective
+model, sampling policy, frame count, focus window, `transcript`,
+`audioTranscript`, and the contact-sheet flag — so changing any of those
+dimensions is a cache miss, never a stale reuse.
 
 The guardrail extracts every supported video part but describes no more than
 `modalityBridgeVideoMaxVideos`. For a target proven to have
