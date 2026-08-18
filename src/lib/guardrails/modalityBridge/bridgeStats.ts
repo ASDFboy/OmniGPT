@@ -16,6 +16,9 @@ export interface BridgeModalityStats {
   averageLatencyMs: number;
   bridged: number;
   cacheHits: number;
+  resultCacheBytes: number;
+  resultCacheHits: number;
+  resultCacheLatencyMs: number;
   failures: number;
   lastUsedAt: string | null;
   latencySamples: number;
@@ -37,6 +40,9 @@ function emptyStats(): BridgeModalityStats {
     averageLatencyMs: 0,
     bridged: 0,
     cacheHits: 0,
+    resultCacheBytes: 0,
+    resultCacheHits: 0,
+    resultCacheLatencyMs: 0,
     failures: 0,
     lastUsedAt: null,
     latencySamples: 0,
@@ -47,7 +53,15 @@ function emptyStats(): BridgeModalityStats {
 
 export function recordBridgeUse(
   kind: BridgeModality,
-  opts: { cacheHit?: boolean; cacheHits?: number; failure?: boolean; latencyMs?: number } = {}
+  opts: {
+    cacheHit?: boolean;
+    cacheHits?: number;
+    failure?: boolean;
+    latencyMs?: number;
+    resultCacheBytes?: number;
+    resultCacheHit?: boolean;
+    resultCacheLatencyMs?: number;
+  } = {}
 ): void {
   const s = stats[kind];
   s.attempts += 1;
@@ -64,6 +78,22 @@ export function recordBridgeUse(
         ? 1
         : 0;
   s.cacheHits += cacheHits;
+  if (opts.resultCacheHit) {
+    s.resultCacheHits += 1;
+    if (
+      typeof opts.resultCacheBytes === "number" &&
+      Number.isFinite(opts.resultCacheBytes) &&
+      opts.resultCacheBytes > 0
+    ) {
+      s.resultCacheBytes += Math.max(0, Math.round(opts.resultCacheBytes));
+    }
+    if (
+      typeof opts.resultCacheLatencyMs === "number" &&
+      Number.isFinite(opts.resultCacheLatencyMs)
+    ) {
+      s.resultCacheLatencyMs += Math.max(0, opts.resultCacheLatencyMs);
+    }
+  }
   if (typeof opts.latencyMs === "number" && Number.isFinite(opts.latencyMs)) {
     s.totalLatencyMs += Math.max(0, opts.latencyMs);
     s.latencySamples += 1;
