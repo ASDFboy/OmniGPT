@@ -349,6 +349,9 @@ npm install -g kilocode
 # Qwen Code
 npm install -g @qwen-code/qwen-code
 
+# Google Gemini CLI (launchable via `omniroute run gemini` → /v1beta surface)
+npm install -g @google/gemini-cli
+
 # Aider
 pip install aider-chat
 
