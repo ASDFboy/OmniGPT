@@ -665,3 +665,52 @@ test("result cache misses when the focus window is added or changed", async () =
   await bridge.preCall(withFocus({ start: 1, end: 2 }), {});
   assert.equal(counter.calls, 3, "a different focus window must invalidate the result cache");
 });
+
+test("audio/video fusion telemetry reaches guardrail meta, bridge stats, and cache hits", async () => {
+  const before = getBridgeStats().video;
+  let describeCalls = 0;
+  const bridge = new VideoBridgeGuardrail({
+    deps: {
+      getSettings: async () => ({
+        modalityBridgeVideoEnabled: true,
+        modalityBridgeVideoModel: "openai/gpt-4o-mini",
+        modalityBridgeVisionPrompt: "fusion telemetry",
+        modalityBridgeCacheEnabled: true,
+        modalityBridgeCacheTtlMinutes: 60,
+        modalityBridgeCacheMaxEntries: 50,
+      }),
+      getCapabilities: () => ({ supportsVideo: false }),
+      selectVisionModel: async () => "openai/gpt-4o-mini",
+      describePart: async () => {
+        describeCalls += 1;
+        return {
+          description: "[Video description: partial fusion observation]",
+          durationSeconds: 4,
+          framesRequested: 1,
+          framesUsed: 1,
+          fusion: {
+            audioAvailable: false,
+            videoAvailable: true,
+            partial: true,
+            failures: { audio: "FAILED" as const },
+          },
+        };
+      },
+    },
+  });
+
+  const first = await bridge.preCall(payload(), {});
+  assert.equal(first.meta?.audioFusionRuns, 1);
+  assert.equal(first.meta?.audioFusionPartials, 1);
+  assert.deepEqual(first.meta?.audioFusionFailureCodes, ["audio:FAILED"]);
+
+  const second = await bridge.preCall(payload(), {});
+  assert.equal(describeCalls, 1, "the second call must be a result cache hit");
+  assert.equal(second.meta?.audioFusionRuns, 1, "cache hits must restore fusion telemetry");
+  assert.equal(second.meta?.audioFusionPartials, 1);
+  assert.deepEqual(second.meta?.audioFusionFailureCodes, ["audio:FAILED"]);
+
+  const after = getBridgeStats().video;
+  assert.equal(after.fusionRuns - before.fusionRuns, 2);
+  assert.equal(after.fusionPartials - before.fusionPartials, 2);
+});

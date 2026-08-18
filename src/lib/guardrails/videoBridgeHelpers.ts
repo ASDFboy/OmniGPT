@@ -2,7 +2,7 @@ import { detectMediaParts, type MediaPart } from "@omniroute/open-sse/utils/medi
 
 import { fetchRemoteMedia, type RemoteMediaFetchResult } from "@/shared/network/remoteImageFetch";
 
-import { fuseVideoAndAudio } from "./videoAudioFusion";
+import { fuseVideoAndAudio, type VideoAudioFusionResult } from "./videoAudioFusion";
 import { buildVideoContactSheet } from "./videoBridgeContactSheet";
 import {
   extractVideoFramesViaBroker,
@@ -238,6 +238,14 @@ export interface DescribeVideoDependencies {
   ) => Promise<RemoteMediaFetchResult>;
 }
 
+/** Observable audio/video fusion outcome: availability per branch plus sanitized failure codes. */
+export interface VideoFusionTelemetry {
+  audioAvailable: boolean;
+  videoAvailable: boolean;
+  partial: boolean;
+  failures?: VideoAudioFusionResult["failures"];
+}
+
 export interface DescribedVideo {
   cacheHits?: number;
   description: string;
@@ -251,6 +259,7 @@ export interface DescribedVideo {
   focusWindow?: VideoFocusWindow;
   transcriptCues?: VideoTranscriptCue[];
   contactSheetUsed?: boolean;
+  fusion?: VideoFusionTelemetry;
 }
 
 export interface VideoCaptionFrame {
@@ -481,11 +490,17 @@ export async function describeVideoPart(
     if (descriptions.length === 0) {
       throw new Error("Video frames could not be described");
     }
+    let fusionTelemetry: VideoFusionTelemetry | undefined;
     if (part.audioTranscript !== undefined) {
-      const audioCues = normalizeVideoTranscript(part.audioTranscript, extracted.durationSeconds);
+      // Audio validation runs inside the fusion's audio branch on purpose: an
+      // invalid audioTranscript must surface as a partial fusion (video kept,
+      // failures.audio recorded), never fail the whole video description.
       const fused = await fuseVideoAndAudio({
         audio: async () => ({
-          observations: audioCues.map((cue) => ({ ...cue, source: "audio" as const })),
+          observations: normalizeVideoTranscript(
+            part.audioTranscript,
+            extracted.durationSeconds
+          ).map((cue) => ({ ...cue, source: "audio" as const })),
         }),
         signal,
         timeoutMs: options.timeoutMs,
@@ -505,6 +520,12 @@ export async function describeVideoPart(
           })),
         }),
       });
+      fusionTelemetry = {
+        audioAvailable: fused.audioAvailable,
+        videoAvailable: fused.videoAvailable,
+        partial: fused.partial,
+        ...(fused.failures ? { failures: fused.failures } : {}),
+      };
       const fusedAudio = fused.observations.filter((observation) => observation.source === "audio");
       transcriptCues = [
         ...transcriptCues,
@@ -529,6 +550,7 @@ export async function describeVideoPart(
       sampling: extracted.sampling,
       transcriptCues: transcriptCues.length > 0 ? transcriptCues : undefined,
       contactSheetUsed: contactSheet?.used || undefined,
+      fusion: fusionTelemetry,
     };
   } catch (error) {
     if (signal.aborted) throw new Error("Video Bridge processing timed out or was aborted");

@@ -108,4 +108,41 @@ test("fuses an explicitly supplied audio-bridge track without starting STT", asy
   assert.equal(captionCalls, 1);
   assert.equal(described.transcriptCues?.[0]?.source, "audio-bridge");
   assert.match(described.description, /audio cue/);
+  assert.deepEqual(described.fusion, {
+    audioAvailable: true,
+    videoAvailable: true,
+    partial: false,
+  });
+});
+
+test("an invalid audioTranscript degrades to a partial fusion and keeps the visual description", async () => {
+  const described = await describeVideoPart(
+    {
+      container: "messages",
+      messageIndex: 0,
+      partIndex: 0,
+      ref: "data:video/mp4;base64,AA==",
+      shape: "data_uri_string",
+      audioTranscript: {
+        cues: [{ text: "late cue", start: 1, end: 99, source: "audio-bridge" }],
+      },
+    },
+    { frameCount: 1, timeoutMs: 1000 },
+    async () => "visual cue",
+    {
+      extractFrames: async () => ({
+        durationSeconds: 5,
+        frames: [{ dataUri: "data:image/jpeg;base64,AA==", timestampSeconds: 2 }],
+      }),
+    }
+  );
+
+  assert.match(described.description, /visual cue/);
+  assert.equal(described.transcriptCues, undefined, "invalid audio must not add transcript cues");
+  assert.deepEqual(described.fusion, {
+    audioAvailable: false,
+    videoAvailable: true,
+    partial: true,
+    failures: { audio: "FAILED" },
+  });
 });

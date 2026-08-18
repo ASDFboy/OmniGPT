@@ -20,6 +20,10 @@ export interface BridgeModalityStats {
   resultCacheHits: number;
   resultCacheLatencyMs: number;
   failures: number;
+  /** Audio/video fusion runs (video bridge only; 0 for other modalities). */
+  fusionRuns: number;
+  /** Fusion runs that completed with one branch failed (partial result). */
+  fusionPartials: number;
   lastUsedAt: string | null;
   latencySamples: number;
   successes: number;
@@ -44,6 +48,8 @@ function emptyStats(): BridgeModalityStats {
     resultCacheHits: 0,
     resultCacheLatencyMs: 0,
     failures: 0,
+    fusionRuns: 0,
+    fusionPartials: 0,
     lastUsedAt: null,
     latencySamples: 0,
     successes: 0,
@@ -57,6 +63,8 @@ export function recordBridgeUse(
     cacheHit?: boolean;
     cacheHits?: number;
     failure?: boolean;
+    fusionRun?: boolean;
+    fusionPartial?: boolean;
     latencyMs?: number;
     resultCacheBytes?: number;
     resultCacheHit?: boolean;
@@ -78,6 +86,8 @@ export function recordBridgeUse(
         ? 1
         : 0;
   s.cacheHits += cacheHits;
+  if (opts.fusionRun) s.fusionRuns += 1;
+  if (opts.fusionPartial) s.fusionPartials += 1;
   if (opts.resultCacheHit) {
     s.resultCacheHits += 1;
     if (

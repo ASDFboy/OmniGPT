@@ -17,6 +17,7 @@ import {
   replaceVideoParts,
   type DescribeVideoDependencies,
   type DescribedVideo,
+  type VideoFusionTelemetry,
   type VideoPart,
 } from "./videoBridgeHelpers";
 import {
@@ -72,8 +73,28 @@ interface VideoResultCacheMetadata {
   samplingPolicyRequested?: "uniform" | "scene_aware" | "segment_aware";
   transcriptCuesApplied?: number;
   contactSheetUsed?: boolean;
+  fusion?: VideoFusionTelemetry;
   cacheBytes: number;
   modelUsed: string;
+}
+
+function isFusionTelemetry(value: unknown): value is VideoFusionTelemetry {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  if (
+    typeof record.audioAvailable !== "boolean" ||
+    typeof record.videoAvailable !== "boolean" ||
+    typeof record.partial !== "boolean"
+  ) {
+    return false;
+  }
+  if (record.failures === undefined) return true;
+  if (!record.failures || typeof record.failures !== "object") return false;
+  return Object.entries(record.failures as Record<string, unknown>).every(
+    ([source, code]) =>
+      (source === "audio" || source === "video") &&
+      (code === "ABORTED" || code === "FAILED" || code === "INVALID")
+  );
 }
 
 export interface VideoBridgeDependencies {
@@ -121,7 +142,8 @@ function isVideoResultCacheMetadata(value: unknown): value is VideoResultCacheMe
       record.samplingPolicyRequested === "segment_aware") &&
     (record.transcriptCuesApplied === undefined ||
       (typeof record.transcriptCuesApplied === "number" && record.transcriptCuesApplied >= 0)) &&
-    (record.contactSheetUsed === undefined || typeof record.contactSheetUsed === "boolean")
+    (record.contactSheetUsed === undefined || typeof record.contactSheetUsed === "boolean") &&
+    (record.fusion === undefined || isFusionTelemetry(record.fusion))
   );
 }
 
@@ -190,6 +212,17 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
     let focusWindowsApplied = 0;
     let transcriptCuesApplied = 0;
     let contactSheetsUsed = 0;
+    let audioFusionRuns = 0;
+    let audioFusionPartials = 0;
+    const audioFusionFailureCodes = new Set<string>();
+    const recordFusionTelemetry = (fusion?: VideoFusionTelemetry): void => {
+      if (!fusion) return;
+      audioFusionRuns += 1;
+      if (fusion.partial) audioFusionPartials += 1;
+      for (const [source, code] of Object.entries(fusion.failures ?? {})) {
+        audioFusionFailureCodes.add(`${source}:${code}`);
+      }
+    };
     let samplingPolicyEffective: "uniform" | "scene_aware" | "segment_aware" = "uniform";
     let failures = 0;
 
@@ -246,6 +279,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
             totalSamplingCandidateCount += meta.samplingCandidateCount ?? 0;
             transcriptCuesApplied += meta.transcriptCuesApplied ?? 0;
             if (meta.contactSheetUsed) contactSheetsUsed += 1;
+            recordFusionTelemetry(meta.fusion);
             if (meta.samplingPolicyEffective && meta.samplingPolicyEffective !== "uniform") {
               samplingPolicyEffective = meta.samplingPolicyEffective;
             }
@@ -256,6 +290,8 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
               successfulModels.add(meta.modelUsed);
             }
             recordBridgeUse("video", {
+              fusionRun: Boolean(meta.fusion),
+              fusionPartial: meta.fusion?.partial ?? false,
               latencyMs: elapsed,
               resultCacheHit: true,
               resultCacheBytes: meta.cacheBytes,
@@ -289,6 +325,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
         if (described.focusWindow) focusWindowsApplied += 1;
         transcriptCuesApplied += described.transcriptCues?.length ?? 0;
         if (described.contactSheetUsed) contactSheetsUsed += 1;
+        recordFusionTelemetry(described.fusion);
         totalDurationSeconds += described.durationSeconds;
         totalSamplingCandidateCount += described.sampling?.candidateCount ?? 0;
         if (
@@ -328,10 +365,13 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
                 described.sampling?.policyRequested ?? runtime.samplingPolicy,
               transcriptCuesApplied: described.transcriptCues?.length ?? 0,
               contactSheetUsed: described.contactSheetUsed ?? false,
+              ...(described.fusion ? { fusion: described.fusion } : {}),
             },
           });
           recordBridgeUse("video", {
             cacheHits: videoCacheHits,
+            fusionRun: Boolean(described.fusion),
+            fusionPartial: described.fusion?.partial ?? false,
             latencyMs: processingLatencyMs,
             resultCacheBytes,
             resultCacheHit: false,
@@ -340,6 +380,8 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
         } else {
           recordBridgeUse("video", {
             cacheHits: videoCacheHits,
+            fusionRun: Boolean(described.fusion),
+            fusionPartial: described.fusion?.partial ?? false,
             latencyMs: processingLatencyMs,
           });
         }
@@ -395,6 +437,9 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
         focusWindowsApplied,
         transcriptCuesApplied,
         contactSheetsUsed,
+        audioFusionRuns,
+        audioFusionPartials,
+        audioFusionFailureCodes: [...audioFusionFailureCodes].sort(),
         samplingCandidateCount: totalSamplingCandidateCount,
         samplingPolicyEffective,
         samplingPolicyRequested: runtime.samplingPolicy,
