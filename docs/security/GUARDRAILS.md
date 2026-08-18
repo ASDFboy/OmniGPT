@@ -340,6 +340,13 @@ are rendered as untrusted observations alongside the frame captions. Invalid,
 out-of-range, or provenance-free text is rejected rather than mixed into the
 caption stream.
 
+An advanced caller may provide an already-authorized `audioTranscript` track
+for the same video. The fusion seam runs visual and audio observations under
+one deadline and abort signal, orders them on a common timeline, collapses
+exact duplicates, and reports a partial result when only one side succeeds.
+The default Video Bridge path does not invoke speech-to-text or download a
+second media copy; without that explicit track, it remains video-only.
+
 Frames are captioned sequentially with the configured Video model. An empty
 Video override inherits the Vision setting; if both are empty, the Vision
 auto-router selects the effective vision-capable model. Successful captions
