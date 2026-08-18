@@ -2,6 +2,7 @@ import { detectMediaParts, type MediaPart } from "@omniroute/open-sse/utils/medi
 
 import { fetchRemoteMedia, type RemoteMediaFetchResult } from "@/shared/network/remoteImageFetch";
 
+import { fuseVideoAndAudio } from "./videoAudioFusion";
 import {
   extractVideoFramesViaBroker,
   type BrokerExtractionOptions,
@@ -36,6 +37,7 @@ export interface VideoPart {
   shape: "input_video" | "video_url" | "video_source" | "data_uri_string";
   focusWindow?: { endSeconds?: number; startSeconds?: number };
   transcript?: unknown;
+  audioTranscript?: unknown;
 }
 
 export type VideoTranscriptSource = "audio-bridge" | "client" | "embedded";
@@ -171,6 +173,9 @@ export function extractVideoParts(body: VideoRequestBody): VideoPart[] {
       const startSeconds = readBound(["startSeconds", "start"]);
       const endSeconds = readBound(["endSeconds", "end"]);
       const transcript = objects.find((object) => object.transcript !== undefined)?.transcript;
+      const audioTranscript = objects.find(
+        (object) => object.audioTranscript !== undefined
+      )?.audioTranscript;
       return {
         container,
         ...(startSeconds === undefined && endSeconds === undefined
@@ -181,6 +186,7 @@ export function extractVideoParts(body: VideoRequestBody): VideoPart[] {
         ref: part.ref,
         shape: part.shape as VideoPart["shape"],
         ...(transcript === undefined ? {} : { transcript }),
+        ...(audioTranscript === undefined ? {} : { audioTranscript }),
       };
     });
 }
@@ -433,7 +439,7 @@ export async function describeVideoPart(
     const focusWindow = options.focusWindow
       ? resolveVideoFocusWindow(extracted.durationSeconds, options.focusWindow)
       : null;
-    const transcriptCues = normalizeVideoTranscript(part.transcript, extracted.durationSeconds);
+    let transcriptCues = normalizeVideoTranscript(part.transcript, extracted.durationSeconds);
     const descriptions: string[] = [];
     for (const frame of deduplicated.frames) {
       if (signal.aborted) throw new Error("Video Bridge processing timed out or was aborted");
@@ -451,6 +457,42 @@ export async function describeVideoPart(
     }
     if (descriptions.length === 0) {
       throw new Error("Video frames could not be described");
+    }
+    if (part.audioTranscript !== undefined) {
+      const audioCues = normalizeVideoTranscript(part.audioTranscript, extracted.durationSeconds);
+      const fused = await fuseVideoAndAudio({
+        audio: async () => ({
+          observations: audioCues.map((cue) => ({ ...cue, source: "audio" as const })),
+        }),
+        signal,
+        timeoutMs: options.timeoutMs,
+        video: async () => ({
+          observations: descriptions.map((text, index) => ({
+            confidence: 1,
+            endSeconds:
+              index + 1 < deduplicated.frames.length
+                ? Math.max(
+                    deduplicated.frames[index].timestampSeconds + 0.001,
+                    deduplicated.frames[index + 1].timestampSeconds
+                  )
+                : deduplicated.frames[index].timestampSeconds + 0.001,
+            source: "video" as const,
+            startSeconds: deduplicated.frames[index].timestampSeconds,
+            text,
+          })),
+        }),
+      });
+      const fusedAudio = fused.observations.filter((observation) => observation.source === "audio");
+      transcriptCues = [
+        ...transcriptCues,
+        ...fusedAudio.map((observation) => ({
+          confidence: observation.confidence,
+          endSeconds: observation.endSeconds,
+          source: "audio-bridge" as const,
+          startSeconds: observation.startSeconds,
+          text: observation.text,
+        })),
+      ];
     }
     const transcriptDescription = transcriptCues.map(formatTranscriptCue).join("; ");
     return {

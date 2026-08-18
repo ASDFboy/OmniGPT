@@ -78,3 +78,34 @@ test("keeps transcript provenance attached to the described video output", async
   assert.match(described.description, /transcript\[source=audio-bridge;confidence=0\.90/);
   assert.match(described.description, /spoken words/);
 });
+
+test("fuses an explicitly supplied audio-bridge track without starting STT", async () => {
+  let captionCalls = 0;
+  const described = await describeVideoPart(
+    {
+      container: "messages",
+      messageIndex: 0,
+      partIndex: 0,
+      ref: "data:video/mp4;base64,AA==",
+      shape: "data_uri_string",
+      audioTranscript: {
+        cues: [{ text: "audio cue", start: 1, end: 3, source: "audio-bridge" }],
+      },
+    },
+    { frameCount: 1, timeoutMs: 1000 },
+    async () => {
+      captionCalls += 1;
+      return "visual cue";
+    },
+    {
+      extractFrames: async () => ({
+        durationSeconds: 5,
+        frames: [{ dataUri: "data:image/jpeg;base64,AA==", timestampSeconds: 2 }],
+      }),
+    }
+  );
+
+  assert.equal(captionCalls, 1);
+  assert.equal(described.transcriptCues?.[0]?.source, "audio-bridge");
+  assert.match(described.description, /audio cue/);
+});
