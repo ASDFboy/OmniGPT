@@ -60,3 +60,52 @@ test("drill-down cache expires entries and evicts the least recently used key", 
   now = 7000;
   assert.equal(cache.get("session-b", "video"), null);
 });
+
+test("drill-down cache enforces a global byte budget with LRU eviction", () => {
+  const bigFrame = (fill: string): VideoDrilldownFrame => ({
+    dataUri: `data:image/jpeg;base64,${fill.repeat(4000)}`,
+    timestampSeconds: 1,
+  });
+  // Each entry is ~3000 decoded bytes; the budget fits two entries.
+  const cache = new VideoDrilldownCache({
+    now: () => 1000,
+    ttlMs: 5000,
+    maxEntries: 10,
+    maxTotalBytes: 7000,
+  });
+  cache.put("s", "v1", { durationSeconds: 10, frames: [bigFrame("A")] });
+  cache.put("s", "v2", { durationSeconds: 10, frames: [bigFrame("B")] });
+  assert.ok(cache.get("s", "v1"));
+  assert.ok(cache.get("s", "v2"));
+  cache.put("s", "v3", { durationSeconds: 10, frames: [bigFrame("C")] });
+  assert.equal(cache.get("s", "v1"), null, "the least recently used entry must be evicted");
+  assert.ok(cache.get("s", "v2"));
+  assert.ok(cache.get("s", "v3"));
+  assert.ok(cache.get("s", "v2"));
+  cache.put("s", "v4", { durationSeconds: 10, frames: [bigFrame("D")] });
+  assert.equal(cache.get("s", "v3"), null, "eviction must follow recency, not insertion order");
+  assert.ok(cache.get("s", "v2"));
+  assert.ok(cache.get("s", "v4"));
+});
+
+test("drill-down cache rejects an entry larger than the whole byte budget", () => {
+  const cache = new VideoDrilldownCache({
+    now: () => 1000,
+    ttlMs: 5000,
+    maxEntries: 4,
+    maxTotalBytes: 1000,
+  });
+  assert.throws(
+    () =>
+      cache.put("s", "v1", {
+        durationSeconds: 10,
+        frames: [{ dataUri: `data:image/jpeg;base64,${"A".repeat(4000)}`, timestampSeconds: 1 }],
+      }),
+    /byte budget/i
+  );
+  assert.equal(cache.get("s", "v1"), null);
+  assert.throws(
+    () => new VideoDrilldownCache({ now: () => 0, ttlMs: 1, maxEntries: 1, maxTotalBytes: 0 }),
+    /byte budget/i
+  );
+});

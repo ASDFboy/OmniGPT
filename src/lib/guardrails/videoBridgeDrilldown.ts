@@ -20,11 +20,14 @@ export interface VideoDrilldownResult {
 
 export interface VideoDrilldownCacheOptions {
   maxEntries: number;
+  /** Aggregate decoded-byte budget across every entry; oldest entries are evicted (LRU) to fit. */
+  maxTotalBytes?: number;
   now?: () => number;
   ttlMs: number;
 }
 
 interface StoredDrilldown extends VideoDrilldownPutValue {
+  bytes: number;
   expiresAt: number;
   sessionId: string;
 }
@@ -37,7 +40,10 @@ function cacheKey(sessionId: string, videoRef: string): string {
   return createHash("sha256").update(`${sessionId}\0${videoRef}`).digest("hex");
 }
 
-function validateFrames(value: VideoDrilldownPutValue): VideoDrilldownFrame[] {
+function validateFrames(value: VideoDrilldownPutValue): {
+  frames: VideoDrilldownFrame[];
+  totalBytes: number;
+} {
   if (
     !Number.isFinite(value.durationSeconds) ||
     value.durationSeconds <= 0 ||
@@ -67,12 +73,16 @@ function validateFrames(value: VideoDrilldownPutValue): VideoDrilldownFrame[] {
     if (totalBytes > MAX_TOTAL_BYTES) throw new Error("Drill-down response byte limit exceeded");
     return { dataUri: frame.dataUri, timestampSeconds: frame.timestampSeconds };
   });
-  return frames.sort((left, right) => left.timestampSeconds - right.timestampSeconds);
+  return {
+    frames: frames.sort((left, right) => left.timestampSeconds - right.timestampSeconds),
+    totalBytes,
+  };
 }
 
 export class VideoDrilldownCache {
   private readonly entries = new Map<string, StoredDrilldown>();
   private readonly now: () => number;
+  private totalBytes = 0;
 
   constructor(private readonly options: VideoDrilldownCacheOptions) {
     if (!Number.isFinite(options.ttlMs) || options.ttlMs <= 0) {
@@ -81,24 +91,47 @@ export class VideoDrilldownCache {
     if (!Number.isInteger(options.maxEntries) || options.maxEntries < 1) {
       throw new Error("Drill-down cache entry limit is invalid");
     }
+    if (
+      options.maxTotalBytes !== undefined &&
+      (!Number.isInteger(options.maxTotalBytes) || options.maxTotalBytes < 1)
+    ) {
+      throw new Error("Drill-down cache byte budget is invalid");
+    }
     this.now = options.now ?? Date.now;
+  }
+
+  private drop(key: string): void {
+    const stored = this.entries.get(key);
+    if (!stored) return;
+    this.entries.delete(key);
+    this.totalBytes -= stored.bytes;
   }
 
   put(sessionId: string, videoRef: string, value: VideoDrilldownPutValue): void {
     if (!sessionId || sessionId.length > 128 || !videoRef || videoRef.length > 4096) {
       throw new Error("Drill-down cache key is invalid");
     }
+    const { frames, totalBytes } = validateFrames(value);
+    if (this.options.maxTotalBytes !== undefined && totalBytes > this.options.maxTotalBytes) {
+      throw new Error("Drill-down entry exceeds the cache byte budget");
+    }
     const key = cacheKey(sessionId, videoRef);
-    this.entries.delete(key);
+    this.drop(key);
     this.entries.set(key, {
+      bytes: totalBytes,
       durationSeconds: value.durationSeconds,
       expiresAt: this.now() + this.options.ttlMs,
-      frames: validateFrames(value),
+      frames,
       sessionId,
     });
-    while (this.entries.size > this.options.maxEntries) {
+    this.totalBytes += totalBytes;
+    while (
+      this.entries.size > this.options.maxEntries ||
+      (this.options.maxTotalBytes !== undefined && this.totalBytes > this.options.maxTotalBytes)
+    ) {
       const oldest = this.entries.keys().next().value;
-      if (oldest) this.entries.delete(oldest);
+      if (!oldest || oldest === key) break;
+      this.drop(oldest);
     }
   }
 
@@ -111,7 +144,7 @@ export class VideoDrilldownCache {
     const stored = this.entries.get(key);
     if (!stored) return null;
     if (stored.expiresAt <= this.now()) {
-      this.entries.delete(key);
+      this.drop(key);
       return null;
     }
     this.entries.delete(key);
@@ -158,7 +191,7 @@ export class VideoDrilldownCache {
     let removed = 0;
     for (const [key, entry] of this.entries.entries()) {
       if (entry.sessionId === sessionId) {
-        this.entries.delete(key);
+        this.drop(key);
         removed += 1;
       }
     }
@@ -167,5 +200,6 @@ export class VideoDrilldownCache {
 
   clearAll(): void {
     this.entries.clear();
+    this.totalBytes = 0;
   }
 }

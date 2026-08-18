@@ -16,6 +16,8 @@ export const VIDEO_BRIDGE_DRILLDOWN_PATH = "/api/modality-bridge/video/drilldown
 const MAX_BODY_BYTES = 34 * 1024 * 1024;
 const drilldownCache = new VideoDrilldownCache({
   maxEntries: 64,
+  // Global decoded-byte ceiling: without it, 64 entries × 32 MiB could pin ~2 GiB.
+  maxTotalBytes: 256 * 1024 * 1024,
   ttlMs: 10 * 60 * 1000,
 });
 
