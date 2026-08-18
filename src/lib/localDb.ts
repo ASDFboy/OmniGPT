@@ -847,3 +847,4 @@ export type {
   RadarLocalMergeState,
 } from "./db/radar";
 export * from "./db/conductorBridge"; // OmniConductor hub mirror — SSE cursor (PRD Conductor RF1)
+export * from "./db/agenticConversations"; // Multi-turn conversation id tracking (X-ConversationId)

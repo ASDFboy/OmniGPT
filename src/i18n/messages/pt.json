@@ -1291,7 +1291,9 @@
       "open": "abrir",
       "close": "fechar"
     },
-    "noResults": "Sem resultados"
+    "noResults": "Sem resultados",
+    "conversations": "Conversations",
+    "conversationsSubtitle": "Multi-turn agentic conversations"
   },
   "webhooks": {
     "title": "Webhooks",
@@ -11071,7 +11073,8 @@
       "compressed": "Compressão",
       "tps": "TPS",
       "duration": "Duração",
-      "time": "Hora"
+      "time": "Hora",
+      "conversation": "Conversa"
     },
     "loadingLogs": "A carregar registos...",
     "noLogs": "Ainda sem registos. Faz algumas chamadas de API para os veres aqui.",
