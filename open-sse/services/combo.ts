@@ -621,6 +621,11 @@ export async function handleComboChat({
   nesting = null,
   hiddenModelsByProvider = getHiddenModelsByProvider(),
   clientManagedResponsesContext = false,
+  deferContextOverflowWhenCompressible = false,
+  compressionExclusions,
+  sourceFormat = null,
+  endpointPath = null,
+  requestHeaders = null,
 }: HandleComboChatOptions): Promise<Response> {
   const comboCtx = createComboContext({ body, combo, settings, relayOptions, log });
   const {
@@ -681,6 +686,11 @@ export async function handleComboChat({
     signal,
     apiKeyAllowedConnections,
     hiddenModelsByProvider,
+    deferContextOverflowWhenCompressible,
+    compressionExclusions,
+    sourceFormat,
+    endpointPath,
+    requestHeaders,
     runCombo: handleComboChat,
   });
   if (fusionDispatch) return fusionDispatch;
@@ -730,6 +740,11 @@ export async function handleComboChat({
     signal,
     apiKeyAllowedConnections,
     hiddenModelsByProvider,
+    deferContextOverflowWhenCompressible,
+    compressionExclusions,
+    sourceFormat,
+    endpointPath,
+    requestHeaders,
     runCombo: handleComboChat,
   });
   if (runtimeUnitDispatch) return runtimeUnitDispatch;
@@ -753,6 +768,11 @@ export async function handleComboChat({
       signal,
       hiddenModelsByProvider,
       clientManagedResponsesContext,
+      deferContextOverflowWhenCompressible,
+      compressionExclusions,
+      sourceFormat,
+      endpointPath,
+      requestHeaders,
       relayOptions,
     });
   }
@@ -780,6 +800,11 @@ export async function handleComboChat({
     buildAutoCandidates,
     hiddenModelsByProvider,
     clientManagedResponsesContext,
+    deferContextOverflowWhenCompressible,
+    compressionExclusions,
+    sourceFormat,
+    endpointPath,
+    requestHeaders,
   });
   if ("earlyResponse" in targetResolution) return targetResolution.earlyResponse;
   const { stickyWeightedLimit, getWeightedStepKeyForTarget, preScreenMap } = targetResolution;
@@ -2500,6 +2525,11 @@ async function handleRoundRobinCombo({
   nesting = null,
   hiddenModelsByProvider = getHiddenModelsByProvider(),
   clientManagedResponsesContext,
+  deferContextOverflowWhenCompressible = false,
+  compressionExclusions,
+  sourceFormat = null,
+  endpointPath = null,
+  requestHeaders = null,
   relayOptions,
 }: HandleRoundRobinOptions): Promise<Response> {
   const config = settings
@@ -2557,6 +2587,11 @@ async function handleRoundRobinCombo({
   const evalRankedTargets = orderTargetsByEvalScores(tagFilteredTargets, config.evalRouting, log);
   const knownContextOverflow = getKnownContextOverflow(evalRankedTargets, body, {
     clientManagedResponsesContext,
+    deferContextOverflowWhenCompressible,
+    compressionExclusions,
+    sourceFormat,
+    endpointPath,
+    requestHeaders,
   });
   if (knownContextOverflow) {
     return errorResponseWithComboDiagnostics(
