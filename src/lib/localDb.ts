@@ -618,6 +618,7 @@ export {
   listPools,
   getPool,
   getPoolsByGroup,
+  ensurePool,
   createPool,
   updatePool,
   deletePool,
