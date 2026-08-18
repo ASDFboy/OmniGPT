@@ -349,6 +349,13 @@ exact duplicates, and reports a partial result when only one side succeeds.
 The default Video Bridge path does not invoke speech-to-text or download a
 second media copy; without that explicit track, it remains video-only.
 
+The internal `/api/modality-bridge/video/drilldown` lifecycle is a separate,
+loopback/token-authenticated cache. It stores at most 16 JPEG frames per entry,
+keeps entries isolated by session and video reference, expires them after ten
+minutes, and supports bounded `start`/`end` reads or explicit session deletion.
+It only slices materialized frames and cannot increase the cost of the primary
+video request.
+
 Frames are captioned sequentially with the configured Video model. An empty
 Video override inherits the Vision setting; if both are empty, the Vision
 auto-router selects the effective vision-capable model. Successful captions

@@ -5562,6 +5562,83 @@ paths:
         "504":
           description: Fixed 120-second broker extraction deadline exceeded
 
+  /api/modality-bridge/video/drilldown:
+    get:
+      x-loopback-only: true
+      tags: [System]
+      summary: Read a bounded Video Bridge drill-down slice
+      description: Internal loopback/token-authenticated lookup into a short-lived per-session frame cache. It never downloads media or starts a subprocess; start/end and frame count only select already materialized frames.
+      security: []
+      parameters:
+        - in: query
+          name: sessionId
+          required: true
+          schema: { type: string, maxLength: 128 }
+        - in: query
+          name: videoRef
+          required: true
+          schema: { type: string, maxLength: 4096 }
+        - in: query
+          name: start
+          required: false
+          schema: { type: number, minimum: 0 }
+        - in: query
+          name: end
+          required: false
+          schema: { type: number, minimum: 0 }
+        - in: query
+          name: frames
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 16 }
+      responses:
+        "200": { description: Bounded cached frame slice }
+        "403": { description: Trusted loopback/token identity required }
+        "404": { description: Drill-down session or media key was not found }
+    post:
+      x-loopback-only: true
+      tags: [System]
+      summary: Store a bounded Video Bridge drill-down result
+      description: Internal lifecycle operation for explicitly authorized callers. The short-lived session cache is isolated by session and media reference and does not alter the primary request cost.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sessionId, videoRef, durationSeconds, frames]
+              properties:
+                sessionId: { type: string, maxLength: 128 }
+                videoRef: { type: string, maxLength: 4096 }
+                durationSeconds: { type: number, exclusiveMinimum: 0, maximum: 600 }
+                frames:
+                  type: array
+                  minItems: 1
+                  maxItems: 16
+                  items:
+                    type: object
+                    required: [timestampSeconds, dataUri]
+                    properties:
+                      timestampSeconds: { type: number, minimum: 0 }
+                      dataUri: { type: string, pattern: "^data:image/jpeg;base64," }
+      responses:
+        "201": { description: Drill-down result stored }
+        "403": { description: Trusted loopback/token identity required }
+        "413": { description: Payload exceeds the bounded session budget }
+    delete:
+      x-loopback-only: true
+      tags: [System]
+      summary: Delete a Video Bridge drill-down session
+      security: []
+      parameters:
+        - in: query
+          name: sessionId
+          required: true
+          schema: { type: string, maxLength: 128 }
+      responses:
+        "200": { description: Session entries removed }
+        "403": { description: Trusted loopback/token identity required }
+
   /api/cache/stats:
     get:
       tags: [System]
