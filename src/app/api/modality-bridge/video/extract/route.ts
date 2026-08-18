@@ -45,7 +45,12 @@ function parseFrameCount(url: URL): number | null {
   const raw = url.searchParams.get("frames");
   if (!raw || !/^\d{1,2}$/.test(raw)) return null;
   const samplingPolicy = url.searchParams.get("samplingPolicy");
-  if (samplingPolicy !== null && samplingPolicy !== "uniform" && samplingPolicy !== "scene_aware") {
+  if (
+    samplingPolicy !== null &&
+    samplingPolicy !== "uniform" &&
+    samplingPolicy !== "scene_aware" &&
+    samplingPolicy !== "segment_aware"
+  ) {
     return null;
   }
   const value = Number(raw);
@@ -73,7 +78,8 @@ function parseFocusWindow(url: URL): VideoFocusBounds | null {
 }
 
 function parseSamplingPolicy(url: URL): VideoSamplingPolicy {
-  return url.searchParams.get("samplingPolicy") === "scene_aware" ? "scene_aware" : "uniform";
+  const value = url.searchParams.get("samplingPolicy");
+  return value === "scene_aware" || value === "segment_aware" ? value : "uniform";
 }
 
 function expectedBrokerPath(): string {

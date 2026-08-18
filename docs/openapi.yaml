@@ -5514,7 +5514,7 @@ paths:
           description: Optional deterministic sampling policy. Scene-aware detection falls back to uniform sampling on detector failure.
           schema:
             type: string
-            enum: [uniform, scene_aware]
+            enum: [uniform, scene_aware, segment_aware]
             default: uniform
         - in: query
           name: start

@@ -8,7 +8,7 @@
 import { VISION_BRIDGE_DEFAULTS } from "./visionBridgeDefaults";
 
 export type VisionBridgeMode = "auto" | "describe" | "reroute";
-export type VideoSamplingPolicy = "uniform" | "scene_aware";
+export type VideoSamplingPolicy = "uniform" | "scene_aware" | "segment_aware";
 
 export const VIDEO_BRIDGE_TIMEOUT_MIN_MS = 1_000;
 export const VIDEO_BRIDGE_TIMEOUT_MAX_MS = 120_000;
@@ -150,8 +150,9 @@ export function resolveVideoBridgeRuntimeSettings(
     frameCount:
       pickNumber(s.modalityBridgeVideoFrameCount) ?? MODALITY_BRIDGE_DEFAULTS.videoFrameCount,
     samplingPolicy:
-      pickString(s.modalityBridgeVideoSamplingPolicy) === "scene_aware"
-        ? "scene_aware"
+      pickString(s.modalityBridgeVideoSamplingPolicy) === "scene_aware" ||
+      pickString(s.modalityBridgeVideoSamplingPolicy) === "segment_aware"
+        ? (pickString(s.modalityBridgeVideoSamplingPolicy) as VideoSamplingPolicy)
         : MODALITY_BRIDGE_DEFAULTS.videoSamplingPolicy,
     maxVideos:
       pickNumber(s.modalityBridgeVideoMaxVideos) ?? MODALITY_BRIDGE_DEFAULTS.videoMaxVideos,

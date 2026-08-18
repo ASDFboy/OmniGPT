@@ -304,6 +304,7 @@ export default function ModalityBridgeVideoTab({
               >
                 <option value="uniform">uniform</option>
                 <option value="scene_aware">scene_aware</option>
+                <option value="segment_aware">segment_aware</option>
               </select>
             </label>
           </div>

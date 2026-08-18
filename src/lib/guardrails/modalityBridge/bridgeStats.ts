@@ -154,7 +154,8 @@ export function buildModalityBridgeHeader(results: GuardrailMetaEntry[]): string
       !meta.rerouted
     ) {
       const sampling =
-        meta.samplingPolicyRequested === "scene_aware"
+        meta.samplingPolicyRequested === "scene_aware" ||
+        meta.samplingPolicyRequested === "segment_aware"
           ? `;sampling=${headerModelToken(meta.samplingPolicyEffective ?? "uniform")};candidates=${typeof meta.samplingCandidateCount === "number" ? Math.max(0, Math.floor(meta.samplingCandidateCount)) : 0}`
           : "";
       segments.push(

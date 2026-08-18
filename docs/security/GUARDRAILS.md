@@ -309,14 +309,16 @@ fallback. Videos are limited to 600 seconds, 8,192 pixels per dimension, and
 33,554,432 source pixels. FFmpeg samples 1–16 midpoint JPEG frames, scales down
 the long edge to at most 1,024 pixels without upscaling smaller inputs, and
 never receives a URL. Sampling is `uniform` by default. The optional
-`scene_aware` policy performs one additional fixed FFmpeg pass over the already
-validated local stream, selects bounded `showinfo` scene timestamps, and falls
-back deterministically to the same uniform midpoints on detector failure,
-timeout, malformed output, or an empty candidate set. The hard 16-frame cap is
+`scene_aware` and experimental `segment_aware` policies perform one additional
+fixed FFmpeg pass over the already validated local stream, select bounded
+`showinfo` scene timestamps, and fall back deterministically to the same
+uniform midpoints on detector failure, timeout, malformed output, or an empty
+candidate set. Segment-aware mode allocates midpoint samples proportionally to
+the validated scene intervals. The hard 16-frame cap is
 applied after selection in every policy. A caller may optionally provide a
 finite focus window (`start`/`end` seconds); bounds are clamped to the media
-duration, reversed or non-finite windows are rejected, and uniform/scene-aware
-sampling is performed only inside the normalized interval. The resulting
+duration, reversed or non-finite windows are rejected, and all sampling
+policies are performed only inside the normalized interval. The resulting
 window is included in sampling metadata and in the untrusted description
 prefix so downstream models can distinguish a focused excerpt from the full
 timeline.
@@ -370,14 +372,14 @@ to raw media.
 
 Runtime settings are DB-backed and Zod-validated:
 
-| Key                                 | Default     | Range / behavior                                                     |
-| ----------------------------------- | ----------- | -------------------------------------------------------------------- |
-| `modalityBridgeVideoEnabled`        | `false`     | Optional runtime, opt-in                                             |
-| `modalityBridgeVideoModel`          | `""`        | Inherit the Vision Bridge model                                      |
-| `modalityBridgeVideoFrameCount`     | `8`         | 1–16                                                                 |
-| `modalityBridgeVideoSamplingPolicy` | `"uniform"` | `uniform` or `scene_aware`; detector failure falls back to `uniform` |
-| `modalityBridgeVideoMaxVideos`      | `1`         | 1–4                                                                  |
-| `modalityBridgeVideoTimeout`        | `120000`    | 1000–120000 ms                                                       |
+| Key                                 | Default     | Range / behavior                                                                                    |
+| ----------------------------------- | ----------- | --------------------------------------------------------------------------------------------------- |
+| `modalityBridgeVideoEnabled`        | `false`     | Optional runtime, opt-in                                                                            |
+| `modalityBridgeVideoModel`          | `""`        | Inherit the Vision Bridge model                                                                     |
+| `modalityBridgeVideoFrameCount`     | `8`         | 1–16                                                                                                |
+| `modalityBridgeVideoSamplingPolicy` | `"uniform"` | `uniform`, `scene_aware`, or proportional `segment_aware`; detector failure falls back to `uniform` |
+| `modalityBridgeVideoMaxVideos`      | `1`         | 1–4                                                                                                 |
+| `modalityBridgeVideoTimeout`        | `120000`    | 1000–120000 ms                                                                                      |
 
 Legacy persisted Video timeout values above 120 seconds are clamped to the
 broker deadline; new settings writes above that limit are rejected.

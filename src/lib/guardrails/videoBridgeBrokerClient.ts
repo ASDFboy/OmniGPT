@@ -109,9 +109,15 @@ function parseBrokerResult(value: unknown, frameCount: number): BrokerExtraction
       ? (record.sampling as Record<string, unknown>)
       : {};
   const policyRequested =
-    samplingRecord.policyRequested === "scene_aware" ? "scene_aware" : "uniform";
+    samplingRecord.policyRequested === "scene_aware" ||
+    samplingRecord.policyRequested === "segment_aware"
+      ? samplingRecord.policyRequested
+      : "uniform";
   const policyEffective =
-    samplingRecord.policyEffective === "scene_aware" ? "scene_aware" : "uniform";
+    samplingRecord.policyEffective === "scene_aware" ||
+    samplingRecord.policyEffective === "segment_aware"
+      ? samplingRecord.policyEffective
+      : "uniform";
   const candidateCount = Number(samplingRecord.candidateCount ?? 0);
   return {
     durationSeconds,
@@ -133,7 +139,7 @@ export async function extractVideoFramesViaBroker(
   const baseUrl = resolveVideoBridgeBrokerBaseUrl();
   const url = new URL(`${baseUrl}${VIDEO_BRIDGE_BROKER_PATH}`);
   url.searchParams.set("frames", String(options.frameCount));
-  if (options.samplingPolicy === "scene_aware") {
+  if (options.samplingPolicy && options.samplingPolicy !== "uniform") {
     url.searchParams.set("samplingPolicy", options.samplingPolicy);
   }
   if (options.focusWindow?.startSeconds !== undefined) {

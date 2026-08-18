@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   calculateSamplingDecision,
+  calculateSegmentAwareTimestamps,
   extractFramesFromLocalVideo,
   parseSceneChangeTimestamps,
   type VideoCommandRunner,
@@ -95,4 +96,20 @@ test("scene detection timeout or runtime failure falls back to uniform sampling"
     policyEffective: "uniform",
     policyRequested: "scene_aware",
   });
+});
+
+test("segment-aware sampling allocates frames across long and short scene segments", () => {
+  const timestamps = calculateSegmentAwareTimestamps(20, 6, [2, 10, 12]);
+  assert.equal(timestamps.length, 6);
+  assert.ok(timestamps.some((timestamp) => timestamp < 2));
+  assert.ok(timestamps.some((timestamp) => timestamp > 2 && timestamp < 10));
+  assert.ok(timestamps.some((timestamp) => timestamp > 12));
+  assert.ok(timestamps.every((timestamp) => timestamp > 0 && timestamp < 20));
+});
+
+test("segment-aware sampling falls back to uniform when boundaries are unusable", () => {
+  const decision = calculateSamplingDecision(8, 4, "segment_aware", []);
+  assert.equal(decision.policyRequested, "segment_aware");
+  assert.equal(decision.policyEffective, "uniform");
+  assert.deepEqual(decision.timestamps, [1, 3, 5, 7]);
 });

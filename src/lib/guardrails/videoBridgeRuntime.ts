@@ -29,7 +29,7 @@ export interface VideoFrameFile {
   timestampSeconds: number;
 }
 
-export type VideoSamplingPolicy = "uniform" | "scene_aware";
+export type VideoSamplingPolicy = "uniform" | "scene_aware" | "segment_aware";
 
 export interface VideoSamplingMetadata {
   candidateCount: number;
@@ -234,6 +234,60 @@ export function parseSceneChangeTimestamps(output: string, durationSeconds: numb
   return normalizeSceneCandidates(durationSeconds, candidates);
 }
 
+/** Allocate midpoint samples proportionally across validated scene segments. */
+export function calculateSegmentAwareTimestamps(
+  durationSeconds: number,
+  requestedFrameCount: number,
+  sceneCandidates: readonly number[],
+  focusWindow: VideoFocusWindow | null = null
+): number[] {
+  const startSeconds = focusWindow?.startSeconds ?? 0;
+  const endSeconds = focusWindow?.endSeconds ?? durationSeconds;
+  const uniform = calculateFrameTimestamps(endSeconds - startSeconds, requestedFrameCount).map(
+    (timestamp) => timestamp + startSeconds
+  );
+  const boundaries = normalizeSceneCandidates(durationSeconds, sceneCandidates).filter(
+    (timestamp) => timestamp > startSeconds && timestamp < endSeconds
+  );
+  if (boundaries.length === 0) return uniform;
+  const segmentStarts = [startSeconds, ...boundaries];
+  const segmentEnds = [...boundaries, endSeconds];
+  const lengths = segmentStarts.map((segmentStart, index) => segmentEnds[index] - segmentStart);
+  const segmentCount = lengths.length;
+  const frameCount = uniform.length;
+  if (segmentCount > frameCount) {
+    return [...uniform].map((timestamp, index) => {
+      const segmentIndex = Math.min(
+        segmentCount - 1,
+        Math.floor((index * segmentCount) / frameCount)
+      );
+      const segmentStart = segmentStarts[segmentIndex];
+      const segmentEnd = segmentEnds[segmentIndex];
+      return segmentStart + (segmentEnd - segmentStart) / 2;
+    });
+  }
+  const allocation = lengths.map(() => 1);
+  let remaining = frameCount - segmentCount;
+  const idealExtra = lengths.map((length) => (length / (endSeconds - startSeconds)) * remaining);
+  const extras = idealExtra.map((value) => Math.floor(value));
+  remaining -= extras.reduce((sum, value) => sum + value, 0);
+  const remainderOrder = idealExtra
+    .map((value, index) => ({ index, remainder: value - Math.floor(value) }))
+    .sort((left, right) => right.remainder - left.remainder || left.index - right.index);
+  for (let index = 0; index < remaining; index++) extras[remainderOrder[index].index] += 1;
+  for (let index = 0; index < allocation.length; index++) allocation[index] += extras[index];
+  const timestamps: number[] = [];
+  for (let segmentIndex = 0; segmentIndex < segmentCount; segmentIndex++) {
+    const count = allocation[segmentIndex];
+    const segmentStart = segmentStarts[segmentIndex];
+    const segmentLength = lengths[segmentIndex];
+    for (let index = 0; index < count; index++) {
+      timestamps.push(segmentStart + ((index + 0.5) * segmentLength) / count);
+    }
+  }
+  return timestamps;
+}
+
 export function calculateSamplingDecision(
   durationSeconds: number,
   requestedFrameCount: number,
@@ -246,7 +300,7 @@ export function calculateSamplingDecision(
   const uniform = calculateFrameTimestamps(endSeconds - startSeconds, requestedFrameCount).map(
     (timestamp) => timestamp + startSeconds
   );
-  if (policy !== "scene_aware") {
+  if (policy === "uniform") {
     return {
       candidateCount: 0,
       ...(focusWindow ? { focusWindow } : {}),
@@ -264,8 +318,23 @@ export function calculateSamplingDecision(
       candidateCount: 0,
       ...(focusWindow ? { focusWindow } : {}),
       policyEffective: "uniform",
-      policyRequested: "scene_aware",
+      policyRequested: policy,
       timestamps: uniform,
+    };
+  }
+
+  if (policy === "segment_aware") {
+    return {
+      candidateCount: candidates.length,
+      ...(focusWindow ? { focusWindow } : {}),
+      policyEffective: "segment_aware",
+      policyRequested: "segment_aware",
+      timestamps: calculateSegmentAwareTimestamps(
+        durationSeconds,
+        requestedFrameCount,
+        candidates,
+        focusWindow
+      ),
     };
   }
 
@@ -478,7 +547,7 @@ export async function extractFramesFromLocalVideo(
   assertLocalPath(outputDirectory);
   const policy = options.samplingPolicy ?? "uniform";
   let sceneCandidates: number[] = [];
-  if (policy === "scene_aware") {
+  if (policy !== "uniform") {
     try {
       sceneCandidates = await detectSceneChangeTimestamps(inputPath, {
         durationSeconds: options.durationSeconds,

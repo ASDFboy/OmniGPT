@@ -68,8 +68,8 @@ interface VideoResultCacheMetadata {
   focusStartSeconds?: number;
   focusEndSeconds?: number;
   samplingCandidateCount?: number;
-  samplingPolicyEffective?: "uniform" | "scene_aware";
-  samplingPolicyRequested?: "uniform" | "scene_aware";
+  samplingPolicyEffective?: "uniform" | "scene_aware" | "segment_aware";
+  samplingPolicyRequested?: "uniform" | "scene_aware" | "segment_aware";
   transcriptCuesApplied?: number;
   cacheBytes: number;
   modelUsed: string;
@@ -112,10 +112,12 @@ function isVideoResultCacheMetadata(value: unknown): value is VideoResultCacheMe
       (typeof record.samplingCandidateCount === "number" && record.samplingCandidateCount >= 0)) &&
     (record.samplingPolicyEffective === undefined ||
       record.samplingPolicyEffective === "uniform" ||
-      record.samplingPolicyEffective === "scene_aware") &&
+      record.samplingPolicyEffective === "scene_aware" ||
+      record.samplingPolicyEffective === "segment_aware") &&
     (record.samplingPolicyRequested === undefined ||
       record.samplingPolicyRequested === "uniform" ||
-      record.samplingPolicyRequested === "scene_aware") &&
+      record.samplingPolicyRequested === "scene_aware" ||
+      record.samplingPolicyRequested === "segment_aware") &&
     (record.transcriptCuesApplied === undefined ||
       (typeof record.transcriptCuesApplied === "number" && record.transcriptCuesApplied >= 0))
   );
@@ -185,7 +187,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
     let totalDedupDropped = 0;
     let focusWindowsApplied = 0;
     let transcriptCuesApplied = 0;
-    let samplingPolicyEffective: "uniform" | "scene_aware" = "uniform";
+    let samplingPolicyEffective: "uniform" | "scene_aware" | "segment_aware" = "uniform";
     let failures = 0;
 
     const attemptedParts = parts.slice(0, runtime.maxVideos);
@@ -238,8 +240,8 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
             totalDurationSeconds += meta.durationSeconds;
             totalSamplingCandidateCount += meta.samplingCandidateCount ?? 0;
             transcriptCuesApplied += meta.transcriptCuesApplied ?? 0;
-            if (meta.samplingPolicyEffective === "scene_aware") {
-              samplingPolicyEffective = "scene_aware";
+            if (meta.samplingPolicyEffective && meta.samplingPolicyEffective !== "uniform") {
+              samplingPolicyEffective = meta.samplingPolicyEffective;
             }
             if (cachedResult.producerModel) {
               successfulModels.add(cachedResult.producerModel);
@@ -282,8 +284,11 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
         transcriptCuesApplied += described.transcriptCues?.length ?? 0;
         totalDurationSeconds += described.durationSeconds;
         totalSamplingCandidateCount += described.sampling?.candidateCount ?? 0;
-        if (described.sampling?.policyEffective === "scene_aware") {
-          samplingPolicyEffective = "scene_aware";
+        if (
+          described.sampling?.policyEffective &&
+          described.sampling.policyEffective !== "uniform"
+        ) {
+          samplingPolicyEffective = described.sampling.policyEffective;
         }
         totalCacheHits += videoCacheHits;
         if (resultCacheKey && selectedModel) {
