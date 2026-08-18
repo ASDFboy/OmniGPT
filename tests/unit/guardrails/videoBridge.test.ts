@@ -577,3 +577,91 @@ test("FFmpeg ENOENT is sanitized and counts only as a failed attempt, never a br
   assert.equal(JSON.stringify(warnings).includes("/private/operator"), false);
   assert.equal(buildModalityBridgeHeader([{ guardrail: "video-bridge", meta: result.meta }]), null);
 });
+
+function cachedBridgeWithCounter(counter: { calls: number }, cacheSalt: string) {
+  return new VideoBridgeGuardrail({
+    deps: {
+      getSettings: async () => ({
+        modalityBridgeVideoEnabled: true,
+        modalityBridgeVideoModel: "openai/gpt-4o-mini",
+        modalityBridgeVisionPrompt: `cache dimensions ${cacheSalt}`,
+        modalityBridgeCacheEnabled: true,
+        modalityBridgeCacheTtlMinutes: 60,
+        modalityBridgeCacheMaxEntries: 50,
+      }),
+      getCapabilities: () => ({ supportsVideo: false }),
+      selectVisionModel: async () => "openai/gpt-4o-mini",
+      describePart: async () => {
+        counter.calls += 1;
+        return {
+          description: `[Video description: observation ${counter.calls}]`,
+          durationSeconds: 4,
+          framesRequested: 1,
+          framesUsed: 1,
+        };
+      },
+    },
+  });
+}
+
+test("result cache misses when audioTranscript is added, changes, and hits when equivalent", async () => {
+  const counter = { calls: 0 };
+  const bridge = cachedBridgeWithCounter(counter, "audio-transcript");
+  const withAudio = (audioTranscript?: unknown) => ({
+    model: "example/text-only",
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "input_video",
+            video_url: "data:video/mp4;base64,QUJD",
+            ...(audioTranscript === undefined ? {} : { audioTranscript }),
+          },
+        ],
+      },
+    ],
+  });
+  const cuesA = { cues: [{ text: "hello", start: 0, end: 1, source: "client" }] };
+  const cuesB = { cues: [{ text: "different", start: 1, end: 2, source: "client" }] };
+
+  await bridge.preCall(withAudio(), {});
+  assert.equal(counter.calls, 1);
+  await bridge.preCall(withAudio(cuesA), {});
+  assert.equal(counter.calls, 2, "adding an audioTranscript must invalidate the result cache");
+  await bridge.preCall(withAudio(structuredClone(cuesA)), {});
+  assert.equal(counter.calls, 2, "an equivalent audioTranscript must reuse the cached result");
+  await bridge.preCall(withAudio(cuesB), {});
+  assert.equal(counter.calls, 3, "a different audioTranscript must invalidate the result cache");
+  await bridge.preCall(withAudio(), {});
+  assert.equal(counter.calls, 3, "removing the audioTranscript must reuse the first cached result");
+});
+
+test("result cache misses when the focus window is added or changed", async () => {
+  const counter = { calls: 0 };
+  const bridge = cachedBridgeWithCounter(counter, "focus-window");
+  const withFocus = (bounds?: { start?: number; end?: number }) => ({
+    model: "example/text-only",
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "input_video",
+            video_url: "data:video/mp4;base64,QUJD",
+            ...(bounds ?? {}),
+          },
+        ],
+      },
+    ],
+  });
+
+  await bridge.preCall(withFocus(), {});
+  assert.equal(counter.calls, 1);
+  await bridge.preCall(withFocus({ start: 0, end: 1 }), {});
+  assert.equal(counter.calls, 2, "adding a focus window must invalidate the result cache");
+  await bridge.preCall(withFocus({ start: 0, end: 1 }), {});
+  assert.equal(counter.calls, 2, "an identical focus window must reuse the cached result");
+  await bridge.preCall(withFocus({ start: 1, end: 2 }), {});
+  assert.equal(counter.calls, 3, "a different focus window must invalidate the result cache");
+});

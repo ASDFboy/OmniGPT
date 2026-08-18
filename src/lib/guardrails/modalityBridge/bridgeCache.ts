@@ -18,6 +18,9 @@ export interface BridgeCacheKeyOptions {
   maxVideos?: number;
   contactSheet?: boolean;
   transcript?: string;
+  audioTranscript?: string;
+  focusStartSeconds?: number | null;
+  focusEndSeconds?: number | null;
   version?: string;
 }
 
@@ -42,6 +45,9 @@ export function bridgeCacheKey(
     maxVideos: options.maxVideos,
     contactSheet: options.contactSheet,
     transcript: options.transcript,
+    audioTranscript: options.audioTranscript,
+    focusStartSeconds: options.focusStartSeconds,
+    focusEndSeconds: options.focusEndSeconds,
     version: options.version,
   };
   return createHash("sha256").update(JSON.stringify(payload)).digest("hex");

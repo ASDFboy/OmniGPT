@@ -212,6 +212,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
                 focusEndSeconds: part.focusWindow?.endSeconds ?? null,
                 focusStartSeconds: part.focusWindow?.startSeconds ?? null,
                 transcript: safeTranscriptFingerprint(part.transcript),
+                audioTranscript: safeTranscriptFingerprint(part.audioTranscript),
                 contactSheet: part.contactSheet ?? false,
                 version: VIDEO_BRIDGE_RESULT_CACHE_VERSION,
               })
