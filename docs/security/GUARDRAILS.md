@@ -331,6 +331,12 @@ compared only with the last frame retained. The first and final timeline frames
 are always retained; comparator or decoder errors fail open and keep coverage.
 The output metadata reports how many frames were dropped.
 
+An explicitly marked video part may request a timestamped contact sheet. The
+bridge builds at most a 4-column, 16-frame JPEG grid and labels the resulting
+observation with every source timestamp. If `sharp` cannot decode or compose
+the grid, the bridge falls back to the individual JPEG frames; a client abort
+still propagates through the sheet operation.
+
 Callers may attach an optional `transcript.cues` array to a supported video
 part when they already possess aligned text. Each cue must carry `text`, a
 finite `start`/`end` interval inside the probed duration, and a whitelisted
