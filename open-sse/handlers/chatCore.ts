@@ -2892,6 +2892,7 @@ export async function handleChatCore({
         credentials,
         log,
         bypassDefaultToolLimit: isOpencodeClient,
+        isOpencodeClient,
       });
 
       updatePendingScope(pendingScope, {
