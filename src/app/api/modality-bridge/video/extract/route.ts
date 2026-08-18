@@ -15,6 +15,9 @@ import {
 } from "@/lib/guardrails/videoBridgeRuntime";
 import { resolveModelSyncInternalBaseUrl } from "@/shared/services/modelSyncScheduler";
 import { VIDEO_BRIDGE_TIMEOUT_MAX_MS } from "@/shared/constants/modalityBridgeDefaults";
+import { createLogger } from "@/shared/utils/logger";
+
+const log = createLogger("video-bridge-broker");
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -191,20 +194,23 @@ export async function handleVideoExtractionBrokerRequest(
       error instanceof VideoExtractionQueueError && error.code === "QUEUE_CAPACITY";
     const clientAborted = request.signal.aborted;
     const deadlineExceeded = !clientAborted && deadline.aborted;
-    console.warn("[VideoBridgeBroker] extraction failed", {
-      aborted: clientAborted,
-      code: clientAborted
-        ? "CLIENT_ABORTED"
-        : queueCapacity
-          ? "QUEUE_CAPACITY"
-          : deadlineExceeded
-            ? "DEADLINE_EXCEEDED"
-            : unavailable
-              ? "RUNTIME_UNAVAILABLE"
-              : "EXTRACTION_FAILED",
-      frameCount,
-      inputBytes: bytes.byteLength,
-    });
+    log.warn(
+      {
+        aborted: clientAborted,
+        code: clientAborted
+          ? "CLIENT_ABORTED"
+          : queueCapacity
+            ? "QUEUE_CAPACITY"
+            : deadlineExceeded
+              ? "DEADLINE_EXCEEDED"
+              : unavailable
+                ? "RUNTIME_UNAVAILABLE"
+                : "EXTRACTION_FAILED",
+        frameCount,
+        inputBytes: bytes.byteLength,
+      },
+      "Video Bridge broker extraction failed"
+    );
     if (clientAborted) return invalid("Video extraction was aborted", 499);
     if (deadlineExceeded) return invalid("Video extraction deadline exceeded", 504);
     if (queueCapacity) {
