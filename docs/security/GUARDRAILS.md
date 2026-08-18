@@ -329,6 +329,17 @@ compared only with the last frame retained. The first and final timeline frames
 are always retained; comparator or decoder errors fail open and keep coverage.
 The output metadata reports how many frames were dropped.
 
+Callers may attach an optional `transcript.cues` array to a supported video
+part when they already possess aligned text. Each cue must carry `text`, a
+finite `start`/`end` interval inside the probed duration, and a whitelisted
+`source` (`client`, `embedded`, or `audio-bridge`); `confidence` defaults to
+`1` and must remain between `0` and `1`. Exact duplicate cues are collapsed.
+OmniRoute never starts transcription from this metadata: validated cues are
+copied into the described result with source, confidence, and interval, and
+are rendered as untrusted observations alongside the frame captions. Invalid,
+out-of-range, or provenance-free text is rejected rather than mixed into the
+caption stream.
+
 Frames are captioned sequentially with the configured Video model. An empty
 Video override inherits the Vision setting; if both are empty, the Vision
 auto-router selects the effective vision-capable model. Successful captions

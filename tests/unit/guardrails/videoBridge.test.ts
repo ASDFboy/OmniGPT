@@ -121,6 +121,57 @@ test("preserves scene-aware sampler metadata in guardrail meta and the transpare
   );
 });
 
+test("reports only validated transcript provenance in guardrail metadata", async () => {
+  const bridge = new VideoBridgeGuardrail({
+    deps: {
+      getSettings: async () => ({
+        modalityBridgeVideoEnabled: true,
+        modalityBridgeVideoModel: "openai/gpt-4o-mini",
+      }),
+      getCapabilities: () => ({ supportsVideo: false }),
+      describePart: async (part) => {
+        assert.deepEqual(part.transcript, {
+          cues: [{ text: "spoken words", start: 1, end: 2, source: "client" }],
+        });
+        return {
+          description: "[Video description: caption; transcript[source=client] spoken words]",
+          durationSeconds: 2,
+          framesRequested: 1,
+          framesUsed: 1,
+          transcriptCues: [
+            {
+              confidence: 1,
+              endSeconds: 2,
+              source: "client",
+              startSeconds: 1,
+              text: "spoken words",
+            },
+          ],
+        };
+      },
+    },
+  });
+  const result = await bridge.preCall(
+    {
+      ...payload(),
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_video",
+              video_url: "data:video/mp4;base64,QUJD",
+              transcript: { cues: [{ text: "spoken words", start: 1, end: 2, source: "client" }] },
+            },
+          ],
+        },
+      ],
+    },
+    {}
+  );
+  assert.equal(result.meta?.transcriptCuesApplied, 1);
+});
+
 test("converts Responses input using input_text while preserving sibling order", async () => {
   const body = {
     model: "example/text-only",

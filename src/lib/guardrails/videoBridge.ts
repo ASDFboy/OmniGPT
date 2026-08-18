@@ -38,6 +38,15 @@ function combineModelIdentities(models: ReadonlySet<string>, fallback: string): 
   return "mixed";
 }
 
+function safeTranscriptFingerprint(value: unknown): string {
+  if (value === undefined) return "";
+  try {
+    return JSON.stringify(value) ?? "";
+  } catch {
+    return "invalid-transcript";
+  }
+}
+
 const VIDEO_BRIDGE_RESULT_CACHE_VERSION = "v2";
 const VIDEO_BRIDGE_RESULT_CACHE_POLICY = "default";
 const VIDEO_BRIDGE_RESULT_CACHE_KEY_KIND = "video-result-v2";
@@ -61,6 +70,7 @@ interface VideoResultCacheMetadata {
   samplingCandidateCount?: number;
   samplingPolicyEffective?: "uniform" | "scene_aware";
   samplingPolicyRequested?: "uniform" | "scene_aware";
+  transcriptCuesApplied?: number;
   cacheBytes: number;
   modelUsed: string;
 }
@@ -105,7 +115,9 @@ function isVideoResultCacheMetadata(value: unknown): value is VideoResultCacheMe
       record.samplingPolicyEffective === "scene_aware") &&
     (record.samplingPolicyRequested === undefined ||
       record.samplingPolicyRequested === "uniform" ||
-      record.samplingPolicyRequested === "scene_aware")
+      record.samplingPolicyRequested === "scene_aware") &&
+    (record.transcriptCuesApplied === undefined ||
+      (typeof record.transcriptCuesApplied === "number" && record.transcriptCuesApplied >= 0))
   );
 }
 
@@ -172,6 +184,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
     let totalSamplingCandidateCount = 0;
     let totalDedupDropped = 0;
     let focusWindowsApplied = 0;
+    let transcriptCuesApplied = 0;
     let samplingPolicyEffective: "uniform" | "scene_aware" = "uniform";
     let failures = 0;
 
@@ -193,6 +206,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
                 maxVideos: runtime.maxVideos,
                 focusEndSeconds: part.focusWindow?.endSeconds ?? null,
                 focusStartSeconds: part.focusWindow?.startSeconds ?? null,
+                transcript: safeTranscriptFingerprint(part.transcript),
                 version: VIDEO_BRIDGE_RESULT_CACHE_VERSION,
               })
             : null;
@@ -223,6 +237,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
             }
             totalDurationSeconds += meta.durationSeconds;
             totalSamplingCandidateCount += meta.samplingCandidateCount ?? 0;
+            transcriptCuesApplied += meta.transcriptCuesApplied ?? 0;
             if (meta.samplingPolicyEffective === "scene_aware") {
               samplingPolicyEffective = "scene_aware";
             }
@@ -264,6 +279,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
         totalFramesUsed += described.framesUsed;
         totalDedupDropped += described.dedupDropped ?? 0;
         if (described.focusWindow) focusWindowsApplied += 1;
+        transcriptCuesApplied += described.transcriptCues?.length ?? 0;
         totalDurationSeconds += described.durationSeconds;
         totalSamplingCandidateCount += described.sampling?.candidateCount ?? 0;
         if (described.sampling?.policyEffective === "scene_aware") {
@@ -298,6 +314,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
               samplingPolicyEffective: described.sampling?.policyEffective ?? "uniform",
               samplingPolicyRequested:
                 described.sampling?.policyRequested ?? runtime.samplingPolicy,
+              transcriptCuesApplied: described.transcriptCues?.length ?? 0,
             },
           });
           recordBridgeUse("video", {
@@ -363,6 +380,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
         framesUsed: totalFramesUsed,
         dedupDropped: totalDedupDropped,
         focusWindowsApplied,
+        transcriptCuesApplied,
         samplingCandidateCount: totalSamplingCandidateCount,
         samplingPolicyEffective,
         samplingPolicyRequested: runtime.samplingPolicy,

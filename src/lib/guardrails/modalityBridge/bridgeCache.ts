@@ -16,6 +16,7 @@ export interface BridgeCacheKeyOptions {
   strategy?: string;
   frameCount?: number;
   maxVideos?: number;
+  transcript?: string;
   version?: string;
 }
 
@@ -38,6 +39,7 @@ export function bridgeCacheKey(
     strategy: options.strategy,
     frameCount: options.frameCount,
     maxVideos: options.maxVideos,
+    transcript: options.transcript,
     version: options.version,
   };
   return createHash("sha256").update(JSON.stringify(payload)).digest("hex");

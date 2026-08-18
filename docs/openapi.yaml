@@ -5498,7 +5498,7 @@ paths:
       x-loopback-only: true
       tags: [System]
       summary: Extract bounded Video Bridge frames through the internal broker
-      description: Internal per-process-authenticated trusted-loopback broker. Accepts at most 50 MiB of video bytes; URLs, paths, executable names, and command arguments are not part of the contract. The body pipeline and streamed handler reader both enforce the input cap. The broker applies fixed FFmpeg/ffprobe confinement, a single extraction slot with four pending jobs/100 MiB queued input, a 4 MiB per-frame cap, and a 32 MiB total response cap. This is not a public upload API.
+      description: Internal per-process-authenticated trusted-loopback broker. Accepts at most 50 MiB of video bytes; URLs, paths, executable names, and command arguments are not part of the contract. The body pipeline and streamed handler reader both enforce the input cap. The broker applies fixed FFmpeg/ffprobe confinement, a single extraction slot with four pending jobs/100 MiB queued input, a 4 MiB per-frame cap, and a 32 MiB total response cap. Optional focus bounds and scene-aware sampling are deterministic and bounded. Transcript provenance is a metadata contract on the parent video part, not an instruction to run speech-to-text. This is not a public upload API.
       security: []
       parameters:
         - in: query
