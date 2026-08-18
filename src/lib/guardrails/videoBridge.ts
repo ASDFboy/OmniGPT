@@ -71,6 +71,7 @@ interface VideoResultCacheMetadata {
   samplingPolicyEffective?: "uniform" | "scene_aware" | "segment_aware";
   samplingPolicyRequested?: "uniform" | "scene_aware" | "segment_aware";
   transcriptCuesApplied?: number;
+  contactSheetUsed?: boolean;
   cacheBytes: number;
   modelUsed: string;
 }
@@ -119,7 +120,8 @@ function isVideoResultCacheMetadata(value: unknown): value is VideoResultCacheMe
       record.samplingPolicyRequested === "scene_aware" ||
       record.samplingPolicyRequested === "segment_aware") &&
     (record.transcriptCuesApplied === undefined ||
-      (typeof record.transcriptCuesApplied === "number" && record.transcriptCuesApplied >= 0))
+      (typeof record.transcriptCuesApplied === "number" && record.transcriptCuesApplied >= 0)) &&
+    (record.contactSheetUsed === undefined || typeof record.contactSheetUsed === "boolean")
   );
 }
 
@@ -187,6 +189,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
     let totalDedupDropped = 0;
     let focusWindowsApplied = 0;
     let transcriptCuesApplied = 0;
+    let contactSheetsUsed = 0;
     let samplingPolicyEffective: "uniform" | "scene_aware" | "segment_aware" = "uniform";
     let failures = 0;
 
@@ -209,6 +212,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
                 focusEndSeconds: part.focusWindow?.endSeconds ?? null,
                 focusStartSeconds: part.focusWindow?.startSeconds ?? null,
                 transcript: safeTranscriptFingerprint(part.transcript),
+                contactSheet: part.contactSheet ?? false,
                 version: VIDEO_BRIDGE_RESULT_CACHE_VERSION,
               })
             : null;
@@ -240,6 +244,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
             totalDurationSeconds += meta.durationSeconds;
             totalSamplingCandidateCount += meta.samplingCandidateCount ?? 0;
             transcriptCuesApplied += meta.transcriptCuesApplied ?? 0;
+            if (meta.contactSheetUsed) contactSheetsUsed += 1;
             if (meta.samplingPolicyEffective && meta.samplingPolicyEffective !== "uniform") {
               samplingPolicyEffective = meta.samplingPolicyEffective;
             }
@@ -282,6 +287,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
         totalDedupDropped += described.dedupDropped ?? 0;
         if (described.focusWindow) focusWindowsApplied += 1;
         transcriptCuesApplied += described.transcriptCues?.length ?? 0;
+        if (described.contactSheetUsed) contactSheetsUsed += 1;
         totalDurationSeconds += described.durationSeconds;
         totalSamplingCandidateCount += described.sampling?.candidateCount ?? 0;
         if (
@@ -320,6 +326,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
               samplingPolicyRequested:
                 described.sampling?.policyRequested ?? runtime.samplingPolicy,
               transcriptCuesApplied: described.transcriptCues?.length ?? 0,
+              contactSheetUsed: described.contactSheetUsed ?? false,
             },
           });
           recordBridgeUse("video", {
@@ -386,6 +393,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
         dedupDropped: totalDedupDropped,
         focusWindowsApplied,
         transcriptCuesApplied,
+        contactSheetsUsed,
         samplingCandidateCount: totalSamplingCandidateCount,
         samplingPolicyEffective,
         samplingPolicyRequested: runtime.samplingPolicy,

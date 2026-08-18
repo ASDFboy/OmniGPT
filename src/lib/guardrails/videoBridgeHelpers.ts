@@ -3,6 +3,7 @@ import { detectMediaParts, type MediaPart } from "@omniroute/open-sse/utils/medi
 import { fetchRemoteMedia, type RemoteMediaFetchResult } from "@/shared/network/remoteImageFetch";
 
 import { fuseVideoAndAudio } from "./videoAudioFusion";
+import { buildVideoContactSheet } from "./videoBridgeContactSheet";
 import {
   extractVideoFramesViaBroker,
   type BrokerExtractionOptions,
@@ -38,6 +39,7 @@ export interface VideoPart {
   focusWindow?: { endSeconds?: number; startSeconds?: number };
   transcript?: unknown;
   audioTranscript?: unknown;
+  contactSheet?: boolean;
 }
 
 export type VideoTranscriptSource = "audio-bridge" | "client" | "embedded";
@@ -176,6 +178,9 @@ export function extractVideoParts(body: VideoRequestBody): VideoPart[] {
       const audioTranscript = objects.find(
         (object) => object.audioTranscript !== undefined
       )?.audioTranscript;
+      const contactSheet = objects.find(
+        (object) => object.contactSheet !== undefined
+      )?.contactSheet;
       return {
         container,
         ...(startSeconds === undefined && endSeconds === undefined
@@ -187,6 +192,7 @@ export function extractVideoParts(body: VideoRequestBody): VideoPart[] {
         shape: part.shape as VideoPart["shape"],
         ...(transcript === undefined ? {} : { transcript }),
         ...(audioTranscript === undefined ? {} : { audioTranscript }),
+        ...(contactSheet === undefined ? {} : { contactSheet: contactSheet === true }),
       };
     });
 }
@@ -244,6 +250,7 @@ export interface DescribedVideo {
   dedupDropped?: number;
   focusWindow?: VideoFocusWindow;
   transcriptCues?: VideoTranscriptCue[];
+  contactSheetUsed?: boolean;
 }
 
 export interface VideoCaptionFrame {
@@ -436,17 +443,33 @@ export async function describeVideoPart(
     });
 
     const deduplicated = await deduplicateVideoFrames(extracted.frames);
+    const contactSheet = part.contactSheet
+      ? await buildVideoContactSheet(deduplicated.frames, {
+          signal,
+          timeoutMs: options.timeoutMs,
+        })
+      : null;
+    const framesToCaption =
+      contactSheet?.used && contactSheet.dataUri
+        ? [{ dataUri: contactSheet.dataUri, timestampSeconds: 0 }]
+        : deduplicated.frames;
     const focusWindow = options.focusWindow
       ? resolveVideoFocusWindow(extracted.durationSeconds, options.focusWindow)
       : null;
     let transcriptCues = normalizeVideoTranscript(part.transcript, extracted.durationSeconds);
     const descriptions: string[] = [];
-    for (const frame of deduplicated.frames) {
+    for (const frame of framesToCaption) {
       if (signal.aborted) throw new Error("Video Bridge processing timed out or was aborted");
       try {
         const caption = (await captionFrame(frame.dataUri, frame.timestampSeconds, signal)).trim();
         if (caption) {
-          descriptions.push(`frame@t=${formatVideoTimestamp(frame.timestampSeconds)} ${caption}`);
+          descriptions.push(
+            `${
+              contactSheet?.used
+                ? `contact-sheet[timestamps=${contactSheet.timestamps.map(formatVideoTimestamp).join(",")}]`
+                : `frame@t=${formatVideoTimestamp(frame.timestampSeconds)}`
+            } ${caption}`
+          );
         }
       } catch {
         if (signal.aborted) {
@@ -505,6 +528,7 @@ export async function describeVideoPart(
       focusWindow: focusWindow ?? undefined,
       sampling: extracted.sampling,
       transcriptCues: transcriptCues.length > 0 ? transcriptCues : undefined,
+      contactSheetUsed: contactSheet?.used || undefined,
     };
   } catch (error) {
     if (signal.aborted) throw new Error("Video Bridge processing timed out or was aborted");

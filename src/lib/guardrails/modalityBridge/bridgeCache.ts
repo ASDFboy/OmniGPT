@@ -16,6 +16,7 @@ export interface BridgeCacheKeyOptions {
   strategy?: string;
   frameCount?: number;
   maxVideos?: number;
+  contactSheet?: boolean;
   transcript?: string;
   version?: string;
 }
@@ -39,6 +40,7 @@ export function bridgeCacheKey(
     strategy: options.strategy,
     frameCount: options.frameCount,
     maxVideos: options.maxVideos,
+    contactSheet: options.contactSheet,
     transcript: options.transcript,
     version: options.version,
   };
