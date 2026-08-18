@@ -7,6 +7,7 @@ import {
   type BrokerExtractionOptions,
   type BrokerExtractionResult,
 } from "./videoBridgeBrokerClient";
+import type { VideoSamplingMetadata, VideoSamplingPolicy } from "./videoBridgeRuntime";
 
 export const VIDEO_BRIDGE_MAX_BYTES = 50 * 1024 * 1024;
 // Inline base64 shares the public 50 MiB JSON admission budget with model,
@@ -87,6 +88,7 @@ export interface DescribeVideoOptions {
   maxDurationSeconds?: number;
   timeoutMs: number;
   signal?: AbortSignal;
+  samplingPolicy?: VideoSamplingPolicy;
 }
 
 export interface DescribeVideoDependencies {
@@ -108,6 +110,7 @@ export interface DescribedVideo {
   framesRequested: number;
   framesUsed: number;
   modelUsed?: string;
+  sampling?: VideoSamplingMetadata;
 }
 
 function normalizeBase64(base64: string): string {
@@ -215,6 +218,7 @@ export async function describeVideoPart(
     const extractFrames = deps.extractFrames ?? extractVideoFramesViaBroker;
     const extracted = await extractFrames(bytes, {
       frameCount: options.frameCount,
+      samplingPolicy: options.samplingPolicy,
       signal,
       timeoutMs: options.timeoutMs,
     });
@@ -243,6 +247,7 @@ export async function describeVideoPart(
       framesExtracted: extracted.frames.length,
       framesRequested: options.frameCount,
       framesUsed: descriptions.length,
+      sampling: extracted.sampling,
     };
   } catch (error) {
     if (signal.aborted) throw new Error("Video Bridge processing timed out or was aborted");

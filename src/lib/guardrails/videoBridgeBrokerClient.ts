@@ -8,6 +8,7 @@ import {
   buildVideoBridgeBrokerHeaders,
   isVideoBridgeBrokerInternalRequest,
 } from "./videoBridgeBrokerAuth";
+import type { VideoSamplingMetadata, VideoSamplingPolicy } from "./videoBridgeRuntime";
 
 export {
   VIDEO_BRIDGE_BROKER_PATH,
@@ -23,10 +24,12 @@ export interface BrokerExtractedFrame {
 export interface BrokerExtractionResult {
   durationSeconds: number;
   frames: BrokerExtractedFrame[];
+  sampling?: VideoSamplingMetadata;
 }
 
 export interface BrokerExtractionOptions {
   frameCount: number;
+  samplingPolicy?: VideoSamplingPolicy;
   signal?: AbortSignal;
   timeoutMs: number;
 }
@@ -96,7 +99,24 @@ function parseBrokerResult(value: unknown, frameCount: number): BrokerExtraction
     }
     return { dataUri, timestampSeconds };
   });
-  return { durationSeconds, frames };
+  const samplingRecord =
+    record?.sampling && typeof record.sampling === "object"
+      ? (record.sampling as Record<string, unknown>)
+      : {};
+  const policyRequested =
+    samplingRecord.policyRequested === "scene_aware" ? "scene_aware" : "uniform";
+  const policyEffective =
+    samplingRecord.policyEffective === "scene_aware" ? "scene_aware" : "uniform";
+  const candidateCount = Number(samplingRecord.candidateCount ?? 0);
+  return {
+    durationSeconds,
+    frames,
+    sampling: {
+      candidateCount: Number.isInteger(candidateCount) && candidateCount >= 0 ? candidateCount : 0,
+      policyEffective,
+      policyRequested,
+    },
+  };
 }
 
 export async function extractVideoFramesViaBroker(
@@ -108,6 +128,9 @@ export async function extractVideoFramesViaBroker(
   const baseUrl = resolveVideoBridgeBrokerBaseUrl();
   const url = new URL(`${baseUrl}${VIDEO_BRIDGE_BROKER_PATH}`);
   url.searchParams.set("frames", String(options.frameCount));
+  if (options.samplingPolicy === "scene_aware") {
+    url.searchParams.set("samplingPolicy", options.samplingPolicy);
+  }
   const fetchImpl = dependencies.fetchImpl ?? fetchModelSyncInternal;
   const timeoutSignal = AbortSignal.timeout(options.timeoutMs);
   const signal = options.signal ? AbortSignal.any([options.signal, timeoutSignal]) : timeoutSignal;

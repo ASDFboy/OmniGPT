@@ -85,6 +85,40 @@ test("converts Chat video to timestamped text and emits telemetry/header metadat
   assert.ok(getBridgeStats().video.bridged >= before.bridged + 1);
 });
 
+test("preserves scene-aware sampler metadata in guardrail meta and the transparency header", async () => {
+  const bridge = new VideoBridgeGuardrail({
+    deps: {
+      getSettings: async () => ({
+        modalityBridgeVideoEnabled: true,
+        modalityBridgeVideoModel: "openai/gpt-4o-mini",
+        modalityBridgeVideoSamplingPolicy: "scene_aware",
+      }),
+      getCapabilities: () => ({ supportsVideo: false }),
+      describePart: async () => ({
+        description: "[Video description: untrusted media-derived observation: a cut]",
+        durationSeconds: 12,
+        framesRequested: 4,
+        framesExtracted: 4,
+        framesUsed: 4,
+        sampling: {
+          candidateCount: 3,
+          policyEffective: "scene_aware",
+          policyRequested: "scene_aware",
+        },
+      }),
+    },
+  });
+
+  const result = await bridge.preCall(payload(), {});
+  assert.equal(result.meta?.samplingPolicyRequested, "scene_aware");
+  assert.equal(result.meta?.samplingPolicyEffective, "scene_aware");
+  assert.equal(result.meta?.samplingCandidateCount, 3);
+  assert.equal(
+    buildModalityBridgeHeader([{ guardrail: "video-bridge", meta: result.meta }]),
+    "video->text;model=openai/gpt-4o-mini;parts=1;sampling=scene_aware;candidates=3"
+  );
+});
+
 test("converts Responses input using input_text while preserving sibling order", async () => {
   const body = {
     model: "example/text-only",

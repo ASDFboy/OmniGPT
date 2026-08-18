@@ -24,6 +24,7 @@ test("Video Bridge settings default to a bounded disabled runtime and accept val
     enabled: false,
     model: "",
     frameCount: 8,
+    samplingPolicy: "uniform",
     maxVideos: 1,
     timeoutMs: 120_000,
     cacheEnabled: MODALITY_BRIDGE_DEFAULTS.cacheEnabled,
@@ -35,6 +36,7 @@ test("Video Bridge settings default to a bounded disabled runtime and accept val
     modalityBridgeVideoEnabled: true,
     modalityBridgeVideoModel: "openai/gpt-4o-mini",
     modalityBridgeVideoFrameCount: 16,
+    modalityBridgeVideoSamplingPolicy: "scene_aware",
     modalityBridgeVideoMaxVideos: 4,
     modalityBridgeVideoTimeout: 120_000,
   });

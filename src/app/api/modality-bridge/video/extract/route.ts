@@ -8,7 +8,10 @@ import {
   type VideoExtractionQueue,
   VideoExtractionQueueError,
 } from "@/lib/guardrails/videoBridgeBrokerQueue";
-import { extractVideoFramesFromBytes } from "@/lib/guardrails/videoBridgeRuntime";
+import {
+  extractVideoFramesFromBytes,
+  type VideoSamplingPolicy,
+} from "@/lib/guardrails/videoBridgeRuntime";
 import { resolveModelSyncInternalBaseUrl } from "@/shared/services/modelSyncScheduler";
 import { VIDEO_BRIDGE_TIMEOUT_MAX_MS } from "@/shared/constants/modalityBridgeDefaults";
 
@@ -31,11 +34,21 @@ function invalid(message: string, status = 400, headers?: Record<string, string>
 }
 
 function parseFrameCount(url: URL): number | null {
-  if ([...url.searchParams.keys()].some((key) => key !== "frames")) return null;
+  if ([...url.searchParams.keys()].some((key) => !["frames", "samplingPolicy"].includes(key))) {
+    return null;
+  }
   const raw = url.searchParams.get("frames");
   if (!raw || !/^\d{1,2}$/.test(raw)) return null;
+  const samplingPolicy = url.searchParams.get("samplingPolicy");
+  if (samplingPolicy !== null && samplingPolicy !== "uniform" && samplingPolicy !== "scene_aware") {
+    return null;
+  }
   const value = Number(raw);
   return Number.isInteger(value) && value >= 1 && value <= 16 ? value : null;
+}
+
+function parseSamplingPolicy(url: URL): VideoSamplingPolicy {
+  return url.searchParams.get("samplingPolicy") === "scene_aware" ? "scene_aware" : "uniform";
 }
 
 function expectedBrokerPath(): string {
@@ -89,6 +102,7 @@ export async function handleVideoExtractionBrokerRequest(
   }
   const frameCount = parseFrameCount(url);
   if (!frameCount) return invalid("Video Bridge frame count must be between 1 and 16");
+  const samplingPolicy = parseSamplingPolicy(url);
   const declaredHeader = request.headers.get("content-length");
   const declaredLength = declaredHeader === null ? null : Number(declaredHeader);
   if (
@@ -127,6 +141,7 @@ export async function handleVideoExtractionBrokerRequest(
         extractFrames(bytes, {
           frameCount,
           maxDurationSeconds: MAX_DURATION_SECONDS,
+          samplingPolicy,
           signal,
           timeoutMs: BROKER_TIMEOUT_MS,
         }),

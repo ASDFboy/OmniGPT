@@ -40,7 +40,6 @@ function combineModelIdentities(models: ReadonlySet<string>, fallback: string): 
 
 const VIDEO_BRIDGE_RESULT_CACHE_VERSION = "v2";
 const VIDEO_BRIDGE_RESULT_CACHE_POLICY = "default";
-const VIDEO_BRIDGE_RESULT_CACHE_STRATEGY = "uniform";
 const VIDEO_BRIDGE_RESULT_CACHE_KEY_KIND = "video-result-v2";
 
 interface VideoResultCacheMetadata {
@@ -56,6 +55,9 @@ interface VideoResultCacheMetadata {
   framesRequested: number;
   framesExtracted: number;
   framesUsed: number;
+  samplingCandidateCount?: number;
+  samplingPolicyEffective?: "uniform" | "scene_aware";
+  samplingPolicyRequested?: "uniform" | "scene_aware";
   cacheBytes: number;
   modelUsed: string;
 }
@@ -90,7 +92,15 @@ function isVideoResultCacheMetadata(value: unknown): value is VideoResultCacheMe
     typeof record.framesExtracted === "number" &&
     typeof record.framesUsed === "number" &&
     typeof record.cacheBytes === "number" &&
-    typeof record.modelUsed === "string"
+    typeof record.modelUsed === "string" &&
+    (record.samplingCandidateCount === undefined ||
+      (typeof record.samplingCandidateCount === "number" && record.samplingCandidateCount >= 0)) &&
+    (record.samplingPolicyEffective === undefined ||
+      record.samplingPolicyEffective === "uniform" ||
+      record.samplingPolicyEffective === "scene_aware") &&
+    (record.samplingPolicyRequested === undefined ||
+      record.samplingPolicyRequested === "uniform" ||
+      record.samplingPolicyRequested === "scene_aware")
   );
 }
 
@@ -154,6 +164,8 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
     let totalFramesUsed = 0;
     let totalDurationSeconds = 0;
     let totalCacheHits = 0;
+    let totalSamplingCandidateCount = 0;
+    let samplingPolicyEffective: "uniform" | "scene_aware" = "uniform";
     let failures = 0;
 
     const attemptedParts = parts.slice(0, runtime.maxVideos);
@@ -169,7 +181,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
                 kind: VIDEO_BRIDGE_RESULT_CACHE_KEY_KIND,
                 extractorVersion: VIDEO_BRIDGE_RESULT_CACHE_VERSION,
                 policyVersion: VIDEO_BRIDGE_RESULT_CACHE_POLICY,
-                strategy: VIDEO_BRIDGE_RESULT_CACHE_STRATEGY,
+                strategy: runtime.samplingPolicy,
                 frameCount: runtime.frameCount,
                 maxVideos: runtime.maxVideos,
                 version: VIDEO_BRIDGE_RESULT_CACHE_VERSION,
@@ -182,7 +194,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
             meta.cacheVersion === VIDEO_BRIDGE_RESULT_CACHE_VERSION &&
             meta.policyVersion === VIDEO_BRIDGE_RESULT_CACHE_POLICY &&
             meta.extractorVersion === VIDEO_BRIDGE_RESULT_CACHE_VERSION &&
-            meta.strategy === VIDEO_BRIDGE_RESULT_CACHE_STRATEGY &&
+            meta.strategy === runtime.samplingPolicy &&
             meta.frameCount === runtime.frameCount &&
             meta.maxVideos === runtime.maxVideos &&
             meta.model === selectedModel &&
@@ -194,6 +206,10 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
             totalFramesExtracted += meta.framesExtracted;
             totalFramesUsed += meta.framesUsed;
             totalDurationSeconds += meta.durationSeconds;
+            totalSamplingCandidateCount += meta.samplingCandidateCount ?? 0;
+            if (meta.samplingPolicyEffective === "scene_aware") {
+              samplingPolicyEffective = "scene_aware";
+            }
             if (cachedResult.producerModel) {
               successfulModels.add(cachedResult.producerModel);
             }
@@ -231,6 +247,10 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
         totalFramesExtracted += described.framesExtracted ?? described.framesUsed;
         totalFramesUsed += described.framesUsed;
         totalDurationSeconds += described.durationSeconds;
+        totalSamplingCandidateCount += described.sampling?.candidateCount ?? 0;
+        if (described.sampling?.policyEffective === "scene_aware") {
+          samplingPolicyEffective = "scene_aware";
+        }
         totalCacheHits += videoCacheHits;
         if (resultCacheKey && selectedModel) {
           const resultCacheBytes = Buffer.byteLength(described.description, "utf8");
@@ -242,7 +262,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
               cacheVersion: VIDEO_BRIDGE_RESULT_CACHE_VERSION,
               policyVersion: VIDEO_BRIDGE_RESULT_CACHE_POLICY,
               extractorVersion: VIDEO_BRIDGE_RESULT_CACHE_VERSION,
-              strategy: VIDEO_BRIDGE_RESULT_CACHE_STRATEGY,
+              strategy: runtime.samplingPolicy,
               model: selectedModel,
               prompt: visionRuntime.prompt,
               frameCount: runtime.frameCount,
@@ -253,6 +273,10 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
               framesUsed: described.framesUsed,
               cacheBytes: resultCacheBytes,
               modelUsed: described.modelUsed ?? selectedModel,
+              samplingCandidateCount: described.sampling?.candidateCount ?? 0,
+              samplingPolicyEffective: described.sampling?.policyEffective ?? "uniform",
+              samplingPolicyRequested:
+                described.sampling?.policyRequested ?? runtime.samplingPolicy,
             },
           });
           recordBridgeUse("video", {
@@ -316,6 +340,9 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
         framesExtracted: totalFramesExtracted,
         framesRequested: totalFramesRequested,
         framesUsed: totalFramesUsed,
+        samplingCandidateCount: totalSamplingCandidateCount,
+        samplingPolicyEffective,
+        samplingPolicyRequested: runtime.samplingPolicy,
         processingTimeMs: Date.now() - startedAt,
         attempts: attemptedParts.length,
         videoModel: combineModelIdentities(successfulModels, routingPlanModel),
@@ -343,6 +370,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
       part,
       {
         frameCount: runtime.frameCount,
+        samplingPolicy: runtime.samplingPolicy,
         signal,
         timeoutMs: runtime.timeoutMs,
       },

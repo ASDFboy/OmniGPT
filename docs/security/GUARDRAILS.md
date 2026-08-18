@@ -308,7 +308,12 @@ explicit default stream is preferred before the deterministic lowest-index
 fallback. Videos are limited to 600 seconds, 8,192 pixels per dimension, and
 33,554,432 source pixels. FFmpeg samples 1–16 midpoint JPEG frames, scales down
 the long edge to at most 1,024 pixels without upscaling smaller inputs, and
-never receives a URL.
+never receives a URL. Sampling is `uniform` by default. The optional
+`scene_aware` policy performs one additional fixed FFmpeg pass over the already
+validated local stream, selects bounded `showinfo` scene timestamps, and falls
+back deterministically to the same uniform midpoints on detector failure,
+timeout, malformed output, or an empty candidate set. The hard 16-frame cap is
+applied after selection in every policy.
 Each frame is limited to 4 MiB, all raw frames together to 23 MiB, and the
 serialized broker response to 32 MiB. A private temporary directory is removed
 in `finally`. OmniRoute does not bundle FFmpeg and does not accept a custom
@@ -337,13 +342,14 @@ to raw media.
 
 Runtime settings are DB-backed and Zod-validated:
 
-| Key                             | Default  | Range / behavior                |
-| ------------------------------- | -------- | ------------------------------- |
-| `modalityBridgeVideoEnabled`    | `false`  | Optional runtime, opt-in        |
-| `modalityBridgeVideoModel`      | `""`     | Inherit the Vision Bridge model |
-| `modalityBridgeVideoFrameCount` | `8`      | 1–16                            |
-| `modalityBridgeVideoMaxVideos`  | `1`      | 1–4                             |
-| `modalityBridgeVideoTimeout`    | `120000` | 1000–120000 ms                  |
+| Key                                 | Default     | Range / behavior                                                     |
+| ----------------------------------- | ----------- | -------------------------------------------------------------------- |
+| `modalityBridgeVideoEnabled`        | `false`     | Optional runtime, opt-in                                             |
+| `modalityBridgeVideoModel`          | `""`        | Inherit the Vision Bridge model                                      |
+| `modalityBridgeVideoFrameCount`     | `8`         | 1–16                                                                 |
+| `modalityBridgeVideoSamplingPolicy` | `"uniform"` | `uniform` or `scene_aware`; detector failure falls back to `uniform` |
+| `modalityBridgeVideoMaxVideos`      | `1`         | 1–4                                                                  |
+| `modalityBridgeVideoTimeout`        | `120000`    | 1000–120000 ms                                                       |
 
 Legacy persisted Video timeout values above 120 seconds are clamped to the
 broker deadline; new settings writes above that limit are rejected.
@@ -582,7 +588,8 @@ Audio uses `modalityBridgeAudioEnabled`, `modalityBridgeAudioModel`,
 keys were introduced with the Modality Bridge schema.
 
 Video uses `modalityBridgeVideoEnabled`, `modalityBridgeVideoModel`,
-`modalityBridgeVideoFrameCount`, `modalityBridgeVideoMaxVideos`, and
+`modalityBridgeVideoFrameCount`, `modalityBridgeVideoSamplingPolicy`,
+`modalityBridgeVideoMaxVideos`, and
 `modalityBridgeVideoTimeout`, plus the shared `modalityBridgeCache*` settings.
 It is disabled by default because FFmpeg/ffprobe are optional operational
 dependencies and frame captioning adds latency and model cost.

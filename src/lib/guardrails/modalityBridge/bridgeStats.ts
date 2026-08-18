@@ -153,8 +153,12 @@ export function buildModalityBridgeHeader(results: GuardrailMetaEntry[]): string
       meta.videosProcessed > 0 &&
       !meta.rerouted
     ) {
+      const sampling =
+        meta.samplingPolicyRequested === "scene_aware"
+          ? `;sampling=${headerModelToken(meta.samplingPolicyEffective ?? "uniform")};candidates=${typeof meta.samplingCandidateCount === "number" ? Math.max(0, Math.floor(meta.samplingCandidateCount)) : 0}`
+          : "";
       segments.push(
-        `video->text;model=${headerModelToken(meta.videoModel)};parts=${meta.videosProcessed}`
+        `video->text;model=${headerModelToken(meta.videoModel)};parts=${meta.videosProcessed}${sampling}`
       );
     }
   }
