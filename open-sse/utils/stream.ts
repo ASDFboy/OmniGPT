@@ -78,6 +78,7 @@ import {
   caseInsensitiveToolNameLookup,
   restoreOpenAIToolNames,
 } from "../translator/helpers/toolCallHelper.ts";
+import { restoreClaudeToolName } from "../services/claudeCodeToolRemapper.ts";
 import { normalizeFinalOpenAIStreamChunk } from "./openAIStreamChunk.ts";
 import { collectClaudeDelta } from "./streamClaudeDelta.ts";
 
@@ -576,17 +577,16 @@ function getOpenAIIntermediateChunks(value: unknown): unknown[] {
   return Array.isArray(candidate) ? candidate : [];
 }
 
-function restoreClaudePassthroughToolUseName(parsed: JsonRecord, toolNameMap: unknown): boolean {
-  if (!(toolNameMap instanceof Map)) return false;
-  if (!parsed || typeof parsed !== "object") return false;
-
+export function restoreClaudePassthroughToolUseName(parsed: JsonRecord, toolNameMap: unknown): boolean {
   const block =
     parsed.content_block && typeof parsed.content_block === "object"
       ? (parsed.content_block as JsonRecord)
       : null;
   if (!block || block.type !== "tool_use" || typeof block.name !== "string") return false;
 
-  const restoredName = caseInsensitiveToolNameLookup(block.name, toolNameMap) ?? block.name;
+  const map = toolNameMap instanceof Map ? toolNameMap : null;
+  const restoredName = restoreClaudeToolName(block.name, map);
+
   if (restoredName === block.name) return false;
   block.name = restoredName;
   return true;
