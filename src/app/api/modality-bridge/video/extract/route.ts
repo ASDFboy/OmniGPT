@@ -10,6 +10,7 @@ import {
 } from "@/lib/guardrails/videoBridgeBrokerQueue";
 import {
   extractVideoFramesFromBytes,
+  type VideoFocusBounds,
   type VideoSamplingPolicy,
 } from "@/lib/guardrails/videoBridgeRuntime";
 import { resolveModelSyncInternalBaseUrl } from "@/shared/services/modelSyncScheduler";
@@ -34,7 +35,11 @@ function invalid(message: string, status = 400, headers?: Record<string, string>
 }
 
 function parseFrameCount(url: URL): number | null {
-  if ([...url.searchParams.keys()].some((key) => !["frames", "samplingPolicy"].includes(key))) {
+  if (
+    [...url.searchParams.keys()].some(
+      (key) => !["frames", "samplingPolicy", "start", "end"].includes(key)
+    )
+  ) {
     return null;
   }
   const raw = url.searchParams.get("frames");
@@ -45,6 +50,26 @@ function parseFrameCount(url: URL): number | null {
   }
   const value = Number(raw);
   return Number.isInteger(value) && value >= 1 && value <= 16 ? value : null;
+}
+
+function parseFocusWindow(url: URL): VideoFocusBounds | null {
+  const start = url.searchParams.get("start");
+  const end = url.searchParams.get("end");
+  if (start === null && end === null) return null;
+  const parse = (value: string | null): number | undefined => {
+    if (value === null || value.length === 0) return undefined;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+  };
+  const startSeconds = parse(start);
+  const endSeconds = parse(end);
+  if (
+    (start !== null && startSeconds === undefined) ||
+    (end !== null && endSeconds === undefined)
+  ) {
+    return null;
+  }
+  return { endSeconds, startSeconds };
 }
 
 function parseSamplingPolicy(url: URL): VideoSamplingPolicy {
@@ -103,6 +128,10 @@ export async function handleVideoExtractionBrokerRequest(
   const frameCount = parseFrameCount(url);
   if (!frameCount) return invalid("Video Bridge frame count must be between 1 and 16");
   const samplingPolicy = parseSamplingPolicy(url);
+  const focusWindow = parseFocusWindow(url);
+  if (focusWindow === null && (url.searchParams.has("start") || url.searchParams.has("end"))) {
+    return invalid("Video Bridge focus window bounds are invalid");
+  }
   const declaredHeader = request.headers.get("content-length");
   const declaredLength = declaredHeader === null ? null : Number(declaredHeader);
   if (
@@ -140,6 +169,7 @@ export async function handleVideoExtractionBrokerRequest(
       () =>
         extractFrames(bytes, {
           frameCount,
+          focusWindow,
           maxDurationSeconds: MAX_DURATION_SECONDS,
           samplingPolicy,
           signal,

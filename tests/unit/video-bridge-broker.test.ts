@@ -93,7 +93,12 @@ test("broker carries the explicit scene-aware policy and preserves effective fal
   let requestedUrl = "";
   const response = await extractVideoFramesViaBroker(
     Buffer.from("safe-video"),
-    { frameCount: 2, samplingPolicy: "scene_aware", timeoutMs: 5_000 },
+    {
+      focusWindow: { endSeconds: 8, startSeconds: 2 },
+      frameCount: 2,
+      samplingPolicy: "scene_aware",
+      timeoutMs: 5_000,
+    },
     {
       fetchImpl: async (input) => {
         requestedUrl = String(input);
@@ -111,6 +116,8 @@ test("broker carries the explicit scene-aware policy and preserves effective fal
   );
 
   assert.equal(new URL(requestedUrl).searchParams.get("samplingPolicy"), "scene_aware");
+  assert.equal(new URL(requestedUrl).searchParams.get("start"), "2");
+  assert.equal(new URL(requestedUrl).searchParams.get("end"), "8");
   assert.deepEqual(response.sampling, {
     candidateCount: 0,
     policyEffective: "uniform",

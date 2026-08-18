@@ -5508,6 +5508,28 @@ paths:
             type: integer
             minimum: 1
             maximum: 16
+        - in: query
+          name: samplingPolicy
+          required: false
+          description: Optional deterministic sampling policy. Scene-aware detection falls back to uniform sampling on detector failure.
+          schema:
+            type: string
+            enum: [uniform, scene_aware]
+            default: uniform
+        - in: query
+          name: start
+          required: false
+          description: Optional focus-window start in seconds. The broker clamps it to the media duration.
+          schema:
+            type: number
+            minimum: 0
+        - in: query
+          name: end
+          required: false
+          description: Optional focus-window end in seconds. It must be greater than the normalized start.
+          schema:
+            type: number
+            minimum: 0
       requestBody:
         required: true
         content:

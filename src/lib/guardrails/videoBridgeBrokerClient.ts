@@ -8,7 +8,11 @@ import {
   buildVideoBridgeBrokerHeaders,
   isVideoBridgeBrokerInternalRequest,
 } from "./videoBridgeBrokerAuth";
-import type { VideoSamplingMetadata, VideoSamplingPolicy } from "./videoBridgeRuntime";
+import type {
+  VideoFocusBounds,
+  VideoSamplingMetadata,
+  VideoSamplingPolicy,
+} from "./videoBridgeRuntime";
 
 export {
   VIDEO_BRIDGE_BROKER_PATH,
@@ -29,6 +33,7 @@ export interface BrokerExtractionResult {
 
 export interface BrokerExtractionOptions {
   frameCount: number;
+  focusWindow?: VideoFocusBounds | null;
   samplingPolicy?: VideoSamplingPolicy;
   signal?: AbortSignal;
   timeoutMs: number;
@@ -130,6 +135,12 @@ export async function extractVideoFramesViaBroker(
   url.searchParams.set("frames", String(options.frameCount));
   if (options.samplingPolicy === "scene_aware") {
     url.searchParams.set("samplingPolicy", options.samplingPolicy);
+  }
+  if (options.focusWindow?.startSeconds !== undefined) {
+    url.searchParams.set("start", String(options.focusWindow.startSeconds));
+  }
+  if (options.focusWindow?.endSeconds !== undefined) {
+    url.searchParams.set("end", String(options.focusWindow.endSeconds));
   }
   const fetchImpl = dependencies.fetchImpl ?? fetchModelSyncInternal;
   const timeoutSignal = AbortSignal.timeout(options.timeoutMs);

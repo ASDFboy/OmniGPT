@@ -313,7 +313,13 @@ never receives a URL. Sampling is `uniform` by default. The optional
 validated local stream, selects bounded `showinfo` scene timestamps, and falls
 back deterministically to the same uniform midpoints on detector failure,
 timeout, malformed output, or an empty candidate set. The hard 16-frame cap is
-applied after selection in every policy.
+applied after selection in every policy. A caller may optionally provide a
+finite focus window (`start`/`end` seconds); bounds are clamped to the media
+duration, reversed or non-finite windows are rejected, and uniform/scene-aware
+sampling is performed only inside the normalized interval. The resulting
+window is included in sampling metadata and in the untrusted description
+prefix so downstream models can distinguish a focused excerpt from the full
+timeline.
 Each frame is limited to 4 MiB, all raw frames together to 23 MiB, and the
 serialized broker response to 32 MiB. A private temporary directory is removed
 in `finally`. OmniRoute does not bundle FFmpeg and does not accept a custom

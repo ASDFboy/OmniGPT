@@ -33,8 +33,19 @@ export type VideoSamplingPolicy = "uniform" | "scene_aware";
 
 export interface VideoSamplingMetadata {
   candidateCount: number;
+  focusWindow?: VideoFocusWindow;
   policyEffective: VideoSamplingPolicy;
   policyRequested: VideoSamplingPolicy;
+}
+
+export interface VideoFocusBounds {
+  endSeconds?: number;
+  startSeconds?: number;
+}
+
+export interface VideoFocusWindow {
+  endSeconds: number;
+  startSeconds: number;
 }
 
 export interface VideoFrameFileList extends Array<VideoFrameFile> {
@@ -56,6 +67,28 @@ export interface ExtractedVideoFrame {
 
 export interface VideoSamplingDecision extends VideoSamplingMetadata {
   timestamps: number[];
+}
+
+export function resolveVideoFocusWindow(
+  durationSeconds: number,
+  bounds: VideoFocusBounds
+): VideoFocusWindow | null {
+  if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+    throw new Error("Video focus window requires a positive duration");
+  }
+  if (bounds.startSeconds === undefined && bounds.endSeconds === undefined) return null;
+  if (
+    (bounds.startSeconds !== undefined && !Number.isFinite(bounds.startSeconds)) ||
+    (bounds.endSeconds !== undefined && !Number.isFinite(bounds.endSeconds))
+  ) {
+    throw new Error("Video focus window bounds must be finite");
+  }
+  const startSeconds = Math.max(0, Math.min(durationSeconds, bounds.startSeconds ?? 0));
+  const endSeconds = Math.max(0, Math.min(durationSeconds, bounds.endSeconds ?? durationSeconds));
+  if (endSeconds <= startSeconds) {
+    throw new Error("Video focus window must have a positive duration");
+  }
+  return { endSeconds, startSeconds };
 }
 
 export const VIDEO_FRAME_MAX_BYTES = 4 * 1024 * 1024;
@@ -205,22 +238,31 @@ export function calculateSamplingDecision(
   durationSeconds: number,
   requestedFrameCount: number,
   policy: VideoSamplingPolicy,
-  sceneCandidates: readonly number[] = []
+  sceneCandidates: readonly number[] = [],
+  focusWindow: VideoFocusWindow | null = null
 ): VideoSamplingDecision {
-  const uniform = calculateFrameTimestamps(durationSeconds, requestedFrameCount);
+  const startSeconds = focusWindow?.startSeconds ?? 0;
+  const endSeconds = focusWindow?.endSeconds ?? durationSeconds;
+  const uniform = calculateFrameTimestamps(endSeconds - startSeconds, requestedFrameCount).map(
+    (timestamp) => timestamp + startSeconds
+  );
   if (policy !== "scene_aware") {
     return {
       candidateCount: 0,
+      ...(focusWindow ? { focusWindow } : {}),
       policyEffective: "uniform",
       policyRequested: "uniform",
       timestamps: uniform,
     };
   }
 
-  const candidates = normalizeSceneCandidates(durationSeconds, sceneCandidates);
+  const candidates = normalizeSceneCandidates(durationSeconds, sceneCandidates).filter(
+    (timestamp) => timestamp >= startSeconds && timestamp < endSeconds
+  );
   if (candidates.length === 0) {
     return {
       candidateCount: 0,
+      ...(focusWindow ? { focusWindow } : {}),
       policyEffective: "uniform",
       policyRequested: "scene_aware",
       timestamps: uniform,
@@ -252,6 +294,7 @@ export function calculateSamplingDecision(
   }
   return {
     candidateCount: candidates.length,
+    ...(focusWindow ? { focusWindow } : {}),
     policyEffective: "scene_aware",
     policyRequested: "scene_aware",
     timestamps: selected,
@@ -423,6 +466,7 @@ export async function extractFramesFromLocalVideo(
   options: {
     durationSeconds: number;
     frameCount: number;
+    focusWindow?: VideoFocusBounds | null;
     runner?: VideoCommandRunner;
     samplingPolicy?: VideoSamplingPolicy;
     signal?: AbortSignal;
@@ -448,11 +492,15 @@ export async function extractFramesFromLocalVideo(
       sceneCandidates = [];
     }
   }
+  const focusWindow = options.focusWindow
+    ? resolveVideoFocusWindow(options.durationSeconds, options.focusWindow)
+    : null;
   const sampling = calculateSamplingDecision(
     options.durationSeconds,
     options.frameCount,
     policy,
-    sceneCandidates
+    sceneCandidates,
+    focusWindow
   );
   if (!Number.isInteger(options.streamIndex) || options.streamIndex < 0) {
     throw new Error("Video stream index is invalid");
@@ -461,6 +509,7 @@ export async function extractFramesFromLocalVideo(
   const frames = [] as VideoFrameFileList;
   frames.sampling = {
     candidateCount: sampling.candidateCount,
+    ...(sampling.focusWindow ? { focusWindow: sampling.focusWindow } : {}),
     policyEffective: sampling.policyEffective,
     policyRequested: sampling.policyRequested,
   };
@@ -540,6 +589,7 @@ export async function extractVideoFramesFromBytes(
   bytes: Uint8Array,
   options: {
     frameCount: number;
+    focusWindow?: VideoFocusBounds | null;
     maxDurationSeconds: number;
     runner?: VideoCommandRunner;
     samplingPolicy?: VideoSamplingPolicy;
@@ -567,6 +617,7 @@ export async function extractVideoFramesFromBytes(
     const frameFiles = await extractFramesFromLocalVideo(inputPath, framesDirectory, {
       durationSeconds: metadata.durationSeconds,
       frameCount: options.frameCount,
+      focusWindow: options.focusWindow,
       runner: options.runner,
       samplingPolicy: options.samplingPolicy,
       signal: options.signal,

@@ -56,6 +56,8 @@ interface VideoResultCacheMetadata {
   framesExtracted: number;
   framesUsed: number;
   dedupDropped?: number;
+  focusStartSeconds?: number;
+  focusEndSeconds?: number;
   samplingCandidateCount?: number;
   samplingPolicyEffective?: "uniform" | "scene_aware";
   samplingPolicyRequested?: "uniform" | "scene_aware";
@@ -169,6 +171,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
     let totalCacheHits = 0;
     let totalSamplingCandidateCount = 0;
     let totalDedupDropped = 0;
+    let focusWindowsApplied = 0;
     let samplingPolicyEffective: "uniform" | "scene_aware" = "uniform";
     let failures = 0;
 
@@ -188,6 +191,8 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
                 strategy: runtime.samplingPolicy,
                 frameCount: runtime.frameCount,
                 maxVideos: runtime.maxVideos,
+                focusEndSeconds: part.focusWindow?.endSeconds ?? null,
+                focusStartSeconds: part.focusWindow?.startSeconds ?? null,
                 version: VIDEO_BRIDGE_RESULT_CACHE_VERSION,
               })
             : null;
@@ -210,6 +215,12 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
             totalFramesExtracted += meta.framesExtracted;
             totalFramesUsed += meta.framesUsed;
             totalDedupDropped += meta.dedupDropped ?? 0;
+            if (
+              typeof meta.focusStartSeconds === "number" ||
+              typeof meta.focusEndSeconds === "number"
+            ) {
+              focusWindowsApplied += 1;
+            }
             totalDurationSeconds += meta.durationSeconds;
             totalSamplingCandidateCount += meta.samplingCandidateCount ?? 0;
             if (meta.samplingPolicyEffective === "scene_aware") {
@@ -252,6 +263,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
         totalFramesExtracted += described.framesExtracted ?? described.framesUsed;
         totalFramesUsed += described.framesUsed;
         totalDedupDropped += described.dedupDropped ?? 0;
+        if (described.focusWindow) focusWindowsApplied += 1;
         totalDurationSeconds += described.durationSeconds;
         totalSamplingCandidateCount += described.sampling?.candidateCount ?? 0;
         if (described.sampling?.policyEffective === "scene_aware") {
@@ -278,6 +290,8 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
               framesExtracted: described.framesExtracted ?? described.framesUsed,
               framesUsed: described.framesUsed,
               dedupDropped: described.dedupDropped ?? 0,
+              focusEndSeconds: described.focusWindow?.endSeconds,
+              focusStartSeconds: described.focusWindow?.startSeconds,
               cacheBytes: resultCacheBytes,
               modelUsed: described.modelUsed ?? selectedModel,
               samplingCandidateCount: described.sampling?.candidateCount ?? 0,
@@ -348,6 +362,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
         framesRequested: totalFramesRequested,
         framesUsed: totalFramesUsed,
         dedupDropped: totalDedupDropped,
+        focusWindowsApplied,
         samplingCandidateCount: totalSamplingCandidateCount,
         samplingPolicyEffective,
         samplingPolicyRequested: runtime.samplingPolicy,
@@ -379,6 +394,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
       {
         frameCount: runtime.frameCount,
         samplingPolicy: runtime.samplingPolicy,
+        focusWindow: part.focusWindow,
         signal,
         timeoutMs: runtime.timeoutMs,
       },
