@@ -55,6 +55,7 @@ interface VideoResultCacheMetadata {
   framesRequested: number;
   framesExtracted: number;
   framesUsed: number;
+  dedupDropped?: number;
   samplingCandidateCount?: number;
   samplingPolicyEffective?: "uniform" | "scene_aware";
   samplingPolicyRequested?: "uniform" | "scene_aware";
@@ -91,6 +92,8 @@ function isVideoResultCacheMetadata(value: unknown): value is VideoResultCacheMe
     typeof record.framesRequested === "number" &&
     typeof record.framesExtracted === "number" &&
     typeof record.framesUsed === "number" &&
+    (record.dedupDropped === undefined ||
+      (typeof record.dedupDropped === "number" && record.dedupDropped >= 0)) &&
     typeof record.cacheBytes === "number" &&
     typeof record.modelUsed === "string" &&
     (record.samplingCandidateCount === undefined ||
@@ -165,6 +168,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
     let totalDurationSeconds = 0;
     let totalCacheHits = 0;
     let totalSamplingCandidateCount = 0;
+    let totalDedupDropped = 0;
     let samplingPolicyEffective: "uniform" | "scene_aware" = "uniform";
     let failures = 0;
 
@@ -205,6 +209,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
             totalFramesRequested += meta.framesRequested;
             totalFramesExtracted += meta.framesExtracted;
             totalFramesUsed += meta.framesUsed;
+            totalDedupDropped += meta.dedupDropped ?? 0;
             totalDurationSeconds += meta.durationSeconds;
             totalSamplingCandidateCount += meta.samplingCandidateCount ?? 0;
             if (meta.samplingPolicyEffective === "scene_aware") {
@@ -246,6 +251,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
         totalFramesRequested += described.framesRequested;
         totalFramesExtracted += described.framesExtracted ?? described.framesUsed;
         totalFramesUsed += described.framesUsed;
+        totalDedupDropped += described.dedupDropped ?? 0;
         totalDurationSeconds += described.durationSeconds;
         totalSamplingCandidateCount += described.sampling?.candidateCount ?? 0;
         if (described.sampling?.policyEffective === "scene_aware") {
@@ -271,6 +277,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
               framesRequested: described.framesRequested,
               framesExtracted: described.framesExtracted ?? described.framesUsed,
               framesUsed: described.framesUsed,
+              dedupDropped: described.dedupDropped ?? 0,
               cacheBytes: resultCacheBytes,
               modelUsed: described.modelUsed ?? selectedModel,
               samplingCandidateCount: described.sampling?.candidateCount ?? 0,
@@ -340,6 +347,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
         framesExtracted: totalFramesExtracted,
         framesRequested: totalFramesRequested,
         framesUsed: totalFramesUsed,
+        dedupDropped: totalDedupDropped,
         samplingCandidateCount: totalSamplingCandidateCount,
         samplingPolicyEffective,
         samplingPolicyRequested: runtime.samplingPolicy,

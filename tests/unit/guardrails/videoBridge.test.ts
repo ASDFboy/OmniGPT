@@ -100,6 +100,7 @@ test("preserves scene-aware sampler metadata in guardrail meta and the transpare
         framesRequested: 4,
         framesExtracted: 4,
         framesUsed: 4,
+        dedupDropped: 1,
         sampling: {
           candidateCount: 3,
           policyEffective: "scene_aware",
@@ -113,6 +114,7 @@ test("preserves scene-aware sampler metadata in guardrail meta and the transpare
   assert.equal(result.meta?.samplingPolicyRequested, "scene_aware");
   assert.equal(result.meta?.samplingPolicyEffective, "scene_aware");
   assert.equal(result.meta?.samplingCandidateCount, 3);
+  assert.equal(result.meta?.dedupDropped, 1);
   assert.equal(
     buildModalityBridgeHeader([{ guardrail: "video-bridge", meta: result.meta }]),
     "video->text;model=openai/gpt-4o-mini;parts=1;sampling=scene_aware;candidates=3"

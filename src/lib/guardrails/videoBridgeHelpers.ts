@@ -111,6 +111,81 @@ export interface DescribedVideo {
   framesUsed: number;
   modelUsed?: string;
   sampling?: VideoSamplingMetadata;
+  dedupDropped?: number;
+}
+
+export interface VideoCaptionFrame {
+  dataUri: string;
+  timestampSeconds: number;
+}
+
+export interface VideoFrameDeduplicationResult {
+  dropped: number;
+  frames: VideoCaptionFrame[];
+}
+
+type VideoFrameComparator = (
+  previous: VideoCaptionFrame,
+  current: VideoCaptionFrame
+) => Promise<number>;
+
+const VIDEO_DEDUP_THRESHOLD = 0.04;
+
+async function compareVideoFramesByGrayscale(
+  previous: VideoCaptionFrame,
+  current: VideoCaptionFrame
+): Promise<number> {
+  const decode = (dataUri: string): Buffer => {
+    const match = /^data:image\/jpeg;base64,([A-Za-z0-9+/=]+)$/i.exec(dataUri);
+    if (!match) throw new Error("Video frame is not a JPEG data URI");
+    return Buffer.from(match[1], "base64");
+  };
+  const { default: sharp } = await import("sharp");
+  const [left, right] = await Promise.all(
+    [previous, current].map((frame) =>
+      sharp(decode(frame.dataUri)).resize(16, 16, { fit: "fill" }).greyscale().raw().toBuffer()
+    )
+  );
+  if (left.length !== right.length || left.length === 0) {
+    throw new Error("Video frame comparison returned invalid dimensions");
+  }
+  let difference = 0;
+  for (let index = 0; index < left.length; index++) {
+    difference += Math.abs(left[index] - right[index]) / 255;
+  }
+  return difference / left.length;
+}
+
+export async function deduplicateVideoFrames(
+  frames: readonly VideoCaptionFrame[],
+  options: { compare?: VideoFrameComparator; threshold?: number } = {}
+): Promise<VideoFrameDeduplicationResult> {
+  if (frames.length < 2) return { dropped: 0, frames: [...frames] };
+  const compare = options.compare ?? compareVideoFramesByGrayscale;
+  const threshold =
+    typeof options.threshold === "number" && Number.isFinite(options.threshold)
+      ? Math.max(0, Math.min(1, options.threshold))
+      : VIDEO_DEDUP_THRESHOLD;
+  const kept: VideoCaptionFrame[] = [frames[0]];
+  let dropped = 0;
+  for (let index = 1; index < frames.length; index++) {
+    const current = frames[index];
+    if (index === frames.length - 1) {
+      kept.push(current);
+      continue;
+    }
+    try {
+      const distance = await compare(kept[kept.length - 1], current);
+      if (Number.isFinite(distance) && distance <= threshold) {
+        dropped += 1;
+        continue;
+      }
+    } catch {
+      // A malformed or unsupported frame must never reduce visual coverage.
+    }
+    kept.push(current);
+  }
+  return { dropped, frames: kept };
 }
 
 function normalizeBase64(base64: string): string {
@@ -223,8 +298,9 @@ export async function describeVideoPart(
       timeoutMs: options.timeoutMs,
     });
 
+    const deduplicated = await deduplicateVideoFrames(extracted.frames);
     const descriptions: string[] = [];
-    for (const frame of extracted.frames) {
+    for (const frame of deduplicated.frames) {
       if (signal.aborted) throw new Error("Video Bridge processing timed out or was aborted");
       try {
         const caption = (await captionFrame(frame.dataUri, frame.timestampSeconds, signal)).trim();
@@ -247,6 +323,7 @@ export async function describeVideoPart(
       framesExtracted: extracted.frames.length,
       framesRequested: options.frameCount,
       framesUsed: descriptions.length,
+      dedupDropped: deduplicated.dropped,
       sampling: extracted.sampling,
     };
   } catch (error) {

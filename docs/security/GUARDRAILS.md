@@ -317,7 +317,11 @@ applied after selection in every policy.
 Each frame is limited to 4 MiB, all raw frames together to 23 MiB, and the
 serialized broker response to 32 MiB. A private temporary directory is removed
 in `finally`. OmniRoute does not bundle FFmpeg and does not accept a custom
-executable path.
+executable path. Before captioning, the bridge applies a conservative visual
+deduplication pass: each JPEG is reduced to a 16×16 grayscale buffer and is
+compared only with the last frame retained. The first and final timeline frames
+are always retained; comparator or decoder errors fail open and keep coverage.
+The output metadata reports how many frames were dropped.
 
 Frames are captioned sequentially with the configured Video model. An empty
 Video override inherits the Vision setting; if both are empty, the Vision
