@@ -38,6 +38,28 @@ function combineModelIdentities(models: ReadonlySet<string>, fallback: string): 
   return "mixed";
 }
 
+const VIDEO_BRIDGE_RESULT_CACHE_VERSION = "v2";
+const VIDEO_BRIDGE_RESULT_CACHE_POLICY = "default";
+const VIDEO_BRIDGE_RESULT_CACHE_STRATEGY = "uniform";
+const VIDEO_BRIDGE_RESULT_CACHE_KEY_KIND = "video-result-v2";
+
+interface VideoResultCacheMetadata {
+  cacheVersion: string;
+  policyVersion: string;
+  extractorVersion: string;
+  strategy: string;
+  model: string;
+  prompt: string;
+  frameCount: number;
+  maxVideos: number;
+  durationSeconds: number;
+  framesRequested: number;
+  framesExtracted: number;
+  framesUsed: number;
+  cacheBytes: number;
+  modelUsed: string;
+}
+
 export interface VideoBridgeDependencies {
   getSettings?: () => Promise<Record<string, unknown>>;
   getCapabilities?: (model: string) => { supportsVideo: boolean | null };
@@ -49,6 +71,27 @@ export interface VideoBridgeDependencies {
     config: VisionModelConfig,
     apiKey?: string
   ) => Promise<string>;
+}
+
+function isVideoResultCacheMetadata(value: unknown): value is VideoResultCacheMetadata {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  return (
+    typeof record.cacheVersion === "string" &&
+    typeof record.policyVersion === "string" &&
+    typeof record.extractorVersion === "string" &&
+    typeof record.strategy === "string" &&
+    typeof record.model === "string" &&
+    typeof record.prompt === "string" &&
+    typeof record.frameCount === "number" &&
+    typeof record.maxVideos === "number" &&
+    typeof record.durationSeconds === "number" &&
+    typeof record.framesRequested === "number" &&
+    typeof record.framesExtracted === "number" &&
+    typeof record.framesUsed === "number" &&
+    typeof record.cacheBytes === "number" &&
+    typeof record.modelUsed === "string"
+  );
 }
 
 export class VideoBridgeGuardrail extends BaseGuardrail {
@@ -92,6 +135,7 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
     const visionRuntime = resolveVisionBridgeRuntimeSettings(persisted);
     const configuredModel = runtime.model.trim() || visionRuntime.model.trim();
     const routingPlanModel = configuredModel || "auto";
+    const cache = runtime.cacheEnabled ? getSharedBridgeCacheFor(runtime) : null;
     const successfulModels = new Set<string>();
     let selectedModelPromise: Promise<string | null> | null = null;
     const selectVideoModel = (): Promise<string | null> => {
@@ -115,31 +159,115 @@ export class VideoBridgeGuardrail extends BaseGuardrail {
     const attemptedParts = parts.slice(0, runtime.maxVideos);
     for (let index = 0; index < attemptedParts.length; index++) {
       if (context.signal?.aborted) throw new Error("Video Bridge processing was aborted");
-      const part = parts[index];
+      const part = attemptedParts[index];
       const attemptStartedAt = Date.now();
       try {
+        const selectedModel = await selectVideoModel();
+        const resultCacheKey =
+          cache && selectedModel
+            ? bridgeCacheKey(part.ref, visionRuntime.prompt, selectedModel, {
+                kind: VIDEO_BRIDGE_RESULT_CACHE_KEY_KIND,
+                extractorVersion: VIDEO_BRIDGE_RESULT_CACHE_VERSION,
+                policyVersion: VIDEO_BRIDGE_RESULT_CACHE_POLICY,
+                strategy: VIDEO_BRIDGE_RESULT_CACHE_STRATEGY,
+                frameCount: runtime.frameCount,
+                maxVideos: runtime.maxVideos,
+                version: VIDEO_BRIDGE_RESULT_CACHE_VERSION,
+              })
+            : null;
+        const cachedResult = resultCacheKey ? cache.getEntry(resultCacheKey) : null;
+        if (cachedResult && isVideoResultCacheMetadata(cachedResult.metadata)) {
+          const meta = cachedResult.metadata;
+          const matchPolicy =
+            meta.cacheVersion === VIDEO_BRIDGE_RESULT_CACHE_VERSION &&
+            meta.policyVersion === VIDEO_BRIDGE_RESULT_CACHE_POLICY &&
+            meta.extractorVersion === VIDEO_BRIDGE_RESULT_CACHE_VERSION &&
+            meta.strategy === VIDEO_BRIDGE_RESULT_CACHE_STRATEGY &&
+            meta.frameCount === runtime.frameCount &&
+            meta.maxVideos === runtime.maxVideos &&
+            meta.model === selectedModel &&
+            meta.prompt === visionRuntime.prompt;
+          if (matchPolicy) {
+            const elapsed = Date.now() - attemptStartedAt;
+            descriptions.push(cachedResult.value);
+            totalFramesRequested += meta.framesRequested;
+            totalFramesExtracted += meta.framesExtracted;
+            totalFramesUsed += meta.framesUsed;
+            totalDurationSeconds += meta.durationSeconds;
+            if (cachedResult.producerModel) {
+              successfulModels.add(cachedResult.producerModel);
+            }
+            if (meta.modelUsed) {
+              successfulModels.add(meta.modelUsed);
+            }
+            recordBridgeUse("video", {
+              latencyMs: elapsed,
+              resultCacheHit: true,
+              resultCacheBytes: meta.cacheBytes,
+              resultCacheLatencyMs: elapsed,
+            });
+            continue;
+          }
+          cache.delete(resultCacheKey);
+        } else if (cachedResult) {
+          cache.delete(resultCacheKey);
+        }
+        const cacheStartAt = Date.now();
         const described = this.deps.describePart
           ? await this.deps.describePart(part)
           : await this.describeWithVisionModel(
               part,
               runtime,
               visionRuntime,
-              await selectVideoModel(),
+              selectedModel,
               context.signal
             );
         if (context.signal?.aborted) throw new Error("Video Bridge processing was aborted");
         if (described.modelUsed) successfulModels.add(described.modelUsed);
         const videoCacheHits = described.cacheHits ?? 0;
+        const processingLatencyMs = Date.now() - attemptStartedAt;
         descriptions.push(described.description);
         totalFramesRequested += described.framesRequested;
         totalFramesExtracted += described.framesExtracted ?? described.framesUsed;
         totalFramesUsed += described.framesUsed;
         totalDurationSeconds += described.durationSeconds;
         totalCacheHits += videoCacheHits;
-        recordBridgeUse("video", {
-          cacheHits: videoCacheHits,
-          latencyMs: Date.now() - attemptStartedAt,
-        });
+        if (resultCacheKey && selectedModel) {
+          const resultCacheBytes = Buffer.byteLength(described.description, "utf8");
+          const cacheLatencyMs = Date.now() - cacheStartAt;
+          cache.setEntry(resultCacheKey, {
+            value: described.description,
+            producerModel: described.modelUsed ?? selectedModel,
+            metadata: {
+              cacheVersion: VIDEO_BRIDGE_RESULT_CACHE_VERSION,
+              policyVersion: VIDEO_BRIDGE_RESULT_CACHE_POLICY,
+              extractorVersion: VIDEO_BRIDGE_RESULT_CACHE_VERSION,
+              strategy: VIDEO_BRIDGE_RESULT_CACHE_STRATEGY,
+              model: selectedModel,
+              prompt: visionRuntime.prompt,
+              frameCount: runtime.frameCount,
+              maxVideos: runtime.maxVideos,
+              durationSeconds: described.durationSeconds,
+              framesRequested: described.framesRequested,
+              framesExtracted: described.framesExtracted ?? described.framesUsed,
+              framesUsed: described.framesUsed,
+              cacheBytes: resultCacheBytes,
+              modelUsed: described.modelUsed ?? selectedModel,
+            },
+          });
+          recordBridgeUse("video", {
+            cacheHits: videoCacheHits,
+            latencyMs: processingLatencyMs,
+            resultCacheBytes,
+            resultCacheHit: false,
+            resultCacheLatencyMs: cacheLatencyMs,
+          });
+        } else {
+          recordBridgeUse("video", {
+            cacheHits: videoCacheHits,
+            latencyMs: processingLatencyMs,
+          });
+        }
       } catch (error) {
         if (context.signal?.aborted) throw new Error("Video Bridge processing was aborted");
         failures += 1;

@@ -317,6 +317,7 @@ test("client abort between videos stops processing and never stubs or falls back
 
 test("real Video Bridge cache hit avoids a second model call and records the hit", async () => {
   let modelCalls = 0;
+  const beforeStats = getBridgeStats().video;
   const bridge = new VideoBridgeGuardrail({
     deps: {
       getSettings: async () => ({
@@ -343,12 +344,22 @@ test("real Video Bridge cache hit avoids a second model call and records the hit
   const second = await bridge.preCall(payload(), {});
   assert.equal(modelCalls, 1);
   assert.equal(first.meta?.cacheHits, 0);
-  assert.equal(second.meta?.cacheHits, 1);
+  assert.equal(second.meta?.cacheHits, 0);
+  const afterStats = getBridgeStats().video;
+  const firstTextPart = (first.modifiedPayload as ReturnType<typeof payload>).messages[0]
+    .content[0];
+  assert.equal(afterStats.resultCacheHits - beforeStats.resultCacheHits, 1);
+  assert.equal(
+    afterStats.resultCacheBytes - beforeStats.resultCacheBytes,
+    Buffer.byteLength(String((firstTextPart as { text: string }).text), "utf8")
+  );
+  assert.equal(afterStats.resultCacheLatencyMs - beforeStats.resultCacheLatencyMs >= 0, true);
 });
 
 test("real primary failure reports and caches the successful fallback model identity", async () => {
   const primary = "openai/gpt-4o-mini";
   const fallback = "anthropic/claude-fable-5";
+  const beforeStats = getBridgeStats().video;
   const attemptedModels: string[] = [];
   const fetchImpl: typeof fetch = async (_input, init) => {
     const body = JSON.parse(String(init?.body)) as { model: string };
@@ -393,15 +404,16 @@ test("real primary failure reports and caches the successful fallback model iden
   assert.deepEqual(attemptedModels, [primary, fallback]);
   assert.equal(first.meta?.videoModel, fallback, "meta must name the successful fallback");
   assert.equal(second.meta?.videoModel, fallback, "cache hit must retain the producer identity");
-  assert.equal(second.meta?.cacheHits, 1);
+  assert.equal(second.meta?.cacheHits, 0);
+  const deltaResultCacheHits = getBridgeStats().video.resultCacheHits - beforeStats.resultCacheHits;
+  assert.equal(deltaResultCacheHits >= 1, true);
   assert.equal(
     buildModalityBridgeHeader([{ guardrail: "video-bridge", meta: second.meta }]),
     `video->text;model=${fallback};parts=1`
   );
 });
 
-test("cache keys miss on timestamp, prompt, and effective model changes; failures are not cached", async () => {
-  let timestamp = 0.25;
+test("cache keys miss on prompt and effective model changes; failures are not cached", async () => {
   let prompt = "prompt-a-9760";
   let selectedModel = "openai/gpt-4o-mini";
   let modelCalls = 0;
@@ -420,7 +432,7 @@ test("cache keys miss on timestamp, prompt, and effective model changes; failure
       selectVisionModel: async () => selectedModel,
       extractFrames: async () => ({
         durationSeconds: 1,
-        frames: [{ timestampSeconds: timestamp, dataUri: "data:image/jpeg;base64,MISS9760" }],
+        frames: [{ timestampSeconds: 0.25, dataUri: "data:image/jpeg;base64,MISS9760" }],
       }),
       callVisionModel: async () => {
         modelCalls += 1;
@@ -434,13 +446,17 @@ test("cache keys miss on timestamp, prompt, and effective model changes; failure
   fail = false;
   await bridge.preCall(payload(), {});
   assert.equal(modelCalls, 2, "failed captions must not be cached");
-  timestamp = 0.5;
+  const hitWithSameSettings = await bridge.preCall(payload(), {});
+  assert.equal(modelCalls, 2, "result cache must reuse after a success");
+  assert.equal(hitWithSameSettings.meta?.cacheHits, 0);
   await bridge.preCall(payload(), {});
+  assert.equal(modelCalls, 2, "frame extraction options did not change on this path");
   prompt = "prompt-b-9760";
   await bridge.preCall(payload(), {});
+  assert.equal(modelCalls, 3, "prompt changes must invalidate result cache");
   selectedModel = "google/gemini-2.5-flash";
   await bridge.preCall(payload(), {});
-  assert.equal(modelCalls, 5);
+  assert.equal(modelCalls, 4, "effective model changes must invalidate result cache");
 });
 
 test("FFmpeg ENOENT is sanitized and counts only as a failed attempt, never a bridged success", async () => {
