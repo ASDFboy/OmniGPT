@@ -1,7 +1,7 @@
 ---
 title: "Codex CLI — Configuration with OmniRoute"
-version: 3.8.49
-lastUpdated: 2026-08-01
+version: 3.8.50
+lastUpdated: 2026-08-18
 ---
 
 # Codex CLI — Configuration with OmniRoute

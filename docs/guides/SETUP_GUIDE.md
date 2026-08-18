@@ -1,7 +1,7 @@
 ---
 title: "📖 Setup Guide — OmniRoute"
-version: 3.8.40
-lastUpdated: 2026-06-28
+version: 3.8.50
+lastUpdated: 2026-08-18
 ---
 
 # 📖 Setup Guide — OmniRoute

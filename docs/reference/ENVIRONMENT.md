@@ -1,7 +1,7 @@
 ---
 title: "Environment Variables Reference"
-version: 3.8.40
-lastUpdated: 2026-06-28
+version: 3.8.50
+lastUpdated: 2026-08-18
 ---
 
 # Environment Variables Reference
@@ -105,6 +105,8 @@ OmniRoute uses **SQLite** (via `better-sqlite3`) for all persistence. These vari
 | `OMNIROUTE_SPEND_MAX_BUFFER_SIZE`      | _(default in code)_  | `src/lib/spend/batchWriter.ts`                        | Max buffered spend entries before a forced flush. Raise on high-QPS deployments; lower when bounded memory matters more.                                                                                                                        |
 | `OMNIROUTE_PROXY_FETCH_DEBUG`          | _(unset)_            | `open-sse/utils/proxyFetch.ts`                        | Set to `"true"` to emit `[ProxyFetch]` debug logs on the Vercel relay path. Off by default to avoid leaking routing hints.                                                                                                                      |
 | `PROXY_LOG_INCLUDE_IPS`                | `false`              | `src/lib/proxyLogger.ts`                               | Set to `"true"` or `"1"` to include client/egress IPs and the account prefix in the verbose `[ProxyEgress]` process-log line. Kept OFF by default so the process log does not leak IPs or the account prefix.                                        |
+| `OMNIROUTE_DEBUG`                      | _(unset)_            | `bin/cli/commands/quota.mjs`                          | Set to `1` to print per-request timing diagnostics (`[omniroute] GET <path> completed in Nms`) from the CLI quota commands to stderr.                                                                                                            |
+| `OMNIROUTE_HEALTHCHECK_PATH`           | _(auto)_             | `scripts/dev/healthcheck.mjs`                         | Explicit path probed by the container health check. Unset, the probe derives it from `OMNIROUTE_BASE_PATH`; setting it opts back into the deep monitoring endpoint.                                                                              |
 | `OMNIROUTE_DEBUG_COMPLETION`           | _(unset)_            | `bin/cli/commands/completion.mjs`                    | Set to any non-empty value to emit `[omniroute completion]` diagnostics from the CLI shell-completion cache paths (read/refresh/write). Off by default — those caches fail silently so a missing/corrupt cache never breaks tab-completion.       |
 | `BATCH_RETRY_DURATION_MS`              | `86400000` (24h)     | `open-sse/services/batchProcessor.ts`                 | Maximum retry window for individual batch items (ms). Items exceeding this duration are marked failed.                                                                                                                                          |
 | `BATCH_BACKOFF_BASE_MS`                | `5000`               | `open-sse/services/batchProcessor.ts`                 | Base delay (ms) for exponential backoff on batch item retries.                                                                                                                                                                                  |
@@ -385,14 +387,27 @@ Controls how OmniRoute discovers and launches CLI sidecars (Claude Code, Codex, 
 | `CLI_CODEX_BIN`           | `codex`     | `src/shared/services/cliRuntime.ts`                 | Custom path to Codex CLI binary.                                                                                                                                               |
 | `CLI_DROID_BIN`           | `droid`     | `src/shared/services/cliRuntime.ts`                 | Custom path to Droid CLI binary.                                                                                                                                               |
 | `CLI_OPENCLAW_BIN`        | `openclaw`  | `src/shared/services/cliRuntime.ts`                 | Custom path to OpenClaw CLI binary.                                                                                                                                            |
-| `CLI_CURSOR_BIN`          | `agent`     | `src/shared/services/cliRuntime.ts`                 | Custom path to Cursor agent binary.                                                                                                                                            |
+| `CLI_CURSOR_BIN`          | `agent`, then `cursor` | `src/shared/services/cliRuntime.ts`      | Custom path to the Cursor agent binary. Without it, detection tries `agent` first and falls back to `cursor`.                                                                  |
 | `CLI_CLINE_BIN`           | `cline`     | `src/shared/services/cliRuntime.ts`                 | Custom path to Cline CLI binary.                                                                                                                                               |
 | `CLI_CONTINUE_BIN`        | `cn`        | `src/shared/services/cliRuntime.ts`                 | Custom path to Continue CLI binary.                                                                                                                                            |
 | `CLI_QODER_BIN`           | `qodercli`  | `src/shared/services/cliRuntime.ts`                 | Custom path to Qoder CLI binary.                                                                                                                                               |
 | `CLI_QWEN_BIN`            | `qwen`      | `src/shared/services/cliRuntime.ts`                 | Custom path to the Qwen Code CLI binary.                                                                                                                                       |
 | `CLI_AIDER_BIN`           | `aider`     | `src/shared/services/cliRuntime.ts`                 | Custom path to the Aider CLI binary.                                                                                                                                           |
 | `CLI_GOOSE_BIN`           | `goose`     | `src/shared/services/cliRuntime.ts`                 | Custom path to the Goose CLI binary.                                                                                                                                           |
-| `CLI_GEMINI_BIN`          | `gemini`    | `src/shared/services/cliRuntime.ts`                 | Custom path to the Google Gemini CLI binary — server-side detection/health checks only; `omniroute run gemini` resolves the `gemini` binary from `PATH`.                       |
+| `CLI_GEMINI_BIN`          | `gemini`    | `src/shared/services/cliRuntime.ts`                 | Custom path to the Google Gemini CLI binary — server-side detection/health checks only; `omniroute run gemini` resolves the `gemini` binary from the system PATH.                       |
+| `CLI_KILO_BIN`            | `kilocode`  | `src/shared/services/cliRuntime.ts`                 | Custom path to the Kilo Code CLI binary.                                                                                                                                       |
+| `CLI_OPENCODE_BIN`        | `opencode`  | `src/shared/services/cliRuntime.ts`                 | Custom path to the OpenCode CLI binary.                                                                                                                                        |
+| `CLI_HERMES_BIN`          | `hermes`    | `src/shared/services/cliRuntime.ts`                 | Custom path to the Hermes binary. Shared by both catalog entries (`hermes` and `hermes-agent`).                                                                                |
+| `CLI_FORGE_BIN`           | `forge`     | `src/shared/services/cliRuntime.ts`                 | Custom path to the ForgeCode CLI binary.                                                                                                                                       |
+| `CLI_JCODE_BIN`           | `jcode`     | `src/shared/services/cliRuntime.ts`                 | Custom path to the jcode CLI binary.                                                                                                                                           |
+| `CLI_DEEPSEEK_TUI_BIN`    | `deepseek-tui` | `src/shared/services/cliRuntime.ts`              | Custom path to the DeepSeek TUI binary.                                                                                                                                        |
+| `CLI_CODEWHALE_BIN`       | `codewhale` | `src/shared/services/cliRuntime.ts`                 | Custom path to the CodeWhale CLI binary.                                                                                                                                       |
+| `CLI_SMELT_BIN`           | `smelt`     | `src/shared/services/cliRuntime.ts`                 | Custom path to the Smelt CLI binary.                                                                                                                                           |
+| `CLI_PI_BIN`              | `pi`        | `src/shared/services/cliRuntime.ts`                 | Custom path to the Pi (pi-coding-agent) binary.                                                                                                                                |
+| `CLI_CRUSH_BIN`           | `crush`     | `src/shared/services/cliRuntime.ts`                 | Custom path to the Crush CLI binary.                                                                                                                                           |
+| `CLI_OMP_BIN`             | `omp`       | `src/shared/services/cliRuntime.ts`                 | Custom path to the Oh My Pi (`omp`) agent binary.                                                                                                                              |
+| `CLI_LETTA_BIN`           | `letta`     | `src/shared/services/cliRuntime.ts`                 | Custom path to the Letta CLI binary.                                                                                                                                           |
+| `CLI_WINDSURF_BIN`        | _(none)_    | `src/shared/services/cliRuntime.ts`                 | Custom path to the Windsurf binary. Windsurf ships **no default command** — binary detection stays disabled until this is set.                                                        |
 | `CLI_DEVIN_BIN`           | `devin`     | `open-sse/executors/devin-cli.ts`                   | Custom path to the Devin CLI binary (v3.8.0). Used by the Windsurf/Devin executor.                                                                                             |
 | `DEVIN_DESKTOP_VERSION`   | `3.6.27`    | `open-sse/executors/devin-desktop.ts`               | Devin Desktop `ide_version`. Overrides must use `x.y.z` format; invalid values fall back to the verified default.                                                            |
 | `DEVIN_DESKTOP_EXTENSION_VERSION` | `1.48.2` | `open-sse/executors/devin-desktop.ts`                | Bundled Codeium/language-server `extension_version`, distinct from Desktop `ide_version`. Overrides must use `x.y.z`; invalid values use the bundled default.                 |
@@ -926,21 +941,22 @@ Reverse-engineered session bridge for hyperagent.com (`src/shared/constants/prov
 
 ## Adobe Firefly Web Provider (Unofficial/Experimental)
 
-Chrome-driven session refresh (ARP) for the Adobe Firefly web provider (`open-sse/services/adobeFireflyChromeRuntime.ts`, `open-sse/services/adobeFireflySession.ts`, `open-sse/services/adobeFireflyClient.ts`). Optional — all defaults are tuned for a normal desktop Chrome install.
+Browser-driven session refresh for the Adobe Firefly web provider
+(`open-sse/services/adobeFireflyBrowserLogin.ts`, `open-sse/services/adobeFireflySession.ts`,
+`open-sse/services/adobeFireflyClient.ts`). Optional — all defaults are tuned for a normal
+desktop install.
+
+> **Removed in #9255.** The old CDP-attached Chrome runtime (adobeFireflyChromeRuntime.ts) was
+> replaced by a Playwright browser-login service, and its knobs no longer exist. The
+> ADOBE_FIREFLY_CHROME_ CDP_PORT / VISIBLE / HEADED / PING / FORCE_RESTART variables, plus
+> ADOBE_FIREFLY_LOGIN_WAIT_MS and ADOBE_FIREFLY_FORTER_WAIT_MS, are read nowhere in the
+> codebase — setting them has no effect.
 
 | Variable                              | Default        | Source File                                       | Description                                                                                          |
 | -------------------------------------- | ---------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `CHROME_PATH`                         | _(auto-detect)_ | `open-sse/services/adobeFireflyChromeRuntime.ts`   | Override path to the local Google Chrome binary used to drive the session refresh.                    |
-| `ADOBE_FIREFLY_CHROME_CDP_PORT`       | `9334`          | `open-sse/services/adobeFireflyChromeRuntime.ts`   | Chrome DevTools Protocol port used to attach to the managed Chrome instance.                          |
-| `ADOBE_FIREFLY_CHROME_HEADLESS`       | `0`             | `open-sse/services/adobeFireflyChromeRuntime.ts`   | Set to `1` for true headless Chrome (known-broken for generate; debug only).                          |
-| `ADOBE_FIREFLY_CHROME_VISIBLE`        | `0`             | `open-sse/services/adobeFireflyChromeRuntime.ts`   | Set to `1` to show the Chrome window on-screen for debugging.                                          |
-| `ADOBE_FIREFLY_CHROME_HEADED`         | `0`             | `open-sse/services/adobeFireflyChromeRuntime.ts`   | Legacy alias for `ADOBE_FIREFLY_CHROME_VISIBLE=1`.                                                    |
-| `ADOBE_FIREFLY_CHROME_PING`           | `0`             | `open-sse/services/adobeFireflyChromeRuntime.ts`   | Set to `1` to prove ARP with an in-page generate-async ping after warm.                                |
-| `ADOBE_FIREFLY_CHROME_FORCE_RESTART`  | `0`             | `open-sse/services/adobeFireflyChromeRuntime.ts`   | Set to `1` to force-restart the managed Chrome instance instead of reusing it.                         |
+| `ADOBE_FIREFLY_CHROME_HEADLESS`       | `0`             | `open-sse/services/adobeFireflyBrowserLogin.ts`    | Set to `1` for true headless Chrome (known-broken for generate; debug only).                          |
 | `ADOBE_FIREFLY_BROWSER_REFRESH`       | `1`             | `open-sse/services/adobeFireflySession.ts`         | Proactive browser warm opt-in/out. `0` disables proactive warm (mid-batch 408 recovery still applies). |
 | `ADOBE_FIREFLY_SESSION_DISK`          | `1`             | `open-sse/services/adobeFireflySession.ts`         | Set to `0` to disable persisting the Adobe Firefly session to disk.                                    |
-| `ADOBE_FIREFLY_LOGIN_WAIT_MS`         | `300000`        | `open-sse/services/adobeFireflyChromeRuntime.ts`   | Max wait (ms) for interactive Adobe login to complete during a browser warm.                           |
-| `ADOBE_FIREFLY_FORTER_WAIT_MS`        | `45000`         | `open-sse/services/adobeFireflyChromeRuntime.ts`   | Max wait (ms) for Forter anti-bot tokens to settle before continuing.                                  |
 | `ADOBE_FIREFLY_MIN_SUBMIT_GAP_MS`     | _(unset)_       | `open-sse/services/adobeFireflySession.ts`         | Minimum gap (ms) enforced between successive submits, overriding the built-in default.                |
 | `ADOBE_FIREFLY_BATCH_EXTRA_GAP_MS`    | _(unset)_       | `open-sse/services/adobeFireflySession.ts`         | Extra gap (ms) added after a successful batch, overriding the built-in default.                       |
 | `ADOBE_FIREFLY_SUBMIT_BASE_DELAY_MS`  | _(unset)_       | `open-sse/services/adobeFireflyClient.ts`          | Base delay (ms) before submitting a generation request, overriding the built-in default.               |
@@ -1529,14 +1545,8 @@ These settings were introduced after the previous environment-contract snapshot.
 | `ADOBE_FIREFLY_SESSION_DISK` | enabled | `open-sse/services/adobeFireflySession.ts` | Persists repaired Adobe sessions under `DATA_DIR`; set `0` for memory-only state. |
 | `ADOBE_FIREFLY_MIN_SUBMIT_GAP_MS` | `12000` | `open-sse/services/adobeFireflySession.ts` | Minimum spacing between Adobe Firefly generate submissions. |
 | `ADOBE_FIREFLY_BATCH_EXTRA_GAP_MS` | `15000` | `open-sse/services/adobeFireflySession.ts` | Extra quiet period after every third successful Adobe submission. |
-| `ADOBE_FIREFLY_CHROME_CDP_PORT` | `9334` | `open-sse/services/adobeFireflyChromeRuntime.ts` | CDP port for the account-scoped Chrome runtime. |
-| `ADOBE_FIREFLY_CHROME_VISIBLE` | `0` | `open-sse/services/adobeFireflyChromeRuntime.ts` | Set `1` to keep the Adobe renewal browser visible; the default parks a headed window off-screen. |
-| `ADOBE_FIREFLY_CHROME_HEADLESS` | `0` | `open-sse/services/adobeFireflyChromeRuntime.ts` | Debug-only true-headless mode; Adobe colligo normally rejects the resulting risk session. |
-| `ADOBE_FIREFLY_CHROME_FORCE_RESTART` | `0` | `open-sse/services/adobeFireflyChromeRuntime.ts` | Set `1` to restart the account-scoped Chrome runtime before renewal. |
-| `ADOBE_FIREFLY_CHROME_PING` | automatic | `open-sse/services/adobeFireflyChromeRuntime.ts` | `1` forces, and `0` disables, the in-page generate probe used to prove the renewed ARP session. |
-| `ADOBE_FIREFLY_LOGIN_WAIT_MS` | context-dependent | `open-sse/services/adobeFireflyChromeRuntime.ts` | Interactive-login wait budget: `0` on background renewal and `300000` on the explicit login flow unless overridden. |
-| `ADOBE_FIREFLY_FORTER_WAIT_MS` | `45000` | `open-sse/services/adobeFireflyChromeRuntime.ts` | Maximum wait for a fresh Forter token during session renewal. |
-| `CHROME_PATH` | auto-detect | `open-sse/services/adobeFireflyChromeRuntime.ts` | Optional absolute Chrome executable used when platform auto-detection is insufficient. |
+| `ADOBE_FIREFLY_CHROME_HEADLESS` | `0` | `open-sse/services/adobeFireflyBrowserLogin.ts` | Debug-only true-headless mode; Adobe colligo normally rejects the resulting risk session. |
+| `CHROME_PATH` | auto-detect | `open-sse/executors/cloudflare-playground.ts`, `open-sse/executors/chatgpt-web-codex.ts` | Optional absolute Chrome executable used by the browser-driven executors when platform auto-detection is insufficient. |
 | `TELEGRAM_BOT_TOKEN` | _(unset)_ | `src/lib/telegram/config.ts` | BotFather token that enables the inbound webhook and signs Mini App `initData`. |
 | `TELEGRAM_DEFAULT_MODEL` | `auto/chat` | `src/lib/telegram/chatProxy.ts` | Model used for Telegram chat replies. |
 | `TELEGRAM_BOT_API_BASE` | `https://api.telegram.org` | `src/lib/telegram/config.ts` | Bot API base URL override for proxies or self-hosted Bot API servers. |

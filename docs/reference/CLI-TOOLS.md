@@ -1,12 +1,12 @@
 ---
 title: "CLI Tools — OmniRoute"
-version: 3.8.40
-lastUpdated: 2026-06-28
+version: 3.8.50
+lastUpdated: 2026-08-18
 ---
 
 # CLI Tools — OmniRoute
 
-Last updated: 2026-06-28
+Last updated: 2026-08-18
 
 OmniRoute integrates with three categories of CLI tools spread across three dedicated dashboard pages:
 
