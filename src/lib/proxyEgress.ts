@@ -196,6 +196,110 @@ export function analyzeEgressSharing(connections: ConnectionEgress[]): {
   return { byEgressIp, sharedWithinRotationGroup };
 }
 
+export const EGRESS_SHARING_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+export interface EgressLogRow {
+  provider: string | null;
+  account: string | null;
+  connectionId: string | null;
+  egressIp: string | null;
+}
+
+export interface EgressSharingSummary {
+  windowStart: string;
+  windowEnd: string;
+  distinctEgressIps: number;
+  sharingByRotationGroup: Array<{
+    rotationGroup: string;
+    sharedIps: number;
+    maxAccountsSharingOneIp: number;
+  }>;
+  maxAccountsSharingOneIp: number;
+}
+
+/**
+ * PURE: anonymous egress-IP sharing summary over proxy_logs-shaped rows.
+ * Dedupes per connection (proxy_logs holds one row per request, not per
+ * connection) — "max accounts behind one IP" therefore counts connections,
+ * not distinct accounts, when one account spans several connections. Reuses
+ * analyzeEgressSharing's rotation-group semantics and returns counts only —
+ * no IP literals, no account identities (#10348).
+ */
+export function summarizeEgressSharing(
+  rows: EgressLogRow[],
+  window: { start: string; end: string }
+): { summary: EgressSharingSummary; warnings: EgressSharingWarning[] } {
+  const byAccount = new Map<string, EgressLogRow>();
+  for (const r of rows) {
+    if (!r.egressIp) continue;
+    const key = r.connectionId ?? r.account;
+    if (!key) continue;
+    if (!byAccount.has(key)) byAccount.set(key, r);
+  }
+
+  const connections = [...byAccount.values()].map((r) => ({
+    connectionId: r.connectionId ?? r.account ?? "unknown",
+    provider: r.provider ?? "",
+    account: r.account ?? r.connectionId,
+    proxyLevel: "log",
+    proxyHost: null,
+    egressIp: r.egressIp,
+  }));
+
+  const { byEgressIp, sharedWithinRotationGroup } = analyzeEgressSharing(connections);
+
+  const byGroup = new Map<string, { sharedIps: number; maxAccountsSharingOneIp: number }>();
+  let maxAccountsSharingOneIp = 0;
+  for (const w of sharedWithinRotationGroup) {
+    const g = byGroup.get(w.rotationGroup) ?? { sharedIps: 0, maxAccountsSharingOneIp: 0 };
+    g.sharedIps++;
+    g.maxAccountsSharingOneIp = Math.max(g.maxAccountsSharingOneIp, w.connections.length);
+    byGroup.set(w.rotationGroup, g);
+    maxAccountsSharingOneIp = Math.max(maxAccountsSharingOneIp, w.connections.length);
+  }
+
+  return {
+    summary: {
+      windowStart: window.start,
+      windowEnd: window.end,
+      distinctEgressIps: Object.keys(byEgressIp).length,
+      sharingByRotationGroup: [...byGroup.entries()].map(([rotationGroup, v]) => ({
+        rotationGroup,
+        sharedIps: v.sharedIps,
+        maxAccountsSharingOneIp: v.maxAccountsSharingOneIp,
+      })),
+      maxAccountsSharingOneIp,
+    },
+    // Raw warnings carry IPs and labels — only ever rendered behind the
+    // PROXY_LOG_INCLUDE_IPS opt-in (#10348), never in the summary itself.
+    warnings: sharedWithinRotationGroup,
+  };
+}
+
+/**
+ * DB-backed: anonymous egress-sharing summary over the last
+ * EGRESS_SHARING_WINDOW_MS of persisted proxy_logs (egress_ip is always
+ * persisted even when the process log line is redacted). No live probes.
+ * Single place where proxy_logs rows are mapped to EgressLogRow — the sweep
+ * and the route both consume this helper. Reads all rows in the window (the
+ * existing SELECT * has no LIMIT); bounded by the 24h window.
+ */
+export async function getRecentEgressSharingSummary(): Promise<{
+  summary: EgressSharingSummary;
+  warnings: EgressSharingWarning[];
+}> {
+  const { exportProxyLogsSince } = await import("./db/proxyLogs");
+  const end = new Date();
+  const start = new Date(end.getTime() - EGRESS_SHARING_WINDOW_MS);
+  const rows: EgressLogRow[] = exportProxyLogsSince(start.toISOString()).map((r) => ({
+    provider: (r.provider as string | null) ?? null,
+    account: (r.account as string | null) ?? null,
+    connectionId: (r.connection_id as string | null) ?? null,
+    egressIp: (r.egress_ip as string | null) ?? null,
+  }));
+  return summarizeEgressSharing(rows, { start: start.toISOString(), end: end.toISOString() });
+}
+
 /**
  * Diagnose egress IPs for every OAuth connection: resolve each connection's
  * proxy, probe the real egress IP, and flag same-rotation-group IP sharing.
