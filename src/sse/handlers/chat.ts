@@ -2215,8 +2215,17 @@ async function handleSingleModelChat(
       // #9708: retry a retryable pre-output transport failure once on the same
       // account (jittered 2-3s) before cooling the connection. A first 503/507
       // must not rotate away from a still-healthy Codex prompt-cache partition.
+      // Skipped inside an emergency-fallback hop: that path guarantees exactly one
+      // upstream call against the free fallback model (#1731) — an extra retry there
+      // burns a second call against a provider we're already treating as a last resort.
+      // Skipped for combo targets too: combo routing owns its own target-level
+      // fallback/retry policy (per-target error handling in handleSingleModel,
+      // then the next combo target) — a same-account retry here just delays that
+      // policy and can surface the wrong terminal status when a later hop throws.
       const transportAttempts = sameAccountTransportRetries.get(credentials.connectionId) || 0;
       if (
+        !runtimeOptions.emergencyFallbackTried &&
+        !comboName &&
         shouldRetrySameAccountTransport({
           status: result.status,
           errorText: errorStr,
