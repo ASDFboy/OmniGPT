@@ -3718,11 +3718,7 @@
     "errorDescription": "Não conseguimos carregar os dados do combo no momento. Verifique sua conexão e tente novamente.",
     "errorId": "ID de Erro: {id}",
     "errorRetry": "Tente Novamente",
-    "comboLabel": "Combo",
-    "usageGuideInvokeTitle": "How to call this combo",
-    "usageGuideInvokeDesc": "Send the combo's exact name as the model, e.g. model: \"my-combo\" (or combo/my-combo).",
-    "usageGuideInvokeAutoNote": "auto and auto/* are a separate zero-config router that does not use your combos (unless a combo is literally named auto).",
-    "usageGuideInvokeOpenrouterNote": "openrouter/auto is a real paid OpenRouter product (Auto Best Available), not an OmniRoute alias — exclude it via Settings → Routing → Hide paid models."
+    "comboLabel": "Combo"
   },
   "costs": {
     "title": "Custos",
@@ -6220,8 +6216,7 @@
       "kiro": "Nível gratuito: 50 créditos/mês (~25K–100K tokens). ⚠️ Os Termos de Serviço do Kiro proíbem o uso de proxy/harness de terceiros.",
       "codex": "Conecte o OpenAI Codex com o fluxo OAuth existente.",
       "qwen": "Conecte o Qwen Code com o fluxo OAuth existente.",
-      "github-models": "Crie um PAT do GitHub com o escopo 'models: read' em github.com/settings/tokens",
-      "cursor-api": "Connect Cursor with a user API key (crsr_...) from cursor.com/dashboard/api; no IDE session needed."
+      "github-models": "Crie um PAT do GitHub com o escopo 'models: read' em github.com/settings/tokens"
     },
     "passthroughModelsDescription": "{provider} aceita IDs de modelo nativos do provedor. Importe de /models ou adicione IDs personalizados para roteamento.",
     "bedrockModelsDescription": "Os modelos Amazon Bedrock têm escopo definido por região da AWS. Importe de /models ou adicione IDs de modelo Bedrock habilitados na região selecionada.",
@@ -7215,7 +7210,6 @@
     "configured": "configurado",
     "none": "Nenhum",
     "modelOverrideValuePlaceholder": "Valor numérico",
-    "modelOverrideReasoningEffortsPlaceholder": "Lista em inglês separada por vírgulas, ex. low, medium, high",
     "addKeyValue": "Adicionar valor da chave",
     "noModelOverrides": "Nenhuma substituição configurada para este modelo.",
     "modelOverrideLoadFailed": "Falha ao carregar substituições de modelo",
@@ -7790,10 +7784,6 @@
       "terse-cjk": {
         "label": "CJK conciso (文言)",
         "description": "Estilo ultra-conciso em chinês clássico (disponível apenas para chinês)."
-      },
-      "i-have-adhd": {
-        "label": "I have ADHD (action-first)",
-        "description": "Action-first output: next action leads, steps numbered, one concrete next step, no preamble."
       }
     },
     "resilienceWaitForCooldown": "Aguarde o resfriamento",
@@ -8226,11 +8216,7 @@
     "cliproxyapiHealth": "Saúde",
     "cliproxyapiPort": "Porta",
     "qdrantHost": "Host",
-    "qdrantCollection": "Coleção",
-    "reasoningTokenBuffer": "Reasoning token buffer",
-    "reasoningTokenBufferDesc": "Allow combo routing to add max_tokens headroom only for known reasoning models when the full buffer fits inside a known output cap.",
-    "zeroLatencyOptimizations": "Zero-latency optimizations",
-    "zeroLatencyOptimizationsDesc": "Opt in to hedging, predictive TTFT skips, and proactive fallback compression. Leave off to prevent these latency features from racing targets or compressing fallback requests."
+    "qdrantCollection": "Coleção"
   },
   "contextRtk": {
     "title": "Motor RTK",

@@ -1,5 +1,4 @@
 import { SEARCH_PROVIDERS } from "../config/searchRegistry.ts";
-import type { BaseExecutor } from "./base.ts";
 import { registerExecutor, getRegisteredExecutor, hasRegisteredExecutor } from "./registry.ts";
 import { AntigravityExecutor } from "./antigravity.ts";
 import { GithubExecutor } from "./github.ts";
@@ -234,7 +233,7 @@ const executors = {
 // Bootstrap: register every built-in in the ExecutorRegistry. registerExecutor
 // throws on duplicates, so an alias collision fails at module load, exactly as
 // loudly as a duplicate object key would have failed at lint time.
-for (const [alias, executor] of Object.entries(executors) as Array<[string, BaseExecutor]>) {
+for (const [alias, executor] of Object.entries(executors)) {
   registerExecutor(alias, executor);
 }
 

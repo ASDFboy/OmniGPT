@@ -104,12 +104,7 @@ export function applyClientUsageBuffer(
   deps: ClientUsageBufferDeps = DEFAULT_DEPS
 ): void {
   const { preserveContextBudgetInVisibleUsage = false } = options;
-  // All-zero usage stubs must take the estimate path. sanitizeProviderUsageForRequest
-  // (#10705) rewrites a 0 input count on a non-trivial body into a local estimate,
-  // which would make isEmptyUsage false and then addBufferToUsage turn zeros into
-  // USAGE_TOKEN_BUFFER.
-  const usageIsEmpty = isEmptyUsage(translatedResponse?.usage);
-  if (translatedResponse?.usage && !usageIsEmpty) {
+  if (translatedResponse?.usage) {
     translatedResponse.usage = sanitizeProviderUsageForRequest(
       translatedResponse.usage,
       body,
