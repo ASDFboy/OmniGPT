@@ -241,7 +241,7 @@ async function buildUnifiedModelsResponseCore(
   // event-loop yield, so a large deployment pins the single Node.js thread for the
   // whole build (reporter: 183 connections / 2000+ models → 10.1s stall that blocks the
   // dashboard WS heartbeat). Yield every `catYIELD_EVERY` items across the hot loops.
-  const catYIELD_EVERY = 20;
+  const catYIELD_EVERY = 1;
   let catYieldCount = 0;
   const maybeYieldCatalogBuild = async (): Promise<void> => {
     catYieldCount++;
@@ -511,13 +511,11 @@ async function buildUnifiedModelsResponseCore(
       const targetModel = getComboTargetModelId(target);
       if (!targetModel) return null;
 
-      const canonical = getCanonicalModelMetadata(
-        {
-          provider: targetModel.providerId,
-          model: targetModel.modelId,
-        },
-        capabilityResolutionSnapshot
-      );
+      const canonical = getCanonicalModelMetadata({
+        provider: targetModel.providerId,
+        model: targetModel.modelId,
+        snapshot: capabilityResolutionSnapshot,
+      });
       if (!canonical) return null;
 
       const providerId = canonical.provider || targetModel.providerId;
