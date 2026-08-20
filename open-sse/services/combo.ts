@@ -2275,7 +2275,10 @@ async function handleComboChatInner({
               );
             }
           }
-          log.warn("COMBO", `Model ${modelStr} failed, trying next`, { status: result.status });
+          log.warn("COMBO", `Model ${modelStr} failed, trying next`, {
+            status: result.status,
+            errorBody: redactConnectionLabel(errorText),
+          });
 
           // #5976: per-model-quota providers (Gemini, GitHub, etc.) multiplex models
           // behind one connection. A model-level 500 or 429 (RPM) must NOT cool down
@@ -3460,7 +3463,10 @@ async function handleRoundRobinCombo({
           kind: classifyComboOutcome(result.status, errorText),
         });
         if (offset > 0) fallbackCount++;
-        log.warn("COMBO-RR", `${modelStr} failed, trying next model`, { status: result.status });
+        log.warn("COMBO-RR", `${modelStr} failed, trying next model`, {
+          status: result.status,
+          errorBody: redactConnectionLabel(errorText),
+        });
 
         if (
           resilienceSettings.providerCooldown.enabled &&
