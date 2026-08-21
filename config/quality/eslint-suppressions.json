@@ -459,6 +459,11 @@
       "count": 2
     }
   },
+  "src/app/(dashboard)/dashboard/cli-code/components/GrokBuildToolCard.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 2
+    }
+  },
   "src/app/(dashboard)/dashboard/cli-code/components/HermesAgentToolCard.tsx": {
     "react-hooks/immutability": {
       "count": 1
@@ -1411,7 +1416,6 @@
       "count": 1
     }
   },
-
   "src/app/api/settings/route.ts": {
     "no-restricted-imports": {
       "count": 1
@@ -2282,7 +2286,6 @@
       "count": 11
     }
   },
-
   "tests/unit/auth-ollama-cloud-per-model-403-3027.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 11
@@ -3161,7 +3164,6 @@
       "count": 12
     }
   },
-
   "tests/unit/management-password.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 4
