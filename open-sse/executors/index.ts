@@ -14,6 +14,7 @@ import { BedrockExecutor } from "./bedrock.ts";
 import { GlmExecutor } from "./glm.ts";
 import { PollinationsExecutor } from "./pollinations.ts";
 import { CloudflareAIExecutor } from "./cloudflare-ai.ts";
+import { FreebuffExecutor } from "./freebuff.ts";
 import { OpencodeExecutor } from "./opencode.ts";
 import { VertexExecutor } from "./vertex.ts";
 import { CliproxyapiExecutor } from "./cliproxyapi.ts";
@@ -117,6 +118,8 @@ const executors = {
   pol: new PollinationsExecutor(), // Alias
   "cloudflare-ai": new CloudflareAIExecutor(),
   cf: new CloudflareAIExecutor(), // Alias
+  freebuff: new FreebuffExecutor(),
+  fb: new FreebuffExecutor(), // Alias
   "opencode-zen": new OpencodeExecutor("opencode-zen"),
   "opencode-go": new OpencodeExecutor("opencode-go"),
   opencode: new OpencodeExecutor("opencode-zen"), // Alias for opencode-zen
