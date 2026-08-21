@@ -879,6 +879,15 @@ export default function CombosPage() {
     }
   };
 
+  const handleComboCreated = async (comboId: string) => {
+    await fetchData();
+    // Wait for React to re-render the new card, then scroll it into view.
+    setTimeout(() => {
+      const el = document.querySelector(`[data-testid="combo-card-${comboId}"]`);
+      if (el) el.scrollIntoView({ behavior: "auto", block: "center" });
+    }, 0);
+  };
+
   const handleDelete = async (id) => {
     if (!confirm(t("deleteConfirm"))) return;
     try {
@@ -1104,7 +1113,7 @@ export default function CombosPage() {
         </div>
       </div>
 
-      <AutoComboCatalog />
+      <AutoComboCatalog onComboCreated={handleComboCreated} />
 
       <KimiComboPresetCard
         alreadyCreated={hasKimiCodingPreset(combos)}
