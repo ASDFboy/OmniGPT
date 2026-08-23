@@ -285,6 +285,7 @@
       "tests/unit/openapi-security-tiers.test.ts",
       "tests/unit/claude-to-openai-glm-user-turn.test.ts",
       "tests/unit/opencode-autocombo-search-pair.test.ts",
+      "tests/unit/opencode-muse-spark-min-output.test.ts",
       "tests/unit/opencode-v2-config-11070.test.ts",
       "tests/unit/openrouter-free-model-credits-exhausted.test.ts",
       "tests/unit/openrouter-passthrough-models.test.ts",
