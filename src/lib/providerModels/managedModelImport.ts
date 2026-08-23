@@ -23,6 +23,7 @@ import {
 } from "@omniroute/open-sse/config/antigravityModelAliases.ts";
 import { filterChatSelectableModels } from "@omniroute/open-sse/services/modelEndpointPolicy.ts";
 import { filterSelectableModels } from "@omniroute/open-sse/services/modelLifecycle.ts";
+import { isSelfHostedChatProvider } from "@/shared/constants/providers";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -253,10 +254,18 @@ export async function importManagedModels({
   const previousSyncedAvailableModels =
     previousSyncedAvailableModelsInput ??
     (await getSyncedAvailableModelsForConnection(providerId, connectionId));
-  const discoveredModels = filterChatSelectableModels(
+  // #11088 (option 1): self-hosted providers keep their non-chat models — chat
+  // filtering happens at read time (resolveLocalSyncedEndpointRoute). Every other
+  // provider keeps the import-time chat filter: the read-time path is gated on
+  // isSelfHostedChatProvider, so dropping it globally leaked image/video models
+  // into OpenAI chat selections (#11271).
+  const selectableModels = filterSelectableModels(
     providerId,
-    filterSelectableModels(providerId, normalizeDiscoveredModels(fetchedModels, providerId))
+    normalizeDiscoveredModels(fetchedModels, providerId)
   );
+  const discoveredModels = isSelfHostedChatProvider(providerId)
+    ? selectableModels
+    : filterChatSelectableModels(providerId, selectableModels);
   const candidateImportedModels = normalizeImportedModels(discoveredModels);
   const importedIds = new Set(candidateImportedModels.map((model) => model.id));
 
