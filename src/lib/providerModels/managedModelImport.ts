@@ -272,7 +272,6 @@ export async function importManagedModels({
   // isSelfHostedChatProvider, so dropping it globally leaked image/video models
   // into OpenAI chat selections (#11271).
   const selectableModels = filterSelectableModels(providerId, providerFilteredModels);
-  );
   const discoveredModels = isSelfHostedChatProvider(providerId)
     ? selectableModels
     : filterChatSelectableModels(providerId, selectableModels);
