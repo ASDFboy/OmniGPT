@@ -372,7 +372,18 @@ export function decodeVideoDataUri(
   return decode(normalized);
 }
 
-async function loadVideoBytes(
+/**
+ * Load protected video bytes from an inline data URI or SSRF-guarded HTTPS source.
+ *
+ * @param part - Extracted request video part.
+ * @param maxBytes - Maximum accepted decoded/downloaded size.
+ * @param timeoutMs - Download deadline passed to the protected fetch boundary.
+ * @param signal - Caller abort/deadline signal.
+ * @param deps - Injectable external download boundary.
+ * @returns Validated video bytes suitable for hashing and extraction.
+ * @throws When the source, size, deadline, or abort policy rejects the input.
+ */
+export async function loadVideoPartBytes(
   part: VideoPart,
   maxBytes: number,
   timeoutMs: number,
@@ -427,7 +438,8 @@ export async function describeVideoPart(
     timestampSeconds: number,
     signal: AbortSignal
   ) => Promise<string>,
-  deps: DescribeVideoDependencies = {}
+  deps: DescribeVideoDependencies = {},
+  preloadedBytes?: Uint8Array
 ): Promise<DescribedVideo> {
   const timeoutController = new AbortController();
   const timeout = setTimeout(() => timeoutController.abort(), options.timeoutMs);
@@ -435,13 +447,14 @@ export async function describeVideoPart(
     ? AbortSignal.any([options.signal, timeoutController.signal])
     : timeoutController.signal;
   try {
-    const bytes = await loadVideoBytes(
-      part,
-      options.maxBytes ?? VIDEO_BRIDGE_MAX_BYTES,
-      options.timeoutMs,
-      signal,
-      deps
-    );
+    const maxBytes = options.maxBytes ?? VIDEO_BRIDGE_MAX_BYTES;
+    const bytes = preloadedBytes
+      ? Buffer.isBuffer(preloadedBytes)
+        ? preloadedBytes
+        : Buffer.from(preloadedBytes)
+      : await loadVideoPartBytes(part, maxBytes, options.timeoutMs, signal, deps);
+    if (signal.aborted) throw new Error("Video Bridge processing timed out or was aborted");
+    if (bytes.byteLength > maxBytes) throw new Error("Video exceeds the maximum size");
     const extractFrames = deps.extractFrames ?? extractVideoFramesViaBroker;
     const extracted = await extractFrames(bytes, {
       focusWindow: options.focusWindow,
