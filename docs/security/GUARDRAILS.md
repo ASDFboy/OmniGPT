@@ -327,8 +327,12 @@ fixed FFmpeg pass over the already validated local stream, select bounded
 `showinfo` scene timestamps, and fall back deterministically to the same
 uniform midpoints on detector failure, timeout, malformed output, or an empty
 candidate set. Segment-aware mode allocates midpoint samples proportionally to
-the validated scene intervals. The hard 16-frame cap is
-applied after selection in every policy. A caller may optionally provide a
+the validated scene intervals; segment-aware evidence and fallback behavior are
+detailed below. The hard 16-frame cap is
+applied after selection in every policy. When a scene-aware request has only a
+one-frame budget, it uses the uniform midpoint of the active full-video or focus
+window and reports `policyEffective: uniform`: a single selected scene frame
+cannot preserve both temporal ends. A caller may optionally provide a
 finite focus window (`start`/`end` seconds); bounds are clamped to the media
 duration, reversed or non-finite windows are rejected, and all sampling
 policies are performed only inside the normalized interval. The resulting
@@ -347,6 +351,43 @@ untrusted-user-context block and may only prioritize observable details; it
 cannot override the separate warning against following instructions visible
 or audible in the media. Textual focus never infers `start`/`end` or changes
 the temporal sampler.
+
+#### FU-07 structural segment evidence
+
+`segment_aware` uses one bounded pre-analysis pass over the already validated
+local video stream. The fixed filter chain first scales to at most 320 pixels
+wide, detects scene changes and frozen intervals, then samples at 1 frame per
+second for blur, average luma, and spatial/temporal information. The pass is
+limited to 600 structural samples, one FFmpeg/filter thread, the same
+`file`-only protocol and container allowlists, a 1 MiB process-output bound,
+and at most 30 seconds inside the broker's shared abort/deadline. It never
+accepts a command, filter, path, or URL from the request.
+
+The structural values are deterministic sampling evidence, not semantic video
+understanding. They do not infer subjects, actions, captions, speech, or user
+intent. Scene and freeze boundaries form segments; freeze coverage, blur,
+exposure, spatial detail, and temporal change only influence how the existing
+1–16 frame budget is allocated. A fully frozen segment is capped at one frame,
+while non-frozen segments compete for the remaining budget. When boundaries
+outnumber frames, uniform timeline coverage is retained so rapid early cuts
+cannot hide a long trailing segment. Scene boundaries within the 1-second
+analysis resolution of a freeze boundary are coalesced.
+
+Missing filters, malformed/empty evidence, a detector error, or the bounded
+pre-analysis timeout fail open to the exact uniform midpoint policy. A caller
+abort or broker deadline does not fail open: it terminates the in-flight
+subprocess, prevents later frame extraction, and the private temporary tree is
+removed in `finally`.
+
+`scripts/perf/video-bridge-fu07-eval.ts` generates deterministic real FFmpeg
+fixtures for post-dedup caption-call savings, dense-motion budget allocation,
+blur/exposure/SI-TI evidence, rapid cuts with a long tail, and gradual-fade
+false positives. It records pre-analysis wall time and, where `/usr/bin/time`
+is available, child CPU and peak RSS. Its quality checks are structural oracles
+only. Real caption-model quality remains `HOLD` because this harness has no
+authorized endpoint or frozen judge. Monetary savings also remain `HOLD`
+unless `--caption-cost-per-call-usd` supplies an explicit positive per-call
+estimate; the script never fabricates either result.
 
 Each frame is limited to 4 MiB, all raw frames together to 23 MiB, and the
 serialized broker response to 32 MiB. A private temporary directory is removed
@@ -369,10 +410,23 @@ coverage. Output metadata separates extracted candidates, successfully used
 frames, and visual duplicates dropped.
 
 An explicitly marked video part may request a timestamped contact sheet. The
-bridge builds at most a 4-column, 16-frame JPEG grid and labels the resulting
-observation with every source timestamp. If `sharp` cannot decode or compose
-the grid, the bridge falls back to the individual JPEG frames; a client abort
-still propagates through the sheet operation.
+bridge builds at most a 4-column, 16-frame JPEG grid. Every 512-pixel cell burns
+its source timestamp into a high-contrast bottom band, while the same timestamps
+remain in textual metadata for downstream association and audit. The complete
+JPEG remains capped at 32 MiB. If `sharp` cannot decode or compose the grid, the
+bridge falls back to the individual JPEG frames; a client abort still propagates
+through the sheet operation.
+
+Promotion evidence is deliberately separate from the synthetic composition
+microbenchmark. `scripts/perf/video-bridge-contact-sheet-eval.ts` defines a
+schema-versioned A/B harness for real OpenAI-compatible vision models. It measures
+provider-reported tokens, end-to-end wall latency (including sheet composition),
+model-call count, and manifest-defined fact retention. Raw model responses are not
+written to the report; only SHA-256 digests and matched fact IDs are retained. The
+harness makes no network or paid model call unless `--execute-real` is passed and
+`--model`, `OMNIROUTE_BASE_URL`, and `OMNIROUTE_API_KEY` are configured. Without
+that explicit real run, its machine-readable verdict remains `HOLD`; synthetic
+payload/call-count measurements alone are not promotion evidence.
 
 Callers may attach an optional `transcript.cues` array to a supported video
 part when they already possess aligned text. Each cue must carry `text`, a
@@ -400,14 +454,39 @@ or download a second media copy; without that explicit track, it remains
 video-only.
 
 The internal `/api/modality-bridge/video/drilldown` lifecycle is a separate,
-loopback/token-authenticated cache. It stores at most 16 JPEG frames per entry,
-keeps entries isolated by session and video reference, expires them after ten
-minutes, and supports bounded `start`/`end` reads or explicit session deletion.
-Besides the per-entry limits, the cache enforces a global 256 MiB decoded-byte
-budget: least-recently-used entries are evicted until new content fits, and an
-entry larger than the whole budget is rejected outright.
-It only slices materialized frames and cannot increase the cost of the primary
-video request.
+loopback/token-authenticated cache substrate. Every operation also requires a
+canonical opaque principal ID. Before a production caller is enabled, it must
+derive that ID from the authenticated tenant and must never forward a
+client-selected value. Cache keys bind that principal to canonical session and
+video-reference IDs, store only their SHA-256-derived keys, and scope both reads
+and deletion to the same principal. The cache stores at most 16 derived JPEG
+frames per entry, expires them after ten minutes, and supports bounded
+`start`/`end` reads or explicit session deletion.
+
+Each principal is limited to 16 entries and 64 MiB of canonical JPEG data. Those
+limits are independent from the global 64-entry/256 MiB ceiling: principal quota
+pressure evicts only that principal's least-recently-used entries before global
+LRU eviction is considered. Expired entries are swept from both principal and
+global accounting on cache activity, while cancellation and validation failure do
+not commit a partial replacement.
+
+The cache rejects non-canonical Base64, excess padding, non-JPEG media, malformed or
+truncated JPEGs, and JPEGs that produce a warning during a bounded full-image `sharp`
+decode. It re-encodes each accepted image as a canonical JPEG, derives width and height
+from the decoded bytes instead of trusting caller fields, and discards any trailing
+polyglot bytes rather than retaining them. Only the bounded canonical compressed buffer
+is charged to both quotas. The JSON wire limit includes Base64 overhead for the 32 MiB
+decoded-input ceiling. Every
+stored derivation records its validated JPEG format/resolution, sampling policy,
+derivation version, creation time, server-computed content hash, and hashed parent
+reference plus the trusted caller's parent-content hash. Cancellation is checked
+between asynchronous decode/hash phases before the atomic cache commit.
+
+This tranche does not yet connect a production producer to the route and does not
+provide multi-resolution variant selection. The transparent Video Bridge request
+path therefore incurs no added work, while tenant-bound principal derivation and
+the full FU-08 multi-resolution lifecycle remain explicit follow-up work rather
+than documented as complete behavior.
 
 Frames are captioned sequentially with the configured Video model. An empty
 Video override inherits the Vision setting; if both are empty, the Vision
