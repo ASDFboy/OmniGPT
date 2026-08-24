@@ -1,4 +1,4 @@
-import { createHash, createHmac, randomBytes } from "node:crypto";
+import { createHash } from "node:crypto";
 
 import { fetch as undiciFetch } from "undici";
 
@@ -90,7 +90,6 @@ const VIDEO_BRIDGE_RESULT_CACHE_VERSION = "v3";
 const VIDEO_BRIDGE_RESULT_CACHE_POLICY = "default";
 const VIDEO_BRIDGE_RESULT_CACHE_KEY_KIND = "video-result-v3";
 const VIDEO_BRIDGE_DOWNLOAD_FLIGHT_VERSION = "v1";
-const VIDEO_BRIDGE_DOWNLOAD_FLIGHT_HMAC_KEY = randomBytes(32);
 
 function buildVideoDownloadFlightKey(
   part: VideoPart,
@@ -109,7 +108,6 @@ function buildVideoDownloadFlightKey(
     maxBytes,
     method: context.method ?? null,
     model: context.model ?? null,
-    principalId,
     provider: context.provider ?? null,
     ref: part.ref,
     shape: part.shape,
@@ -118,9 +116,11 @@ function buildVideoDownloadFlightKey(
     timeoutMs,
     version: VIDEO_BRIDGE_DOWNLOAD_FLIGHT_VERSION,
   });
-  return `video-download:${createHmac("sha256", VIDEO_BRIDGE_DOWNLOAD_FLIGHT_HMAC_KEY)
-    .update(canonicalIdentity)
-    .digest("hex")}`;
+  const requestFingerprint = createHash("sha256").update(canonicalIdentity).digest("hex");
+  // The authenticated database id is an ephemeral in-memory scope, not a
+  // password or persisted credential. Keep it out of cryptographic hashes so
+  // password-hash analysis cannot conflate tenant partitioning with storage.
+  return `video-download:${JSON.stringify([principalId, requestFingerprint])}`;
 }
 
 interface VideoResultCacheMetadata {
