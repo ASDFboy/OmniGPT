@@ -1,0 +1,1 @@
+- **feat(video):** add an opt-in focused analysis mode that safely uses a normalized, 500-code-point latest-user hint for task-aware frame captions while preserving full-mode prompts, temporal-window isolation, and cache identity without storing raw task text.

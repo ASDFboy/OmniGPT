@@ -7,7 +7,7 @@ lastUpdated: 2026-08-14
 # Guardrails
 
 > **Source of truth:** `src/lib/guardrails/`
-> **Last updated:** 2026-08-15 — v3.8.50 (Video Bridge broker confinement)
+> **Last updated:** 2026-08-24 — v3.8.50 (Video Bridge focused captions)
 
 Guardrails enforce safety, policy, and content transformations at the boundary
 between OmniRoute and upstream providers. Each guardrail can inspect (and
@@ -335,6 +335,19 @@ policies are performed only inside the normalized interval. The resulting
 window is included in sampling metadata and in the untrusted description
 prefix so downstream models can distinguish a focused excerpt from the full
 timeline.
+
+Semantic caption focus is a separate, explicit setting. The default `full`
+analysis mode preserves the existing frame prompt and never forwards request
+text to the caption model. In `focused` mode, the bridge reads only the latest
+non-empty user-authored `text`/`input_text` from the same Chat or Responses
+container, normalizes it to NFC, collapses control characters and whitespace,
+and limits it to 500 Unicode code points. An empty result falls back to the
+exact `full` prompt. A usable hint is serialized as JSON in a dedicated
+untrusted-user-context block and may only prioritize observable details; it
+cannot override the separate warning against following instructions visible
+or audible in the media. Textual focus never infers `start`/`end` or changes
+the temporal sampler.
+
 Each frame is limited to 4 MiB, all raw frames together to 23 MiB, and the
 serialized broker response to 32 MiB. A private temporary directory is removed
 in `finally`. OmniRoute does not bundle FFmpeg and does not accept a custom
@@ -399,9 +412,13 @@ including a fallback model; the bridge reports `mixed` when different frames
 were produced by different models. A cache hit reuses that producer identity
 instead of relabeling it as the requested routing plan. The whole-video result
 cache is keyed on every input that changes the output — prompt, effective
-model, sampling policy, frame count, focus window, `transcript`,
+model, sampling policy, frame count, semantic analysis mode, the SHA-256
+fingerprint of the normalized focus hint, focus window, `transcript`,
 `audioTranscript`, and the contact-sheet flag — so changing any of those
-dimensions is a cache miss, never a stale reuse.
+dimensions is a cache miss, never a stale reuse. Result-cache v4 metadata keeps
+the mode and fingerprint, never the raw user task. Guardrail metadata reports
+both the requested and effective analysis modes; a requested `focused` mode
+without usable user text is reported as effectively `full`.
 
 The guardrail extracts every supported video part but describes no more than
 `modalityBridgeVideoMaxVideos`. For a target proven to have
@@ -417,6 +434,7 @@ Runtime settings are DB-backed and Zod-validated:
 | Key                                 | Default     | Range / behavior                                                                                    |
 | ----------------------------------- | ----------- | --------------------------------------------------------------------------------------------------- |
 | `modalityBridgeVideoEnabled`        | `false`     | Optional runtime, opt-in                                                                            |
+| `modalityBridgeVideoAnalysisMode`   | `"full"`    | `full` preserves generic captions; `focused` uses bounded, untrusted latest-user context            |
 | `modalityBridgeVideoModel`          | `""`        | Inherit the Vision Bridge model                                                                     |
 | `modalityBridgeVideoFrameCount`     | `8`         | 1–16                                                                                                |
 | `modalityBridgeVideoSamplingPolicy` | `"uniform"` | `uniform`, `scene_aware`, or proportional `segment_aware`; detector failure falls back to `uniform` |
@@ -659,7 +677,8 @@ Audio uses `modalityBridgeAudioEnabled`, `modalityBridgeAudioModel`,
 `modalityBridgeCache*` settings. Audio has no legacy-key fallback because these
 keys were introduced with the Modality Bridge schema.
 
-Video uses `modalityBridgeVideoEnabled`, `modalityBridgeVideoModel`,
+Video uses `modalityBridgeVideoEnabled`, `modalityBridgeVideoAnalysisMode`,
+`modalityBridgeVideoModel`,
 `modalityBridgeVideoFrameCount`, `modalityBridgeVideoSamplingPolicy`,
 `modalityBridgeVideoMaxVideos`, and
 `modalityBridgeVideoTimeout`, plus the shared `modalityBridgeCache*` settings.

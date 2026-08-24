@@ -10,6 +10,7 @@ import { createHash } from "node:crypto";
 import type { VisionBridgeRuntimeSettings } from "@/shared/constants/modalityBridgeDefaults";
 
 export interface BridgeCacheKeyOptions {
+  analysisMode?: "full" | "focused";
   kind?: string;
   extractorVersion?: string;
   policyVersion?: string;
@@ -21,6 +22,7 @@ export interface BridgeCacheKeyOptions {
   audioTranscript?: string;
   focusStartSeconds?: number | null;
   focusEndSeconds?: number | null;
+  focusHintFingerprint?: string | null;
   version?: string;
 }
 
@@ -34,6 +36,7 @@ export function bridgeCacheKey(
   // - keeps old call sites stable (no options)
   // - adds explicit policy/version dimensions for future cache busting
   const payload = {
+    analysisMode: options.analysisMode,
     contentRef,
     kind: options.kind ?? "media-frame",
     model,
@@ -48,6 +51,7 @@ export function bridgeCacheKey(
     audioTranscript: options.audioTranscript,
     focusStartSeconds: options.focusStartSeconds,
     focusEndSeconds: options.focusEndSeconds,
+    focusHintFingerprint: options.focusHintFingerprint,
     version: options.version,
   };
   return createHash("sha256").update(JSON.stringify(payload)).digest("hex");
