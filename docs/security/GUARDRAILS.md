@@ -323,18 +323,56 @@ fallback. Videos are limited to 600 seconds, 8,192 pixels per dimension, and
 the long edge to at most 1,024 pixels without upscaling smaller inputs, and
 never receives a URL. Sampling is `uniform` by default. The optional
 `scene_aware` and experimental `segment_aware` policies perform one additional
-fixed FFmpeg pass over the already validated local stream, select bounded
-`showinfo` scene timestamps, and fall back deterministically to the same
-uniform midpoints on detector failure, timeout, malformed output, or an empty
-candidate set. Segment-aware mode allocates midpoint samples proportionally to
-the validated scene intervals. The hard 16-frame cap is
-applied after selection in every policy. A caller may optionally provide a
+fixed FFmpeg pass over the already validated local stream. Scene-aware mode
+selects bounded `showinfo` timestamps and falls back deterministically to the
+same uniform midpoints on detector failure, timeout, malformed output, or an
+empty candidate set. Segment-aware evidence and fallback behavior are detailed
+below. The hard 16-frame cap is applied after selection in every policy. A caller may
+optionally provide a
 finite focus window (`start`/`end` seconds); bounds are clamped to the media
 duration, reversed or non-finite windows are rejected, and all sampling
 policies are performed only inside the normalized interval. The resulting
 window is included in sampling metadata and in the untrusted description
 prefix so downstream models can distinguish a focused excerpt from the full
 timeline.
+
+#### FU-07 structural segment evidence
+
+`segment_aware` uses one bounded pre-analysis pass over the already validated
+local video stream. The fixed filter chain first scales to at most 320 pixels
+wide, detects scene changes and frozen intervals, then samples at 1 frame per
+second for blur, average luma, and spatial/temporal information. The pass is
+limited to 600 structural samples, one FFmpeg/filter thread, the same
+`file`-only protocol and container allowlists, a 1 MiB process-output bound,
+and at most 30 seconds inside the broker's shared abort/deadline. It never
+accepts a command, filter, path, or URL from the request.
+
+The structural values are deterministic sampling evidence, not semantic video
+understanding. They do not infer subjects, actions, captions, speech, or user
+intent. Scene and freeze boundaries form segments; freeze coverage, blur,
+exposure, spatial detail, and temporal change only influence how the existing
+1–16 frame budget is allocated. A fully frozen segment is capped at one frame,
+while non-frozen segments compete for the remaining budget. When boundaries
+outnumber frames, uniform timeline coverage is retained so rapid early cuts
+cannot hide a long trailing segment. Scene boundaries within the 1-second
+analysis resolution of a freeze boundary are coalesced.
+
+Missing filters, malformed/empty evidence, a detector error, or the bounded
+pre-analysis timeout fail open to the exact uniform midpoint policy. A caller
+abort or broker deadline does not fail open: it terminates the in-flight
+subprocess, prevents later frame extraction, and the private temporary tree is
+removed in `finally`.
+
+`scripts/perf/video-bridge-fu07-eval.ts` generates deterministic real FFmpeg
+fixtures for post-dedup caption-call savings, dense-motion budget allocation,
+blur/exposure/SI-TI evidence, rapid cuts with a long tail, and gradual-fade
+false positives. It records pre-analysis wall time and, where `/usr/bin/time`
+is available, child CPU and peak RSS. Its quality checks are structural oracles
+only. Real caption-model quality remains `HOLD` because this harness has no
+authorized endpoint or frozen judge. Monetary savings also remain `HOLD`
+unless `--caption-cost-per-call-usd` supplies an explicit positive per-call
+estimate; the script never fabricates either result.
+
 Each frame is limited to 4 MiB, all raw frames together to 23 MiB, and the
 serialized broker response to 32 MiB. A private temporary directory is removed
 in `finally`. OmniRoute does not bundle FFmpeg and does not accept a custom
