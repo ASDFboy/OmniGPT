@@ -356,10 +356,23 @@ coverage. Output metadata separates extracted candidates, successfully used
 frames, and visual duplicates dropped.
 
 An explicitly marked video part may request a timestamped contact sheet. The
-bridge builds at most a 4-column, 16-frame JPEG grid and labels the resulting
-observation with every source timestamp. If `sharp` cannot decode or compose
-the grid, the bridge falls back to the individual JPEG frames; a client abort
-still propagates through the sheet operation.
+bridge builds at most a 4-column, 16-frame JPEG grid. Every 512-pixel cell burns
+its source timestamp into a high-contrast bottom band, while the same timestamps
+remain in textual metadata for downstream association and audit. The complete
+JPEG remains capped at 32 MiB. If `sharp` cannot decode or compose the grid, the
+bridge falls back to the individual JPEG frames; a client abort still propagates
+through the sheet operation.
+
+Promotion evidence is deliberately separate from the synthetic composition
+microbenchmark. `scripts/perf/video-bridge-contact-sheet-eval.ts` defines a
+schema-versioned A/B harness for real OpenAI-compatible vision models. It measures
+provider-reported tokens, end-to-end wall latency (including sheet composition),
+model-call count, and manifest-defined fact retention. Raw model responses are not
+written to the report; only SHA-256 digests and matched fact IDs are retained. The
+harness makes no network or paid model call unless `--execute-real` is passed and
+`--model`, `OMNIROUTE_BASE_URL`, and `OMNIROUTE_API_KEY` are configured. Without
+that explicit real run, its machine-readable verdict remains `HOLD`; synthetic
+payload/call-count measurements alone are not promotion evidence.
 
 Callers may attach an optional `transcript.cues` array to a supported video
 part when they already possess aligned text. Each cue must carry `text`, a
