@@ -1,0 +1,1 @@
+- **fix(video-bridge):** burn high-contrast timestamps into every bounded contact-sheet cell and add a real-model A/B harness whose promotion verdict stays `HOLD` until token, latency, and quality evidence is actually executed
