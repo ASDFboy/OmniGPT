@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, createHmac, randomBytes } from "node:crypto";
 
 import { fetch as undiciFetch } from "undici";
 
@@ -90,6 +90,7 @@ const VIDEO_BRIDGE_RESULT_CACHE_VERSION = "v3";
 const VIDEO_BRIDGE_RESULT_CACHE_POLICY = "default";
 const VIDEO_BRIDGE_RESULT_CACHE_KEY_KIND = "video-result-v3";
 const VIDEO_BRIDGE_DOWNLOAD_FLIGHT_VERSION = "v1";
+const VIDEO_BRIDGE_DOWNLOAD_FLIGHT_HMAC_KEY = randomBytes(32);
 
 function buildVideoDownloadFlightKey(
   part: VideoPart,
@@ -117,7 +118,9 @@ function buildVideoDownloadFlightKey(
     timeoutMs,
     version: VIDEO_BRIDGE_DOWNLOAD_FLIGHT_VERSION,
   });
-  return `video-download:${createHash("sha256").update(canonicalIdentity).digest("hex")}`;
+  return `video-download:${createHmac("sha256", VIDEO_BRIDGE_DOWNLOAD_FLIGHT_HMAC_KEY)
+    .update(canonicalIdentity)
+    .digest("hex")}`;
 }
 
 interface VideoResultCacheMetadata {
