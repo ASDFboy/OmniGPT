@@ -803,6 +803,12 @@ jobs:
       - name: Unit tests (shard ${{ matrix.shard }}/8) with V8 coverage
         env:
           TEST_SHARD: ${{ matrix.shard }}/8
+          # NODE_OPTIONS (nao so o flag em test:unit:ci:shard) porque quem estoura o
+          # heap e o processo `c8` que embrulha a suite — ele agrega ~577 MB de JSON
+          # de cobertura bruta. Subir o teto so no node filho deixa o pai no default
+          # do V8 (~4 GB) e o OOM continua igual, em ~4083 MB. Mesmo padrao ja usado
+          # pelo job de merge de cobertura mais abaixo.
+          NODE_OPTIONS: --max-old-space-size=8192
         run: |
           rm -rf coverage-shard coverage-shard-report
           npx c8 \
