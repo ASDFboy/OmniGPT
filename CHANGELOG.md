@@ -89,7 +89,7 @@
 - **feat(cli):** run `omniroute serve --tray` as a detached desktop process after server and tray readiness, with graphical login auto-start support.
 - **feat(routing):** add client-, provider-, and model-neutral exclusive managed session connection leases with API-key-bound generation fencing, durable SQLite ownership, explicit allowlist policy, and bounded 429 capacity retry semantics.
 
-## [3.8.50] — TBD
+## [3.8.50] — 2026-08-25
 
 _Living section — regenerated 2026-08-12 from all cycle commits (cycle open `ed2db6cb19` → tip). Bullets carry the merged PR and its author; direct pushes listed separately._
 
@@ -1356,6 +1356,7 @@ _Living section — regenerated 2026-08-12 from all cycle commits (cycle open `e
 - **chore(repo):** repository hygiene — the self-referential `_tasks` symlink was untracked and `.gitignore` anchored so a `_tasks` symlink can never be tracked again, `.source/dynamic.ts`, `.source`, `/output/` and the Playwright CLI artifact directory were ignored, an initial `.cbmignore` was added for codebase-memory indexing, unused `.source/dynamic.ts` and `source.config.mjs` files were removed, the stray unresolved conflict marker in `ENVIRONMENT.md` was cleaned up, and the Open Collective sponsorship link was removed from the README
 - **chore(release):** localized `llm.txt` mirrors and the v3.8.50 base quality docs were synchronized, and the 363 `changelog.d` fragments were aggregated into this section
 
+
 ### 🙌 Contributors
 
 Thanks to everyone whose work landed in v3.8.50:
@@ -1363,7 +1364,10 @@ Thanks to everyone whose work landed in v3.8.50:
 | Contributor | PRs / Issues |
 | --- | --- |
 | [@AbdullahFageeh](https://github.com/AbdullahFageeh) | #9087 |
-| [@adevwithpurpose](https://github.com/adevwithpurpose) | #9790, #10118, #10222 |
+| [@abhijeetnardele24-hash](https://github.com/abhijeetnardele24-hash) | #10498 |
+| [@Abhishek4512009](https://github.com/Abhishek4512009) | #10494 |
+| [@acc0mplish](https://github.com/acc0mplish) | #10732, #10948 |
+| [@adevwithpurpose](https://github.com/adevwithpurpose) | #9790, #10118, #10222, #10800, #10834, #10835, #10836, #10882 |
 | [@adrianojiu](https://github.com/adrianojiu) | #8438 |
 | [@agisota](https://github.com/agisota) | #9837 |
 | [@AgnesRiber](https://github.com/AgnesRiber) | #9718, #9976 |
@@ -1371,93 +1375,137 @@ Thanks to everyone whose work landed in v3.8.50:
 | [@AIB1TAL0S](https://github.com/AIB1TAL0S) | #9284 |
 | [@AlanSyue](https://github.com/AlanSyue) | direct commit / report |
 | [@alex-jordan547](https://github.com/alex-jordan547) | #9235, #9245, #9813 |
+| [@aliyosufi](https://github.com/aliyosufi) | #11159 |
 | [@amartinawi](https://github.com/amartinawi) | #10090, #10091, #10092, #10097, #10101 |
-| [@AndrianBalanescu](https://github.com/AndrianBalanescu) | #8888, #8889, #8890, #8891, #8892, #8893, #8894, #8895 |
+| [@An0nym0us92](https://github.com/An0nym0us92) | #11394 |
+| [@AndrianBalanescu](https://github.com/AndrianBalanescu) | #8888, #8889, #8890, #8891, #8892, #8893, #8894, #8895, #11081, #11082 |
 | [@AnhLead](https://github.com/AnhLead) | #9722 |
 | [@aniketshukla1](https://github.com/aniketshukla1) | #9148 |
 | [@Anjielon](https://github.com/Anjielon) | #8776 |
+| [@anudeepadi](https://github.com/anudeepadi) | #10288 |
 | [@apoapostolov](https://github.com/apoapostolov) | #8916 |
+| [@app](https://github.com/app) | #10042, #10043 |
+| [@arafatkatze](https://github.com/arafatkatze) | #10706 |
 | [@ARC345](https://github.com/ARC345) | #9628, #10050, #10051 |
-| [@artickc](https://github.com/artickc) | #8571, #8578, #8791, #8843, #8870, #8927, #8974, #9097, #9549 |
+| [@arminanton](https://github.com/arminanton) | #10933, #10952, #11166 |
+| [@aron-intframe](https://github.com/aron-intframe) | #10459 |
+| [@artickc](https://github.com/artickc) | #8571, #8578, #8791, #8843, #8870, #8927, #8974, #9097, #9255, #9549 |
 | [@Arul-](https://github.com/Arul-) | #9761 |
-| [@AStupidBear](https://github.com/AStupidBear) | #10180 |
+| [@asorourx](https://github.com/asorourx) | #11036 |
+| [@AStupidBear](https://github.com/AStupidBear) | #10180, #11385 |
+| [@azzaouiomar19-sketch](https://github.com/azzaouiomar19-sketch) | #10394 |
 | [@b1nhm1nh](https://github.com/b1nhm1nh) | direct commit / report |
-| [@backryun](https://github.com/backryun) | #8228, #8451, #8627, #8809, #8818, #9084, #9086, #9090, #9091, #9092, #9093, #9114, #9119, #9120, #9122, #9135, #9136, #9137, #9138, #9139, #9141, #9561, #9562, #9563, #9564, #9565, #9566, #9742, #9747, #9748, #9751, #9753, #9755, #9791, #9792, #9793, #9795, #9796, #9797, #9798, #9920, #9972, #9973, #9974, #9975, #9977, #9978, #9979, #9984, #9986, #9987, #9988, #9989, #9990, #9998, #10087, #10088, #10134, #10178, #10175, #10254, #10255, #10256, #10257, #10258, #10339 |
+| [@backryun](https://github.com/backryun) | #8228, #8451, #8627, #8809, #8818, #9084, #9086, #9090, #9091, #9092, #9093, #9114, #9119, #9120, #9122, #9135, #9136, #9137, #9138, #9139, #9141, #9561, #9562, #9563, #9564, #9565, #9566, #9742, #9747, #9748, #9751, #9753, #9755, #9791, #9792, #9793, #9795, #9796, #9797, #9798, #9920, #9972, #9973, #9974, #9975, #9977, #9978, #9979, #9984, #9986, #9987, #9988, #9989, #9990, #9998, #10087, #10088, #10134, #10175, #10178, #10195, #10254, #10255, #10256, #10257, #10258, #10324, #10339, #10453, #10464, #10483, #10637, #10964 |
 | [@Benson-mk](https://github.com/Benson-mk) | #8369 |
-| [@benzntech](https://github.com/benzntech) | #9810, #9812, #9939 |
+| [@benzntech](https://github.com/benzntech) | #9810, #9812, #9939, #10124, #10126, #10458 |
 | [@Bl0ck154](https://github.com/Bl0ck154) | #9231 |
+| [@blackwell-systems](https://github.com/blackwell-systems) | #10807 |
+| [@blarovse](https://github.com/blarovse) | #10411 |
 | [@bortolidiego](https://github.com/bortolidiego) | #10058 |
-| [@branben](https://github.com/branben) | #9940 |
-| [@Chewji9875](https://github.com/Chewji9875) | #9257, #9420, #9821, #9994, #10160 |
-| [@chirag127](https://github.com/chirag127) | #6674 |
+| [@branben](https://github.com/branben) | #9940, #10575 |
+| [@Chewji9875](https://github.com/Chewji9875) | #9257, #9420, #9821, #9994, #10116, #10160, #10305, #10376 |
+| [@chirag127](https://github.com/chirag127) | #6674, #10071 |
 | [@chloeassistant](https://github.com/chloeassistant) | #9675, #9746 |
 | [@configurowebmax](https://github.com/configurowebmax) | #8877 |
 | [@corefusiion](https://github.com/corefusiion) | #8285 |
 | [@costaeder](https://github.com/costaeder) | #8626, #8629, #8630 |
+| [@cryptiklemur](https://github.com/cryptiklemur) | #10684, #10685 |
 | [@csoftware-arigpt](https://github.com/csoftware-arigpt) | #3440 |
 | [@DaDecky](https://github.com/DaDecky) | direct commit / report |
+| [@danscMax](https://github.com/danscMax) | #8634 |
 | [@DarkEsteves](https://github.com/DarkEsteves) | #10250 |
+| [@dcox79](https://github.com/dcox79) | #10543 |
 | [@ddarkr](https://github.com/ddarkr) | #9035, #9036, #10177 |
-| [@diegosouzapw](https://github.com/diegosouzapw) | maintainer |
 | [@Dingding-leo](https://github.com/Dingding-leo) | #7987, #8640, #8678, #8704, #8774, #8790, #8808, #8817 |
 | [@DinonowDev](https://github.com/DinonowDev) | #8804 |
+| [@dionjoshualobo](https://github.com/dionjoshualobo) | #9721 |
+| [@dpozimski](https://github.com/dpozimski) | #10253 |
 | [@Dragost](https://github.com/Dragost) | #8339 |
 | [@dsitmilis](https://github.com/dsitmilis) | direct commit / report |
-| [@Egorich-print](https://github.com/Egorich-print) | #9001, #9020, #9058 |
+| [@echoriver89](https://github.com/echoriver89) | #10717 |
+| [@Egorich-print](https://github.com/Egorich-print) | #9001, #9020, #9058, #10881, #10887, #11097 |
+| [@ekinnee](https://github.com/ekinnee) | #11307 |
+| [@electrumguy](https://github.com/electrumguy) | #10774, #11149 |
 | [@engmarcosjr](https://github.com/engmarcosjr) | #9993 |
 | [@epsilonode](https://github.com/epsilonode) | #8871 |
 | [@ervareza](https://github.com/ervareza) | direct commit / report |
-| [@excessivechaos](https://github.com/excessivechaos) | #10062, #10138 |
+| [@excessivechaos](https://github.com/excessivechaos) | #10062, #10138, #10552, #10883, #10884, #10907, #11179 |
 | [@fajarhide](https://github.com/fajarhide) | #9191, #9198 |
-| [@fenix007](https://github.com/fenix007) | #9618 |
+| [@farshidrezaei](https://github.com/farshidrezaei) | #10777 |
+| [@fenix007](https://github.com/fenix007) | #9618, #10016 |
+| [@freudantunes](https://github.com/freudantunes) | #10623 |
 | [@Gecky2102](https://github.com/Gecky2102) | #9280 |
-| [@ggdayup](https://github.com/ggdayup) | #10199 |
+| [@geek007git](https://github.com/geek007git) | #10441 |
+| [@ggdayup](https://github.com/ggdayup) | #10199, #11113, #11114, #11375 |
+| [@Gi99lin](https://github.com/Gi99lin) | #10342 |
+| [@giauphan](https://github.com/giauphan) | #10392 |
 | [@Gioxaa](https://github.com/Gioxaa) | #9162, #9171 |
 | [@HaoNgo232](https://github.com/HaoNgo232) | direct commit / report |
 | [@Hariprajwal](https://github.com/Hariprajwal) | #9922 |
-| [@hartmark](https://github.com/hartmark) | #9635, #9704, #9711, #9712, #9727, #9734, #9735, #9738, #9741, #9744, #9745, #9822, #10025, #10034, #10037, #10038, #10041, #10121, #10217 |
+| [@harkaranbrar7](https://github.com/harkaranbrar7) | #10281 |
+| [@hartmark](https://github.com/hartmark) | #9635, #9704, #9711, #9712, #9727, #9734, #9735, #9738, #9741, #9744, #9745, #9822, #10025, #10034, #10037, #10038, #10041, #10121, #10217, #10262, #10263, #10330, #10331, #11259 |
 | [@Hdiaktoros](https://github.com/Hdiaktoros) | #8930 |
 | [@HectorBernstorff](https://github.com/HectorBernstorff) | direct commit / report |
 | [@HellFiveOsborn](https://github.com/HellFiveOsborn) | #9248 |
-| [@herjarsa](https://github.com/herjarsa) | #9714, #9816, #9937, #9946, #10128 |
+| [@herjarsa](https://github.com/herjarsa) | #9714, #9816, #9937, #9946, #10128, #10456 |
+| [@hgaib](https://github.com/hgaib) | #10722 |
 | [@horacecar](https://github.com/horacecar) | #7679 |
-| [@HouMinXi](https://github.com/HouMinXi) | #8886, #8904, #8905, #8976, #8984, #9079, #9106, #9207, #9242, #9328, #9340, #9342, #9351, #9365, #9380, #9381, #9392, #9449, #9482, #9483, #9509, #9510, #9572, #9631, #9634, #9695, #9929 |
+| [@HouMinXi](https://github.com/HouMinXi) | #8886, #8904, #8905, #8976, #8984, #9079, #9106, #9207, #9242, #9328, #9340, #9342, #9351, #9365, #9380, #9381, #9392, #9449, #9482, #9483, #9509, #9510, #9572, #9631, #9634, #9695, #9929, #10457, #10475, #10525, #10529, #10573, #10663, #10846, #11084, #11139, #11140, #11141, #11386, #11418 |
 | [@hppsc1215](https://github.com/hppsc1215) | #8970 |
-| [@hydraxman](https://github.com/hydraxman) | #10137 |
+| [@Hsia97](https://github.com/Hsia97) | #10810 |
+| [@hydraxman](https://github.com/hydraxman) | #10137, #10572 |
 | [@Iammilansoni](https://github.com/Iammilansoni) | #9353, #9397 |
+| [@ignamiranda](https://github.com/ignamiranda) | #11206 |
 | [@ikelvingo](https://github.com/ikelvingo) | #8591, #8872, #9053 |
 | [@infinit-X](https://github.com/infinit-X) | #9095 |
+| [@InkshadeWoods](https://github.com/InkshadeWoods) | #10733 |
 | [@isaaclb98](https://github.com/isaaclb98) | #9730 |
-| [@jackjinke](https://github.com/jackjinke) | #9556, #9601, #10005, #10045 |
+| [@jackjinke](https://github.com/jackjinke) | #9556, #9601, #10005, #10045, #10248, #10533, #10540, #10574, #11041 |
+| [@jacobsparts](https://github.com/jacobsparts) | #11399, #11400, #11402 |
 | [@jax-novita](https://github.com/jax-novita) | #8913 |
 | [@jeff-alves](https://github.com/jeff-alves) | #10221 |
 | [@jeyhunfaslanov](https://github.com/jeyhunfaslanov) | #10259 |
 | [@jhordanjw123](https://github.com/jhordanjw123) | #8736 |
 | [@jktan0504](https://github.com/jktan0504) | #9025 |
 | [@joachimBrindeau](https://github.com/joachimBrindeau) | #9200 |
+| [@jonlwheat2-gif](https://github.com/jonlwheat2-gif) | #10610, #10709, #11194 |
 | [@JoshimOfficial](https://github.com/JoshimOfficial) | #9011 |
 | [@jowimila](https://github.com/jowimila) | #9325 |
-| [@JxnLexn](https://github.com/JxnLexn) | #8933, #8940, #8944, #8949 |
+| [@JxnLexn](https://github.com/JxnLexn) | #8933, #8940, #8944, #8949, #10422, #10608 |
 | [@Kaedo17](https://github.com/Kaedo17) | #8922 |
+| [@KaspaPulse](https://github.com/KaspaPulse) | #10362 |
 | [@khoazero123](https://github.com/khoazero123) | #9272 |
+| [@killmonger2317-coder](https://github.com/killmonger2317-coder) | #10445 |
 | [@KittisakT](https://github.com/KittisakT) | #9423 |
+| [@Kizuno18](https://github.com/Kizuno18) | #10803 |
 | [@KooshaPari](https://github.com/KooshaPari) | #7329 |
+| [@kriptoburak](https://github.com/kriptoburak) | #10854 |
+| [@krishna3554](https://github.com/krishna3554) | #10620, #10855 |
+| [@lamchun1110](https://github.com/lamchun1110) | #10372, #10397 |
 | [@larin-vas](https://github.com/larin-vas) | #9828 |
 | [@lazysaltyfish](https://github.com/lazysaltyfish) | direct commit / report |
 | [@LeonG606](https://github.com/LeonG606) | #9457 |
+| [@linhdmn](https://github.com/linhdmn) | #10980, #11085, #11214, #11274 |
 | [@Llliao1113](https://github.com/Llliao1113) | #8921 |
 | [@lucasalx](https://github.com/lucasalx) | #9919 |
 | [@lucasmellos](https://github.com/lucasmellos) | #8925 |
 | [@lukiod](https://github.com/lukiod) | #8828 |
 | [@luoyide](https://github.com/luoyide) | direct commit / report |
+| [@maci0](https://github.com/maci0) | #11279 |
 | [@mad-gooze](https://github.com/mad-gooze) | #9052 |
 | [@maisdesign](https://github.com/maisdesign) | #8858 |
+| [@marcelokarval](https://github.com/marcelokarval) | #11397 |
 | [@marchlhw](https://github.com/marchlhw) | #9050 |
+| [@marcs7](https://github.com/marcs7) | #11180 |
 | [@matiasbaglieri](https://github.com/matiasbaglieri) | #9707 |
-| [@maxmad64bis](https://github.com/maxmad64bis) | #9150, #9246, #9291, #9414 |
+| [@maxmad64bis](https://github.com/maxmad64bis) | #9150, #9246, #9291, #9414, #10278, #10402, #10652, #10662, #10664, #10694, #10769, #10770, #10779, #10876, #10885, #10974, #10978, #11008, #11009, #11047, #11116, #11129, #11130, #11133, #11151, #11162, #11252 |
 | [@McLuck](https://github.com/McLuck) | #8914 |
+| [@megamen32](https://github.com/megamen32) | #10184 |
+| [@MeRezaRezaei](https://github.com/MeRezaRezaei) | #10174, #10614, #10944, #11042, #11045 |
 | [@Michael-Rocco-Goldmann](https://github.com/Michael-Rocco-Goldmann) | #9770, #9773, #9777, #9787 |
-| [@MichaelYcJo](https://github.com/MichaelYcJo) | #8244 |
+| [@MichaelYcJo](https://github.com/MichaelYcJo) | #8244, #10725, #10726 |
+| [@Minamaged18](https://github.com/Minamaged18) | #11269 |
+| [@minhlongs](https://github.com/minhlongs) | #10805 |
 | [@minhnhat166](https://github.com/minhnhat166) | direct commit / report |
 | [@MohitRawat017](https://github.com/MohitRawat017) | #8718, #8772, #9605 |
 | [@Momen4444](https://github.com/Momen4444) | #9612 |
@@ -1465,64 +1513,103 @@ Thanks to everyone whose work landed in v3.8.50:
 | [@mtb-ninja](https://github.com/mtb-ninja) | #10114 |
 | [@MumuTW](https://github.com/MumuTW) | #8839 |
 | [@mvanhorn](https://github.com/mvanhorn) | #9542 |
+| [@mymusicmyspace](https://github.com/mymusicmyspace) | #10965 |
 | [@Mynacol](https://github.com/Mynacol) | #9733 |
+| [@NahuSaruf](https://github.com/NahuSaruf) | #10545 |
+| [@Neuron-Mr-White](https://github.com/Neuron-Mr-White) | #10228, #10230, #10957, #11378 |
 | [@nguyenha935](https://github.com/nguyenha935) | #9044, #9215 |
 | [@nordz0r](https://github.com/nordz0r) | #10170 |
 | [@nosolosoft](https://github.com/nosolosoft) | #8900 |
-| [@oyi77](https://github.com/oyi77) | #8299, #8752, #9158, #9818 |
-| [@pacocartones](https://github.com/pacocartones) | #10216 |
+| [@ntdat812](https://github.com/ntdat812) | #10843, #10853, #10857, #10858, #10860, #10862, #10868, #10935, #11004, #11374, #11376, #11377 |
+| [@ntdatt812](https://github.com/ntdatt812) | #10715, #11076 |
+| [@octo-patch](https://github.com/octo-patch) | #10650 |
+| [@ofonseca-pyming](https://github.com/ofonseca-pyming) | #11297 |
+| [@oyi77](https://github.com/oyi77) | #8299, #8752, #9158, #9818, #10910, #10942 |
+| [@pacocartones](https://github.com/pacocartones) | #10216, #10673, #11059, #11193, #11199, #11238, #11241, #11321, #11322, #11332, #11338 |
+| [@pandaaaa1990](https://github.com/pandaaaa1990) | #10731 |
+| [@phatchau036](https://github.com/phatchau036) | #10517 |
+| [@phuongddx](https://github.com/phuongddx) | #11415 |
 | [@PixmaNts](https://github.com/PixmaNts) | #9432 |
 | [@pizzav-xyz](https://github.com/pizzav-xyz) | #9077 |
 | [@Poid-ZA](https://github.com/Poid-ZA) | #9467 |
 | [@Prudhvivuda](https://github.com/Prudhvivuda) | #8807, #9014, #9015, #9016 |
+| [@pucedoteth](https://github.com/pucedoteth) | #10607 |
 | [@qianze0628](https://github.com/qianze0628) | #9038 |
+| [@rafacpti23](https://github.com/rafacpti23) | #11207, #11213 |
 | [@raflyazf](https://github.com/raflyazf) | direct commit / report |
-| [@Rahulsharma0810](https://github.com/Rahulsharma0810) | #8961 |
-| [@rinseaid](https://github.com/rinseaid) | #8945, #9037, #9932, #9933, #9969, #9982 |
+| [@Rahulsharma0810](https://github.com/Rahulsharma0810) | #8961, #10872 |
+| [@RaviTharuma](https://github.com/RaviTharuma) | #10055, #10297, #10307, #10344, #10352, #10488, #10565, #10566, #10568, #10584, #10771, #10814, #10818, #10820, #10821, #10822, #10827, #10847, #10971, #10979, #10981, #11014, #11015, #11016, #11017, #11020, #11024, #11314, #11318, #11320 |
+| [@realize000](https://github.com/realize000) | #10490 |
+| [@redzrush101](https://github.com/redzrush101) | #10492 |
+| [@rengaryang](https://github.com/rengaryang) | #11333 |
+| [@rinseaid](https://github.com/rinseaid) | #8945, #9037, #9932, #9933, #9969, #9982, #10554 |
+| [@ritheshcn25](https://github.com/ritheshcn25) | #10026 |
 | [@rixzkiye](https://github.com/rixzkiye) | direct commit / report |
+| [@rizxfrog](https://github.com/rizxfrog) | #10356, #10546 |
 | [@RobertsXML](https://github.com/RobertsXML) | direct commit / report |
 | [@royanrosyad85](https://github.com/royanrosyad85) | direct commit / report |
+| [@rqzbeh](https://github.com/rqzbeh) | #10415, #10420, #10424, #10430, #10465, #10470, #10890, #10894, #10898, #10899, #10901, #11039, #11054, #11055, #11056, #11078, #11117, #11123, #11125, #11132, #11155, #11161, #11177, #11182, #11189, #11262 |
 | [@rushsinging](https://github.com/rushsinging) | #8947 |
 | [@ryan-brosas](https://github.com/ryan-brosas) | #9693 |
 | [@ryanngit](https://github.com/ryanngit) | direct commit / report |
-| [@sadSanta-07](https://github.com/sadSanta-07) | #9938 |
+| [@sadSanta-07](https://github.com/sadSanta-07) | #9938, #10209, #10605, #10772 |
 | [@SalyyS1](https://github.com/SalyyS1) | direct commit / report |
 | [@Sam280903](https://github.com/Sam280903) | #9274, #9278, #9281, #9283, #9448 |
+| [@sanforex24h](https://github.com/sanforex24h) | #11026 |
+| [@SCys](https://github.com/SCys) | #11107 |
 | [@seakleangnhak](https://github.com/seakleangnhak) | direct commit / report |
 | [@seanford](https://github.com/seanford) | #8523 |
 | [@SemonCat](https://github.com/SemonCat) | direct commit / report |
+| [@sha367](https://github.com/sha367) | #10471 |
 | [@shixi-li](https://github.com/shixi-li) | #9022, #9513, #10001 |
+| [@Siva010](https://github.com/Siva010) | #10658 |
+| [@SnCr90](https://github.com/SnCr90) | #10534 |
 | [@soulhakr](https://github.com/soulhakr) | #8799 |
-| [@stanleytejakusuma](https://github.com/stanleytejakusuma) | #9610 |
+| [@sprintberlin](https://github.com/sprintberlin) | #11353, #11355, #11360 |
+| [@stanleytejakusuma](https://github.com/stanleytejakusuma) | #9610, #10636, #10660, #10730, #11337 |
 | [@Stazyu](https://github.com/Stazyu) | #9007, #9226, #9438 |
 | [@SupremeNexas](https://github.com/SupremeNexas) | #9913 |
-| [@swingtempo](https://github.com/swingtempo) | #9307 |
+| [@swingtempo](https://github.com/swingtempo) | #9307, #10354 |
 | [@szzhoujiarui](https://github.com/szzhoujiarui) | #9218 |
 | [@tald26](https://github.com/tald26) | #9959 |
 | [@taltas](https://github.com/taltas) | direct commit / report |
-| [@TechNickAI](https://github.com/TechNickAI) | #9251 |
+| [@TechNickAI](https://github.com/TechNickAI) | #9251, #10558 |
 | [@TengSivtean](https://github.com/TengSivtean) | #10000, #10002, #10086 |
+| [@TheDemonTuan](https://github.com/TheDemonTuan) | #11364 |
 | [@TheFrenchGhosty](https://github.com/TheFrenchGhosty) | #9326 |
-| [@tiangao88](https://github.com/tiangao88) | #10046 |
+| [@tiangao88](https://github.com/tiangao88) | #10046, #10363 |
+| [@tientien17](https://github.com/tientien17) | #10798 |
+| [@tito13kfm](https://github.com/tito13kfm) | #10227 |
+| [@tkgo11](https://github.com/tkgo11) | #10370, #10371 |
+| [@tuandinh0801](https://github.com/tuandinh0801) | #10804, #10830, #11230 |
+| [@Tushar49](https://github.com/Tushar49) | #10186 |
 | [@tuxmonteiro](https://github.com/tuxmonteiro) | #9065 |
 | [@vinogradovnet](https://github.com/vinogradovnet) | #9581 |
 | [@VXNCXNX](https://github.com/VXNCXNX) | #9111, #9783 |
 | [@wgordon17](https://github.com/wgordon17) | #8909, #9233, #9441, #9619 |
 | [@Witroch4](https://github.com/Witroch4) | #8713 |
 | [@witt3rd](https://github.com/witt3rd) | #9962, #9963 |
+| [@wpec](https://github.com/wpec) | #10839 |
 | [@XDayonline](https://github.com/XDayonline) | #10053 |
-| [@xiaoyaner0201](https://github.com/xiaoyaner0201) | #8757, #8869, #8876, #8883, #8906, #8931, #9021, #9027, #9452, #9042, #9316 |
-| [@xz-dev](https://github.com/xz-dev) | #8908, #9199, #9205, #9262, #9290, #9313, #9555, #9569, #9629, #9788, #9983, #10079, #10243 |
-| [@yansigit](https://github.com/yansigit) | #9834, #9911, #9917, #9921, #10065 |
+| [@xiaoyaner0201](https://github.com/xiaoyaner0201) | #8757, #8869, #8876, #8883, #8906, #8931, #9021, #9027, #9042, #9316, #9452, #10468 |
+| [@xyzs996](https://github.com/xyzs996) | #11210 |
+| [@xz-dev](https://github.com/xz-dev) | #8367, #8908, #9199, #9205, #9262, #9290, #9313, #9555, #9569, #9629, #9788, #9983, #10066, #10072, #10079, #10162, #10243, #10247, #10437, #10712, #10716, #10723, #10806, #10953 |
+| [@yansigit](https://github.com/yansigit) | #9834, #9909, #9911, #9917, #9921, #10065 |
 | [@yidecode](https://github.com/yidecode) | direct commit / report |
+| [@yourspraveen](https://github.com/yourspraveen) | #11075, #11088, #11165, #11271 |
 | [@yulinlina](https://github.com/yulinlina) | #10013 |
+| [@YunyunZhai](https://github.com/YunyunZhai) | #10946, #10960 |
 | [@yutuknown](https://github.com/yutuknown) | #8999 |
 | [@zabrodschiipavel-sketch](https://github.com/zabrodschiipavel-sketch) | #9312 |
-| [@Zartharas](https://github.com/Zartharas) | #9161, #9164, #9181, #9182, #9184, #9185, #9186, #9189, #9294, #9825, #9833, #9936, #9965, #9992, #10218 |
+| [@zannen7](https://github.com/zannen7) | #10077 |
+| [@Zartharas](https://github.com/Zartharas) | #9161, #9164, #9181, #9182, #9184, #9185, #9186, #9189, #9294, #9825, #9833, #9936, #9965, #9992, #10202, #10218, #10272, #10329, #10518, #10519, #10521, #10799, #10873, #10878 |
 | [@Zenlyte](https://github.com/Zenlyte) | #9005 |
 | [@zhiru](https://github.com/zhiru) | #9099, #9101 |
-| [@ziuus](https://github.com/ziuus) | #8912 |
+| [@ziuus](https://github.com/ziuus) | #8912, #11372 |
+| [@zmf963](https://github.com/zmf963) | direct commit / report |
+| [@zoser69](https://github.com/zoser69) | #10874 |
 | [@zuckdorsey](https://github.com/zuckdorsey) | #9723 |
+| [@diegosouzapw](https://github.com/diegosouzapw) | maintainer |
 
 ---
 
