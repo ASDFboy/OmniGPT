@@ -9,6 +9,25 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
+// Carrega o modulo de forma ESTATICA (mesma convenção dos testes irmãos
+// chatgptTlsClient.test.ts / grokTlsClient.test.ts).
+//
+// Por que isso importa: `claudeTlsClient.ts` puxa `tlsClientBase.ts` ->
+// `open-sse/utils/proxyFetch.ts`, cujo grafo de modulos custa ~5-12s para o
+// Vite transformar dentro de um worker jsdom do Vitest. Cada `await
+// import("../claudeTlsClient.ts")` feito DENTRO de um `it()` cobrava esse custo
+// do orcamento do teste (testTimeout padrao = 5000ms), entao o PRIMEIRO teste do
+// arquivo estourava por timeout sempre que a maquina estava sob carga — que e
+// exatamente o caso quando a suite inteira roda com 20 workers em paralelo
+// (`npm run test:vitest:ui`). Rodando o arquivo sozinho numa maquina ociosa ele
+// passava por pouco, o que fazia a falha parecer poluicao entre arquivos.
+//
+// Com o import estatico o custo do grafo e pago na fase de COLETA do arquivo
+// (que nao esta sujeita ao testTimeout) e os `await import()` de dentro dos
+// testes passam a resolver do registro ja quente, em ~0ms. Nenhuma assercao foi
+// alterada.
+import "../claudeTlsClient.ts";
+
 describe("claudeTlsClient", () => {
   beforeEach(() => {
     // Clear env vars before each test
