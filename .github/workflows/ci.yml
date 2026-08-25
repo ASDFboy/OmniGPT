@@ -692,7 +692,17 @@ jobs:
       # vouchear). Sem este passo o par build+validate deste job e estruturalmente
       # incompativel e falha 100% das vezes.
       - name: Stamp dist/BUILD_SHA for the provenance guard (#10427)
-        run: node scripts/build/write-build-sha.mjs
+        # O SHA TEM de vir do head da PR, nao de `git rev-parse HEAD`. Este workflow
+        # roda em `pull_request`, entao o checkout e o MERGE COMMIT efemero que o
+        # GitHub cria — um commit que nao existe em branch nenhuma e portanto nunca e
+        # ancestral da release. O guard de proveniencia (#10427) rejeita exatamente
+        # isso, e com razao: um artefato carimbado com o merge commit nao pode ser
+        # rastreado ate codigo que passou pelos gates.
+        env:
+          OMNIROUTE_BUILD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          export OMNIROUTE_BUILD_SHA="${OMNIROUTE_BUILD_SHA:0:7}"
+          node scripts/build/write-build-sha.mjs
       - run: npm run check:pack-artifact
       # WS1.2 (#7065 class): pack the real tarball, install it into a clean prefix and
       # BOOT it to a healthy /api/monitoring/health — the gate that structure checks
