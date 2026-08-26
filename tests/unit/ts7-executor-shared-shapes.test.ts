@@ -14,7 +14,11 @@ const { OpencodeExecutor } = await import("../../open-sse/executors/opencode.ts"
  * that failed to type-check — no duplicate added here.
  */
 
-describe("OpencodeExecutor — the tools array survives the narrowing fix", () => {
+// NOTE: the former truncates-to-128 guard here is superseded by
+// opencode-tools-no-truncation.test.ts (#11444): tool-list limiting moved to
+// chatCore truncateToolList(); the executor must forward arrays intact.
+
+describe("OpencodeExecutor — tools truncation survives the narrowing fix", () => {
   const executor = new OpencodeExecutor("opencode-go");
   const CREDENTIALS = { apiKey: "k" } as Record<string, unknown>;
 
