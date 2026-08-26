@@ -3430,7 +3430,7 @@
   },
   "tests/integration/skills-pipeline.test.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 14
+      "count": 15
     },
     "@typescript-eslint/no-unused-vars": {
       "count": 2

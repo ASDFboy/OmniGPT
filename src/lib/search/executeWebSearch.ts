@@ -183,7 +183,22 @@ export async function executeWebSearch(
       );
     }
   } else {
-    credentials = await resolveSearchCredentials(providerConfig.id);
+    // Auto-select: prefer the cheapest non-fallback provider that actually has
+    // credentials. Fallback-only free providers are a last resort, so a
+    // configured paid provider is never skipped just because a cheaper
+    // no-credentials provider appears first in the cost sort (issue #11524).
+    const candidateProviders = Object.values(SEARCH_PROVIDERS)
+      .filter((provider) => !provider.fallbackOnly && supportsSearchType(provider, searchType))
+      .sort((a, b) => a.costPerQuery - b.costPerQuery);
+
+    for (const candidate of candidateProviders) {
+      const candidateCredentials = await resolveSearchCredentials(candidate.id);
+      if (candidateCredentials) {
+        providerConfig = candidate;
+        credentials = candidateCredentials;
+        break;
+      }
+    }
 
     if (!credentials) {
       // 1. Try credentialed providers first, sorted by cost. Fallback-only
@@ -244,10 +259,11 @@ export async function executeWebSearch(
       .filter((providerId) => providerId !== providerConfig!.id);
 
     for (const providerId of otherIds) {
-      const creds = await resolveSearchCredentials(providerId);
-      if (creds) {
+      const altConfig = getSearchProvider(providerId);
+      const altCreds = await resolveSearchCredentials(providerId);
+      if (altConfig && altCreds) {
         alternateProviderId = providerId;
-        alternateCredentials = creds;
+        alternateCredentials = altCreds;
         break;
       }
     }
