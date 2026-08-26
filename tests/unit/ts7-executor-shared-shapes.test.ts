@@ -90,4 +90,3 @@ describe("OpencodeExecutor — tools truncation survives the narrowing fix", () 
     assert.equal((out as unknown[]).length, 1);
   });
 });
-
