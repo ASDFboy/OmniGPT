@@ -23,7 +23,7 @@ function renderApiKeySaveHook(): {
   document.body.appendChild(container);
   let hookResult: ReturnType<typeof useApiKeySave> | null = null;
   function Wrapper() {
-    hookResult = useApiKeySave({
+    const result = useApiKeySave({
       providerId: "huge-catalog-openai-compatible",
       fetchConnections: vi.fn().mockResolvedValue(undefined),
       fetchProviderModelMeta: vi.fn().mockResolvedValue(undefined),
@@ -34,6 +34,9 @@ function renderApiKeySaveHook(): {
       notify: { success: vi.fn(), error: vi.fn() },
       t,
     });
+    React.useEffect(() => {
+      hookResult = result;
+    }, [result]);
     return null;
   }
   const root = createRoot(container);
@@ -60,7 +63,7 @@ describe("useApiKeySave.handleSaveApiKey — full-sync opt-out (#11324)", () => 
   });
 
   it("does not auto-trigger a full /sync-models catalog fetch when the caller asks to add just one manual model", async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {
       const url = String(input);
       if (url === "/api/providers") return response(true, { connection: { id: "conn-1" } });
       if (url.includes("/sync-models")) {
@@ -82,12 +85,16 @@ describe("useApiKeySave.handleSaveApiKey — full-sync opt-out (#11324)", () => 
       await hookResult().handleSaveApiKey({ apiKey: "sk-test", skipModelSync: true });
     });
 
-    const syncCalls = fetchMock.mock.calls.filter(([input]) => String(input).includes("/sync-models"));
+    const syncCalls = fetchMock.mock.calls.filter(([input]) =>
+      String(input).includes("/sync-models")
+    );
     expect(syncCalls).toHaveLength(0);
 
     // The opt-out is a client-side intent signal only — it must never leak into the
     // persisted connection payload sent to the server.
-    const providersCall = fetchMock.mock.calls.find(([input]) => String(input) === "/api/providers");
+    const providersCall = fetchMock.mock.calls.find(
+      ([input]) => String(input) === "/api/providers"
+    );
     const postedBody = JSON.parse((providersCall?.[1] as RequestInit).body as string);
     expect(postedBody).not.toHaveProperty("skipModelSync");
   });
@@ -111,7 +118,9 @@ describe("useApiKeySave.handleSaveApiKey — full-sync opt-out (#11324)", () => 
       await hookResult().handleSaveApiKey({ apiKey: "sk-test" });
     });
 
-    const syncCalls = fetchMock.mock.calls.filter(([input]) => String(input).includes("/sync-models"));
+    const syncCalls = fetchMock.mock.calls.filter(([input]) =>
+      String(input).includes("/sync-models")
+    );
     expect(syncCalls).toHaveLength(1);
   });
 });
