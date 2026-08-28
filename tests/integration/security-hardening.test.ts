@@ -300,16 +300,6 @@ test("OAuth routes that can create provider connections require auth guard", () 
     "src/app/api/oauth/kiro/social-exchange/route.ts",
   ];
 
-  // cursor/import and kiro/import delegate to the shared requireManagementAuth()
-  // guard, which internally performs the same checks the older inline literals
-  // asserted: isAuthRequired() (auth active?), isDashboardSessionAuthenticated()
-  // (user authenticated?) and a 401 "Authentication required" response for
-  // anonymous callers. Asserting the guard wiring keeps this contract
-  // refactor-proof.
-  const guardDelegatingTargets = new Set([
-    "src/app/api/oauth/cursor/import/route.ts",
-    "src/app/api/oauth/kiro/import/route.ts",
-  ]);
 
   for (const relPath of targets) {
     const content = readIfExists(relPath);
