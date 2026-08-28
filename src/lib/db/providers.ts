@@ -3,7 +3,6 @@
  */
 
 import { v4 as uuidv4 } from "uuid";
-import { isRuntimeRetiredProviderId } from "@/shared/constants/providerRetirement";
 import { getDbInstance, rowToCamel, cleanNulls } from "./core";
 import { backupDbFile } from "./backup";
 import {
@@ -37,6 +36,7 @@ import {
 import { pickCodexConnectionForUser } from "@/lib/oauth/utils/codexConnectionSelection";
 import { isMicrosoftDesignerWebRetiredProviderId } from "@/shared/constants/designerWebRetirement";
 import { reconcileCodexUsageHistory } from "./providers/usageIdentityReconciliation";
+import { isRuntimeRetiredProviderId } from "@/shared/constants/providerRetirement";
 
 /**
  * normalizeProviderSpecificData + the Codex fingerprint-seed invariant: Codex
