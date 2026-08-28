@@ -1,4 +1,4 @@
--- 163_model_capabilities.sql
+-- 169_model_capabilities.sql
 --
 -- Promote `model_capabilities` from a lazily-created runtime table to a real migration.
 --
