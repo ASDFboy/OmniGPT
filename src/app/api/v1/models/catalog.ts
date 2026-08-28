@@ -1230,7 +1230,7 @@ async function buildUnifiedModelsResponseCore(
             continue;
           }
 
-          if (includeAlias) {
+          if (includeAlias || Boolean(prefix)) {
             models.push({
               id: aliasId,
               object: "model",
@@ -1242,7 +1242,7 @@ async function buildUnifiedModelsResponseCore(
               ...syncedFields,
             });
           }
-          if (includeAlias && modelType === "audio") {
+          if ((includeAlias || Boolean(prefix)) && modelType === "audio") {
             models.push({
               id: aliasId,
               object: "model",
@@ -1655,7 +1655,7 @@ async function buildUnifiedModelsResponseCore(
             ? getCustomVisionCapabilityFields(model, aliasId, modelId)
             : null;
 
-          if (includeAlias) {
+          if (includeAlias || Boolean(prefix)) {
             models.push({
               id: aliasId,
               object: "model",
@@ -1773,7 +1773,7 @@ async function buildUnifiedModelsResponseCore(
         const visionFields =
           getVisionCapabilityFields(aliasId) || getVisionCapabilityFields(modelId);
 
-        if (includeAlias) {
+        if (includeAlias || Boolean(nodePrefix)) {
           models.push({
             id: aliasId,
             object: "model",
