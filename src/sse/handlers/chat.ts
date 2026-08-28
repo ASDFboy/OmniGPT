@@ -2304,6 +2304,7 @@ async function handleSingleModelChat(
                 (failureKind === "rate_limit" || failureKind === "transient")
               ),
               isCombo,
+              headers: result.response.headers,
             }
           );
 

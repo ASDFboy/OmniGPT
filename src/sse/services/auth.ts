@@ -63,6 +63,7 @@ import {
   hasPerModelQuota,
   getRuntimeProviderProfile,
   recordModelLockoutFailure,
+  retryHintBypassesMaxCooldownMs,
   isProviderModelUnsupported400,
 } from "@omniroute/open-sse/services/accountFallback.ts";
 import { isLocalProvider } from "@omniroute/open-sse/config/providerRegistry.ts";
@@ -2548,6 +2549,7 @@ export async function markAccountUnavailable(
     persistUnavailableState?: boolean;
     /** Caller is the combo engine — it records its own model-level lockouts. */
     isCombo?: boolean;
+    headers?: Headers | Record<string, string> | null;
   } = {}
 ) {
   const currentMutex = markMutexes.get(connectionId) || Promise.resolve();
@@ -2663,7 +2665,7 @@ export async function markAccountUnavailable(
       backoffLevel,
       model,
       provider,
-      null,
+      options.headers ?? null,
       effectiveProviderProfile
     );
 
@@ -2901,13 +2903,11 @@ export async function markAccountUnavailable(
               : (fallbackResult.quotaResetHintMs ?? null),
           maxCooldownMs: mlSettings.maxCooldownMs,
           scope: usesExactAntigravityLock ? "exact" : undefined,
-          // #6863 vs #7940: exactCooldownMs above is only ever set from a genuine
-          // upstream signal (Retry-After/reset header or a parsed quotaResetHintMs) —
-          // never a synthetic estimate — so it must bypass maxCooldownMs instead of
-          // being clamped down to a window the upstream already told us is wrong.
-          exactCooldownIsUpstreamReset:
-            fallbackResult.usedUpstreamRetryHint === true ||
-            typeof fallbackResult.quotaResetHintMs === "number",
+          // Only a transport header or google.rpc.RetryInfo can bypass maxCooldownMs.
+          // Prose and generic JSON hints remain exact but operator-capped.
+          exactCooldownIsUpstreamReset: retryHintBypassesMaxCooldownMs(
+            fallbackResult.retryHintSource
+          ),
         }
       );
       // Update last error for observability (without changing terminal status)
