@@ -24,6 +24,7 @@
 import { getDbInstance } from "./db/core";
 import { invalidateDbCache, getModelCatalogCacheVersion } from "./db/readCache";
 import { backupDbFile } from "./db/backup";
+import { registerDbStateResetter } from "./db/stateReset";
 
 import {
   transformModelsDevToPricing,
@@ -231,6 +232,15 @@ function mapCapabilityRecord(record: Record<string, unknown>): ModelCapabilityEn
 let pricingMemo: PricingByProvider | null = null;
 let pricingMemoVersion = -1; // -1: never equals a real cacheVersion (starts at 0), guarantees a miss on the first call
 
+// resetDbInstance() (tests, DB swaps) must also drop the pricing memo below —
+// ported from main's #10055 and wired to THIS memo (keyed on the catalog cache
+// version), not to a second cache of its own.
+function invalidateModelsDevPricingCache(): void {
+  pricingMemo = null;
+  pricingMemoVersion = -1;
+}
+registerDbStateResetter(invalidateModelsDevPricingCache);
+
 /**
  * Read synced pricing from `models_dev_pricing` namespace.
  * Results are memoized until `saveModelsDevPricing` / `clearModelsDevPricing`.
@@ -285,6 +295,7 @@ export function saveModelsDevPricing(data: PricingByProvider): void {
   });
   tx();
   backupDbFile("pre-write");
+  invalidateModelsDevPricingCache();
   invalidateDbCache("pricing");
 }
 
@@ -295,6 +306,7 @@ export function clearModelsDevPricing(): void {
   const db = getDbInstance();
   db.prepare("DELETE FROM key_value WHERE namespace = 'models_dev_pricing'").run();
   backupDbFile("pre-write");
+  invalidateModelsDevPricingCache();
   invalidateDbCache("pricing");
 }
 
