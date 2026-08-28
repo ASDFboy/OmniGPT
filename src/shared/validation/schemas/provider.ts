@@ -377,6 +377,17 @@ export const createProviderNodeSchema = z
         message: "Prefix is required",
         path: ["prefix"],
       });
+    } else if (isReservedProviderPrefix(value.prefix.trim())) {
+      // Reserved-prefix guard (tokenrouter bug): the runtime model resolver skips
+      // compatible-node lookup for built-in registry ids/aliases, so a node
+      // created with such a prefix could never be reached by it and silently
+      // routed requests to the built-in provider instead. Reject at the write
+      // path. Case-sensitive to match the runtime guard exactly.
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: reservedProviderPrefixMessage(value.prefix.trim()),
+        path: ["prefix"],
+      });
     }
     if (nodeType === "openai-compatible" && !value.apiType) {
       ctx.addIssue({

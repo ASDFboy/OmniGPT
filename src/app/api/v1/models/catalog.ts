@@ -151,7 +151,19 @@ export {
   __flushCatalogBackgroundRefreshForTest,
   __forceCatalogInFlightRejectionForTest,
 } from "./catalogCache";
-export type { CachedCatalog } from "./catalogCache";
+export type { CachedCatalog, BackgroundRefreshScheduler } from "./catalogCache";
+
+/**
+ * Per-call options for {@link getUnifiedModelsResponse}.
+ *
+ * Restored in #11551: `/v1/models` passes Next's `after()` so the stale-while-
+ * revalidate rebuild is deferred until after the response flush. #9199 had removed
+ * the injection point while the route kept passing it, so the argument was silently
+ * dropped and the refresh ran on a plain `setTimeout`.
+ */
+export type CatalogResponseOptions = {
+  scheduleBackgroundRefresh?: BackgroundRefreshScheduler;
+};
 
 const BUILTIN_AUTO_YIELD_INTERVAL = 2;
 
