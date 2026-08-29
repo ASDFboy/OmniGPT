@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "Video Köprüsü",
     "modalityBridgeVideoDesc": "Video karelerinden örnekler alın, bunları bir görüntü modeliyle açıklayın ve seçilen metin modeliyle devam edin.",
     "modalityBridgeVideoRuntimeReady": "Çalışma ortamı hazır",
+    "modalityBridgeVideoRuntimeChecking": "Çalışma zamanı denetleniyor…",
     "modalityBridgeVideoRuntimeUnavailable": "Çalışma ortamı kullanılamıyor",
     "modalityBridgeVideoRuntimeInstall": "Video çıkarmayı etkinleştirmek için sunucunun PATH ortamına FFmpeg ve ffprobe yükleyin.",
     "modalityBridgeVideoEnabled": "Video Köprüsünü etkinleştir",

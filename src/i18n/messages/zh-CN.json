@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "视频桥接",
     "modalityBridgeVideoDesc": "对视频帧进行采样，使用视觉模型描述这些帧，然后继续使用所选的文本模型。",
     "modalityBridgeVideoRuntimeReady": "运行时已就绪",
+    "modalityBridgeVideoRuntimeChecking": "正在检查运行时…",
     "modalityBridgeVideoRuntimeUnavailable": "运行时不可用",
     "modalityBridgeVideoRuntimeInstall": "请在服务器的 PATH 中安装 FFmpeg 和 ffprobe 以启用视频提取。",
     "modalityBridgeVideoEnabled": "启用视频桥接",

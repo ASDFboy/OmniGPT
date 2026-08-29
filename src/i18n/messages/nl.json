@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "Videobrug",
     "modalityBridgeVideoDesc": "Neem voorbeelden van videoframes, beschrijf ze met een visiemodel en ga verder met het gekozen tekstmodel.",
     "modalityBridgeVideoRuntimeReady": "Runtime gereed",
+    "modalityBridgeVideoRuntimeChecking": "Runtime controleren…",
     "modalityBridgeVideoRuntimeUnavailable": "Runtime niet beschikbaar",
     "modalityBridgeVideoRuntimeInstall": "Installeer FFmpeg en ffprobe in het PATH van de server om video-extractie in te schakelen.",
     "modalityBridgeVideoEnabled": "Videobrug inschakelen",

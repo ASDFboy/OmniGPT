@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "גשר וידאו",
     "modalityBridgeVideoDesc": "דגמו פריימים מהווידאו, תארו אותם באמצעות מודל ראייה והמשיכו עם מודל הטקסט שנבחר.",
     "modalityBridgeVideoRuntimeReady": "סביבת הריצה מוכנה",
+    "modalityBridgeVideoRuntimeChecking": "בודק את סביבת הריצה…",
     "modalityBridgeVideoRuntimeUnavailable": "סביבת הריצה אינה זמינה",
     "modalityBridgeVideoRuntimeInstall": "התקינו את FFmpeg ואת ffprobe ב-PATH של השרת כדי לאפשר חילוץ וידאו.",
     "modalityBridgeVideoEnabled": "הפעלת גשר וידאו",

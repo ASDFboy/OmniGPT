@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "Videobrygga",
     "modalityBridgeVideoDesc": "Sampla videobildrutor, beskriv dem med en synmodell och fortsätt med den valda textmodellen.",
     "modalityBridgeVideoRuntimeReady": "Körmiljön är klar",
+    "modalityBridgeVideoRuntimeChecking": "Kontrollerar körtidsmiljö…",
     "modalityBridgeVideoRuntimeUnavailable": "Körmiljön är inte tillgänglig",
     "modalityBridgeVideoRuntimeInstall": "Installera FFmpeg och ffprobe i serverns PATH för att aktivera videoextrahering.",
     "modalityBridgeVideoEnabled": "Aktivera Videobrygga",

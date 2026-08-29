@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "Video most",
     "modalityBridgeVideoDesc": "Odoberte snímky z videa, opíšte ich modelom pre spracovanie obrazu a pokračujte vybraným textovým modelom.",
     "modalityBridgeVideoRuntimeReady": "Prostredie je pripravené",
+    "modalityBridgeVideoRuntimeChecking": "Kontrola behového prostredia…",
     "modalityBridgeVideoRuntimeUnavailable": "Prostredie nie je dostupné",
     "modalityBridgeVideoRuntimeInstall": "Nainštalujte FFmpeg a ffprobe do PATH servera, aby ste povolili extrakciu videa.",
     "modalityBridgeVideoEnabled": "Povoliť Video most",

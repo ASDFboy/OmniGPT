@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "Видео мост",
     "modalityBridgeVideoDesc": "Извлечете примерни кадри от видеото, опишете ги с модел за зрение и продължете с избрания текстов модел.",
     "modalityBridgeVideoRuntimeReady": "Средата за изпълнение е готова",
+    "modalityBridgeVideoRuntimeChecking": "Проверка на средата за изпълнение…",
     "modalityBridgeVideoRuntimeUnavailable": "Средата за изпълнение не е налична",
     "modalityBridgeVideoRuntimeInstall": "Инсталирайте FFmpeg и ffprobe в PATH на сървъра, за да разрешите извличането на видео.",
     "modalityBridgeVideoEnabled": "Активиране на Видео мост",

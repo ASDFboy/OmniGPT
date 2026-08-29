@@ -207,8 +207,12 @@ limits, runtime
 counters, and a guarded sample request. The Audio tab is also live: it exposes
 enablement, an STT-only model picker with Auto, timeout/max-clip limits, audio
 counters, and an `input_audio` sample test. The Video tab is functional: it reports
-the FFmpeg/ffprobe runtime state, persists enable/model/frame/video/timeout limits,
-filters the model picker to vision-capable models, and exposes video counters.
+the FFmpeg/ffprobe runtime state — one of four explicit UI states (`unknown` while
+the probe is in flight or could not complete, `restricted` on a non-loopback
+dashboard host where the probe is skipped client-side, `unavailable` once probed
+and confirmed missing, or `available` with the FFmpeg/ffprobe versions) — persists
+enable/model/frame/video/timeout limits, filters the model picker to vision-capable
+models, and exposes video counters.
 
 The former Vision Bridge card under AI settings is a compatibility link to the
 new page; it no longer owns a second copy of the form. Media Providers also
@@ -288,13 +292,26 @@ Runtime settings are DB-backed and Zod-validated:
 The shared cache remains controlled by `modalityBridgeCacheEnabled`,
 `modalityBridgeCacheTtlMinutes`, and `modalityBridgeCacheMaxEntries`.
 
-### Video Bridge (`videoBridge.ts`)
+### Video Bridge (`videoBridge.ts`, `videoBridgePipeline.ts`)
 
 Intercepts top-level video parts in Chat Completions `messages` and Responses
 API `input` before a target without known native video support is called.
 Supported shapes are `input_video`, `video_url`, `video_source`, HTTPS URLs,
 and `data:video/*;base64,...` data URIs. Plain filenames in text are not treated
 as video.
+
+`VideoBridgeGuardrail.preCall` (`videoBridge.ts`) owns request traversal, the
+capability/policy check, per-request aggregation, and the response payload.
+Per-video work — acquisition, the whole-result cache, describing a frame
+sequence (which fuses any caller-declared audio transcript), and per-attempt
+metrics/abort/cleanup — is hidden behind `processVideoPart` in
+`videoBridgePipeline.ts`, called once per video part inside `preCall`'s loop.
+That module also defines the explicit port boundaries `VideoMediaBrokerPort`
+(acquiring bytes and extracting sampled frames), `VideoAudioTranscriptionPort`
+(fusing a caller-declared audio transcript with the sampled captions), and
+`VideoDrilldownPort` (the frame drill-down persistence boundary; not yet wired
+into `processVideoPart` — only the separate `/api/modality-bridge/video/drilldown`
+route writes drill-down entries today).
 
 The public `/v1` request path never imports or invokes a subprocess. Remote
 videos are downloaded under a 50 MiB bound; inline base64 videos have a

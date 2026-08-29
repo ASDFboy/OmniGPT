@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "Видеомост",
     "modalityBridgeVideoDesc": "Возьмите образцы кадров видео, опишите их с помощью модели компьютерного зрения и продолжите работу с выбранной текстовой моделью.",
     "modalityBridgeVideoRuntimeReady": "Среда выполнения готова",
+    "modalityBridgeVideoRuntimeChecking": "Проверка среды выполнения…",
     "modalityBridgeVideoRuntimeUnavailable": "Среда выполнения недоступна",
     "modalityBridgeVideoRuntimeInstall": "Установите FFmpeg и ffprobe в PATH сервера, чтобы включить извлечение видео.",
     "modalityBridgeVideoEnabled": "Включить Видеомост",

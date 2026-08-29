@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "動画ブリッジ",
     "modalityBridgeVideoDesc": "動画のフレームをサンプリングし、視覚モデルで説明してから、選択したテキストモデルで処理を続けます。",
     "modalityBridgeVideoRuntimeReady": "ランタイムは準備完了です",
+    "modalityBridgeVideoRuntimeChecking": "ランタイムを確認しています…",
     "modalityBridgeVideoRuntimeUnavailable": "ランタイムを利用できません",
     "modalityBridgeVideoRuntimeInstall": "動画抽出を有効にするには、サーバーの PATH に FFmpeg と ffprobe をインストールしてください。",
     "modalityBridgeVideoEnabled": "動画ブリッジを有効にする",

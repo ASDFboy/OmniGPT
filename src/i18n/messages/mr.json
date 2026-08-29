@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "व्हिडिओ ब्रिज",
     "modalityBridgeVideoDesc": "व्हिडिओ फ्रेमचे नमुने घ्या, व्हिजन मॉडेलने त्यांचे वर्णन करा आणि निवडलेल्या मजकूर मॉडेलसह पुढे सुरू ठेवा.",
     "modalityBridgeVideoRuntimeReady": "रनटाइम तयार आहे",
+    "modalityBridgeVideoRuntimeChecking": "रनटाइम तपासत आहे…",
     "modalityBridgeVideoRuntimeUnavailable": "रनटाइम उपलब्ध नाही",
     "modalityBridgeVideoRuntimeInstall": "व्हिडिओ एक्स्ट्रॅक्शन सक्षम करण्यासाठी सर्व्हरच्या PATH मध्ये FFmpeg आणि ffprobe स्थापित करा.",
     "modalityBridgeVideoEnabled": "व्हिडिओ ब्रिज सक्षम करा",

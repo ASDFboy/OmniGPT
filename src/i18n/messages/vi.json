@@ -8201,6 +8201,7 @@
     "modalityBridgeVideoTitle": "Cầu nối video",
     "modalityBridgeVideoDesc": "Lấy mẫu các khung hình video, mô tả chúng bằng mô hình thị giác rồi tiếp tục bằng mô hình văn bản đã chọn.",
     "modalityBridgeVideoRuntimeReady": "Môi trường chạy đã sẵn sàng",
+    "modalityBridgeVideoRuntimeChecking": "Đang kiểm tra runtime…",
     "modalityBridgeVideoRuntimeUnavailable": "Môi trường chạy không khả dụng",
     "modalityBridgeVideoRuntimeInstall": "Cài đặt FFmpeg và ffprobe trong PATH của máy chủ để bật tính năng trích xuất video.",
     "modalityBridgeVideoEnabled": "Bật Cầu nối video",

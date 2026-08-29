@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "สะพานวิดีโอ",
     "modalityBridgeVideoDesc": "สุ่มตัวอย่างเฟรมวิดีโอ อธิบายด้วยโมเดลการมองเห็น แล้วดำเนินการต่อด้วยโมเดลข้อความที่เลือก",
     "modalityBridgeVideoRuntimeReady": "รันไทม์พร้อมใช้งาน",
+    "modalityBridgeVideoRuntimeChecking": "กำลังตรวจสอบรันไทม์…",
     "modalityBridgeVideoRuntimeUnavailable": "รันไทม์ไม่พร้อมใช้งาน",
     "modalityBridgeVideoRuntimeInstall": "ติดตั้ง FFmpeg และ ffprobe ใน PATH ของเซิร์ฟเวอร์เพื่อเปิดใช้การแยกวิดีโอ",
     "modalityBridgeVideoEnabled": "เปิดใช้สะพานวิดีโอ",

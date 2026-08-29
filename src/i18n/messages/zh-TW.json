@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "影片橋接",
     "modalityBridgeVideoDesc": "對影片影格進行取樣，使用視覺模型描述這些影格，然後繼續使用所選的文字模型。",
     "modalityBridgeVideoRuntimeReady": "執行環境已就緒",
+    "modalityBridgeVideoRuntimeChecking": "正在檢查執行階段…",
     "modalityBridgeVideoRuntimeUnavailable": "執行環境無法使用",
     "modalityBridgeVideoRuntimeInstall": "請在伺服器的 PATH 中安裝 FFmpeg 和 ffprobe 以啟用影片擷取。",
     "modalityBridgeVideoEnabled": "啟用影片橋接",

@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "Video Bridge",
     "modalityBridgeVideoDesc": "Odeberte snímky z videa, popište je modelem pro zpracování obrazu a pokračujte zvoleným textovým modelem.",
     "modalityBridgeVideoRuntimeReady": "Běhové prostředí je připraveno",
+    "modalityBridgeVideoRuntimeChecking": "Kontrola běhového prostředí…",
     "modalityBridgeVideoRuntimeUnavailable": "Běhové prostředí není dostupné",
     "modalityBridgeVideoRuntimeInstall": "Nainstalujte FFmpeg a ffprobe do PATH serveru, aby bylo možné extrahovat video.",
     "modalityBridgeVideoEnabled": "Povolit Video Bridge",

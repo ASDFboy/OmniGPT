@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "Videosilta",
     "modalityBridgeVideoDesc": "Poimi videosta kuvia, kuvaile ne konenäkömallilla ja jatka valitulla tekstimallilla.",
     "modalityBridgeVideoRuntimeReady": "Ajoympäristö on valmis",
+    "modalityBridgeVideoRuntimeChecking": "Tarkistetaan ajonaikaista ympäristöä…",
     "modalityBridgeVideoRuntimeUnavailable": "Ajoympäristö ei ole käytettävissä",
     "modalityBridgeVideoRuntimeInstall": "Asenna FFmpeg ja ffprobe palvelimen PATH-polkuun videoiden purkamista varten.",
     "modalityBridgeVideoEnabled": "Ota Videosilta käyttöön",

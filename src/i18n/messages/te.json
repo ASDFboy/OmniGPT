@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "వీడియో బ్రిడ్జ్",
     "modalityBridgeVideoDesc": "వీడియో ఫ్రేమ్‌లను నమూనాగా తీసుకుని, విజన్ మోడల్‌తో వాటిని వివరించి, ఎంచుకున్న టెక్స్ట్ మోడల్‌తో కొనసాగించండి.",
     "modalityBridgeVideoRuntimeReady": "రన్‌టైమ్ సిద్ధంగా ఉంది",
+    "modalityBridgeVideoRuntimeChecking": "రన్‌టైమ్‌ను తనిఖీ చేస్తోంది…",
     "modalityBridgeVideoRuntimeUnavailable": "రన్‌టైమ్ అందుబాటులో లేదు",
     "modalityBridgeVideoRuntimeInstall": "వీడియో వెలికితీతను ప్రారంభించడానికి సర్వర్ PATH లో FFmpeg మరియు ffprobe ను ఇన్‌స్టాల్ చేయండి.",
     "modalityBridgeVideoEnabled": "వీడియో బ్రిడ్జ్‌ను ప్రారంభించండి",

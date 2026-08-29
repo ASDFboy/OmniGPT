@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "Tulay ng Video",
     "modalityBridgeVideoDesc": "Kumuha ng mga sample na frame ng video, ilarawan ang mga ito gamit ang vision model, at magpatuloy sa napiling text model.",
     "modalityBridgeVideoRuntimeReady": "Handa ang runtime",
+    "modalityBridgeVideoRuntimeChecking": "Sinusuri ang runtime…",
     "modalityBridgeVideoRuntimeUnavailable": "Hindi available ang runtime",
     "modalityBridgeVideoRuntimeInstall": "I-install ang FFmpeg at ffprobe sa PATH ng server para paganahin ang pagkuha ng video.",
     "modalityBridgeVideoEnabled": "Paganahin ang Tulay ng Video",

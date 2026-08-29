@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "Videóhíd",
     "modalityBridgeVideoDesc": "Vegyen mintát a videó képkockáiból, írassa le őket egy látásmodellel, majd folytassa a kiválasztott szövegmodellel.",
     "modalityBridgeVideoRuntimeReady": "A futtatókörnyezet kész",
+    "modalityBridgeVideoRuntimeChecking": "Futtatókörnyezet ellenőrzése…",
     "modalityBridgeVideoRuntimeUnavailable": "A futtatókörnyezet nem érhető el",
     "modalityBridgeVideoRuntimeInstall": "Telepítse az FFmpeg és az ffprobe programot a kiszolgáló PATH útvonalára a videókinyerés engedélyezéséhez.",
     "modalityBridgeVideoEnabled": "Videóhíd engedélyezése",

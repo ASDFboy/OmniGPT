@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "Most wideo",
     "modalityBridgeVideoDesc": "Pobierz próbki klatek wideo, opisz je modelem wizyjnym i kontynuuj za pomocą wybranego modelu tekstowego.",
     "modalityBridgeVideoRuntimeReady": "Środowisko uruchomieniowe jest gotowe",
+    "modalityBridgeVideoRuntimeChecking": "Sprawdzanie środowiska uruchomieniowego…",
     "modalityBridgeVideoRuntimeUnavailable": "Środowisko uruchomieniowe jest niedostępne",
     "modalityBridgeVideoRuntimeInstall": "Zainstaluj FFmpeg i ffprobe w PATH serwera, aby włączyć wyodrębnianie wideo.",
     "modalityBridgeVideoEnabled": "Włącz Most wideo",

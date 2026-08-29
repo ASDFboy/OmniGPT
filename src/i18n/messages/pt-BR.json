@@ -8201,6 +8201,7 @@
     "modalityBridgeVideoTitle": "Ponte de vídeo",
     "modalityBridgeVideoDesc": "Faça uma amostragem dos quadros do vídeo, descreva-os com um modelo de visão e continue com o modelo de texto escolhido.",
     "modalityBridgeVideoRuntimeReady": "Ambiente de execução pronto",
+    "modalityBridgeVideoRuntimeChecking": "Verificando o runtime…",
     "modalityBridgeVideoRuntimeUnavailable": "Ambiente de execução indisponível",
     "modalityBridgeVideoRuntimeInstall": "Instale o FFmpeg e o ffprobe no PATH do servidor para habilitar a extração de vídeo.",
     "modalityBridgeVideoEnabled": "Ativar Ponte de vídeo",

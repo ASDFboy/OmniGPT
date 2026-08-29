@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "Ponte video",
     "modalityBridgeVideoDesc": "Campiona i fotogrammi del video, descrivili con un modello di visione e prosegui con il modello di testo scelto.",
     "modalityBridgeVideoRuntimeReady": "Runtime pronto",
+    "modalityBridgeVideoRuntimeChecking": "Verifica del runtime…",
     "modalityBridgeVideoRuntimeUnavailable": "Runtime non disponibile",
     "modalityBridgeVideoRuntimeInstall": "Installa FFmpeg e ffprobe nel PATH del server per abilitare l’estrazione video.",
     "modalityBridgeVideoEnabled": "Abilita Ponte video",

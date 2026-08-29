@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "Video körpüsü",
     "modalityBridgeVideoDesc": "Video kadrlarından nümunələr götürün, onları görüntü modeli ilə təsvir edin və seçilmiş mətn modeli ilə davam edin.",
     "modalityBridgeVideoRuntimeReady": "İcra mühiti hazırdır",
+    "modalityBridgeVideoRuntimeChecking": "İş vaxtı yoxlanılır…",
     "modalityBridgeVideoRuntimeUnavailable": "İcra mühiti əlçatan deyil",
     "modalityBridgeVideoRuntimeInstall": "Video çıxarışını aktivləşdirmək üçün serverin PATH mühitinə FFmpeg və ffprobe quraşdırın.",
     "modalityBridgeVideoEnabled": "Video körpüsünü aktivləşdir",

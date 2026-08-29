@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "ویڈیو برج",
     "modalityBridgeVideoDesc": "ویڈیو فریموں کے نمونے لیں، وژن ماڈل سے ان کی وضاحت کریں اور منتخب ٹیکسٹ ماڈل کے ساتھ جاری رکھیں۔",
     "modalityBridgeVideoRuntimeReady": "رن ٹائم تیار ہے",
+    "modalityBridgeVideoRuntimeChecking": "رن ٹائم کی جانچ ہو رہی ہے…",
     "modalityBridgeVideoRuntimeUnavailable": "رن ٹائم دستیاب نہیں",
     "modalityBridgeVideoRuntimeInstall": "ویڈیو اخذ کرنے کے لیے سرور کے PATH میں FFmpeg اور ffprobe انسٹال کریں۔",
     "modalityBridgeVideoEnabled": "ویڈیو برج فعال کریں",

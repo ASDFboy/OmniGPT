@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "پل ویدیو",
     "modalityBridgeVideoDesc": "از فریم‌های ویدیو نمونه بگیرید، آن‌ها را با یک مدل بینایی توصیف کنید و با مدل متنی انتخاب‌شده ادامه دهید.",
     "modalityBridgeVideoRuntimeReady": "محیط اجرا آماده است",
+    "modalityBridgeVideoRuntimeChecking": "در حال بررسی زمان اجرا…",
     "modalityBridgeVideoRuntimeUnavailable": "محیط اجرا در دسترس نیست",
     "modalityBridgeVideoRuntimeInstall": "برای فعال‌کردن استخراج ویدیو، FFmpeg و ffprobe را در PATH سرور نصب کنید.",
     "modalityBridgeVideoEnabled": "فعال‌کردن پل ویدیو",

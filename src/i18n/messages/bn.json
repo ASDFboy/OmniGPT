@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "ভিডিও ব্রিজ",
     "modalityBridgeVideoDesc": "ভিডিও ফ্রেমের নমুনা নিন, ভিশন মডেল দিয়ে সেগুলো বর্ণনা করুন এবং নির্বাচিত টেক্সট মডেল দিয়ে চালিয়ে যান।",
     "modalityBridgeVideoRuntimeReady": "রানটাইম প্রস্তুত",
+    "modalityBridgeVideoRuntimeChecking": "রানটাইম পরীক্ষা করা হচ্ছে…",
     "modalityBridgeVideoRuntimeUnavailable": "রানটাইম উপলভ্য নয়",
     "modalityBridgeVideoRuntimeInstall": "ভিডিও এক্সট্র্যাকশন চালু করতে সার্ভারের PATH-এ FFmpeg ও ffprobe ইনস্টল করুন।",
     "modalityBridgeVideoEnabled": "ভিডিও ব্রিজ চালু করুন",

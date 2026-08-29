@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "Daraja la video",
     "modalityBridgeVideoDesc": "Chukua sampuli za fremu za video, zieleze kwa modeli ya kuona, kisha uendelee na modeli ya maandishi iliyochaguliwa.",
     "modalityBridgeVideoRuntimeReady": "Mazingira ya utekelezaji yako tayari",
+    "modalityBridgeVideoRuntimeChecking": "Inakagua mazingira ya utekelezaji…",
     "modalityBridgeVideoRuntimeUnavailable": "Mazingira ya utekelezaji hayapatikani",
     "modalityBridgeVideoRuntimeInstall": "Sakinisha FFmpeg na ffprobe kwenye PATH ya seva ili kuwezesha uchimbaji wa video.",
     "modalityBridgeVideoEnabled": "Washa Daraja la video",

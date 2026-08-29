@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "Відеоміст",
     "modalityBridgeVideoDesc": "Виберіть зразки кадрів відео, опишіть їх за допомогою моделі комп’ютерного зору та продовжте з вибраною текстовою моделлю.",
     "modalityBridgeVideoRuntimeReady": "Середовище виконання готове",
+    "modalityBridgeVideoRuntimeChecking": "Перевірка середовища виконання…",
     "modalityBridgeVideoRuntimeUnavailable": "Середовище виконання недоступне",
     "modalityBridgeVideoRuntimeInstall": "Встановіть FFmpeg і ffprobe у PATH сервера, щоб увімкнути видобування відео.",
     "modalityBridgeVideoEnabled": "Увімкнути Відеоміст",

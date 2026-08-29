@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "Videobro",
     "modalityBridgeVideoDesc": "Ta ut videobilder, beskriv dem med en synsmodell, og fortsett med den valgte tekstmodellen.",
     "modalityBridgeVideoRuntimeReady": "Kjøremiljøet er klart",
+    "modalityBridgeVideoRuntimeChecking": "Sjekker kjøretidsmiljø…",
     "modalityBridgeVideoRuntimeUnavailable": "Kjøremiljøet er utilgjengelig",
     "modalityBridgeVideoRuntimeInstall": "Installer FFmpeg og ffprobe i serverens PATH for å aktivere videouttrekk.",
     "modalityBridgeVideoEnabled": "Aktiver Videobro",

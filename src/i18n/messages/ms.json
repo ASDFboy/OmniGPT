@@ -8186,6 +8186,7 @@
     "modalityBridgeVideoTitle": "Jambatan Video",
     "modalityBridgeVideoDesc": "Ambil sampel bingkai video, huraikannya dengan model penglihatan dan teruskan dengan model teks yang dipilih.",
     "modalityBridgeVideoRuntimeReady": "Runtime sedia",
+    "modalityBridgeVideoRuntimeChecking": "Memeriksa masa jalan…",
     "modalityBridgeVideoRuntimeUnavailable": "Runtime tidak tersedia",
     "modalityBridgeVideoRuntimeInstall": "Pasang FFmpeg dan ffprobe dalam PATH pelayan untuk mendayakan pengekstrakan video.",
     "modalityBridgeVideoEnabled": "Dayakan Jambatan Video",
