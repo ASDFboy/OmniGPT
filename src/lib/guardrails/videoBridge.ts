@@ -102,7 +102,11 @@ function waitForVideoBridgePromise<T>(promise: Promise<T>, signal: AbortSignal):
   });
 }
 
-const VIDEO_BRIDGE_RESULT_CACHE_VERSION = "v4";
+// v5 (#11652): the normalized transcript contract changed (provenance trust
+// boundary, budgets, cross-source reconciliation, focus scoping) — bump so a
+// cache entry computed under the old, less-restrictive normalization can
+// never be served for a request processed under the new contract.
+const VIDEO_BRIDGE_RESULT_CACHE_VERSION = "v5";
 const VIDEO_BRIDGE_RESULT_CACHE_POLICY = "sampling-then-dedup-v2";
 const VIDEO_BRIDGE_RESULT_CACHE_KEY_KIND = "video-result-v4";
 const VIDEO_BRIDGE_DOWNLOAD_FLIGHT_VERSION = "v1";
