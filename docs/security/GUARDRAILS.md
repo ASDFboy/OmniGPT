@@ -1,13 +1,14 @@
 ---
 title: "Guardrails"
-version: 3.8.50
-lastUpdated: 2026-08-24
+version: 3.8.51
+lastUpdated: 2026-08-29
 ---
 
 # Guardrails
 
 > **Source of truth:** `src/lib/guardrails/`
-> **Last updated:** 2026-08-24 — v3.8.50 (Video Bridge visual dedup hardening + focused captions)
+> **Last updated:** 2026-08-29 — v3.8.51 (Video Bridge transcript provenance is caller-declared,
+> not yet server-verified — clarified per #11661)
 
 Guardrails enforce safety, policy, and content transformations at the boundary
 between OmniRoute and upstream providers. Each guardrail can inspect (and
@@ -437,7 +438,12 @@ OmniRoute never starts transcription from this metadata: validated cues are
 copied into the described result with source, confidence, and interval, and
 are rendered as untrusted observations alongside the frame captions. Invalid,
 out-of-range, or provenance-free text is rejected rather than mixed into the
-caption stream.
+caption stream. The `source` field is presently caller-declared, not
+server-verified: OmniRoute enforces that the value is one of the three
+allowed strings, but does not yet cryptographically confirm that an
+`embedded` or `audio-bridge` label actually came from a server-owned
+extraction. Treat `source` as an untrusted hint until that verification
+lands; do not build authorization decisions on it.
 
 An advanced caller may provide an already-authorized `audioTranscript` track
 for the same video. The fusion seam runs visual and audio observations under
