@@ -1,5 +1,6 @@
 import { createErrorResponse } from "@/lib/api/errorResponse";
 import {
+  currentVideoBridgeBrokerFingerprint,
   VIDEO_BRIDGE_BROKER_PATH,
   isVideoBridgeBrokerInternalRequest,
 } from "@/lib/guardrails/videoBridgeBrokerAuth";
@@ -13,6 +14,10 @@ import {
   type VideoFocusBounds,
   type VideoSamplingPolicy,
 } from "@/lib/guardrails/videoBridgeRuntime";
+import {
+  extractVideoSubtitlesFromBytes,
+  VIDEO_SUBTITLE_SUBDEADLINE_MS,
+} from "@/lib/guardrails/videoBridgeSubtitleRuntime";
 import { resolveModelSyncInternalBaseUrl } from "@/shared/services/modelSyncScheduler";
 import { VIDEO_BRIDGE_TIMEOUT_MAX_MS } from "@/shared/constants/modalityBridgeDefaults";
 import { createLogger } from "@/shared/utils/logger";
@@ -35,6 +40,11 @@ function invalid(message: string, status = 400, headers?: Record<string, string>
   const response = createErrorResponse({ status, message, type: "invalid_request" });
   for (const [name, value] of Object.entries(headers ?? {})) response.headers.set(name, value);
   return response;
+}
+
+/** The extract route serves two mutually exclusive operations behind one authenticated path. */
+function isSubtitleProbeRequest(url: URL): boolean {
+  return url.searchParams.get("subtitles") === "1";
 }
 
 function parseFrameCount(url: URL): number | null {
@@ -117,7 +127,105 @@ export async function readBoundedVideoBrokerBody(
 interface VideoExtractionBrokerRouteDependencies {
   deadlineSignal?: AbortSignal;
   extractFrames?: typeof extractVideoFramesFromBytes;
+  extractSubtitles?: typeof extractVideoSubtitlesFromBytes;
   queue?: VideoExtractionQueue;
+}
+
+/** Shared by both operations: declared-length pre-check, bounded read, actual-size check. */
+async function readValidatedVideoBrokerBytes(request: Request): Promise<Buffer | Response> {
+  const declaredHeader = request.headers.get("content-length");
+  const declaredLength = declaredHeader === null ? null : Number(declaredHeader);
+  if (
+    declaredLength !== null &&
+    (!Number.isFinite(declaredLength) || declaredLength < 1 || declaredLength > MAX_INPUT_BYTES)
+  ) {
+    await request.body?.cancel("Video Bridge input exceeds the byte limit");
+    return invalid("Video Bridge input exceeds the byte limit", 413);
+  }
+  let bytes: Buffer;
+  try {
+    bytes = await readBoundedVideoBrokerBody(request);
+  } catch (error) {
+    if (error instanceof Error && error.message === "VIDEO_INPUT_TOO_LARGE") {
+      return invalid("Video Bridge input exceeds the byte limit", 413);
+    }
+    return invalid("Video Bridge input could not be read");
+  }
+  if (
+    bytes.byteLength < 1 ||
+    bytes.byteLength > MAX_INPUT_BYTES ||
+    (declaredLength !== null && bytes.byteLength !== declaredLength)
+  ) {
+    return invalid("Video Bridge input exceeds the byte limit", 413);
+  }
+  return bytes;
+}
+
+/**
+ * Bounded, allowlisted-codec subtitle probe (#11659). Stamps the response with the shared
+ * broker fingerprint so the client-side adapter can refuse anything not actually produced by
+ * this trusted loopback process before treating it as "embedded" provenance.
+ */
+async function handleSubtitleProbeBrokerRequest(
+  request: Request,
+  url: URL,
+  dependencies: VideoExtractionBrokerRouteDependencies
+): Promise<Response> {
+  if ([...url.searchParams.keys()].some((key) => key !== "subtitles")) {
+    return invalid("Video Bridge subtitle probe accepts no other parameters");
+  }
+  const bytesOrResponse = await readValidatedVideoBrokerBytes(request);
+  if (bytesOrResponse instanceof Response) return bytesOrResponse;
+  const bytes = bytesOrResponse;
+
+  const deadline =
+    dependencies.deadlineSignal ?? AbortSignal.timeout(VIDEO_SUBTITLE_SUBDEADLINE_MS);
+  const signal = AbortSignal.any([request.signal, deadline]);
+  const queue = dependencies.queue ?? extractionQueue;
+  const extractSubtitles = dependencies.extractSubtitles ?? extractVideoSubtitlesFromBytes;
+  try {
+    const result = await queue.run(
+      bytes.byteLength,
+      () =>
+        extractSubtitles(bytes, {
+          maxDurationSeconds: MAX_DURATION_SECONDS,
+          signal,
+          timeoutMs: VIDEO_SUBTITLE_SUBDEADLINE_MS,
+        }),
+      signal
+    );
+    return Response.json(
+      { ...result, fingerprint: currentVideoBridgeBrokerFingerprint() },
+      { headers: { "Cache-Control": "no-store" } }
+    );
+  } catch (error) {
+    const queueCapacity =
+      error instanceof VideoExtractionQueueError && error.code === "QUEUE_CAPACITY";
+    const clientAborted = request.signal.aborted;
+    const deadlineExceeded = !clientAborted && deadline.aborted;
+    log.warn(
+      {
+        aborted: clientAborted,
+        code: clientAborted
+          ? "CLIENT_ABORTED"
+          : queueCapacity
+            ? "QUEUE_CAPACITY"
+            : deadlineExceeded
+              ? "DEADLINE_EXCEEDED"
+              : "EXTRACTION_FAILED",
+        inputBytes: bytes.byteLength,
+      },
+      "Video Bridge broker subtitle probe failed"
+    );
+    if (clientAborted) return invalid("Video extraction was aborted", 499);
+    if (deadlineExceeded) return invalid("Video extraction deadline exceeded", 504);
+    if (queueCapacity) {
+      return invalid("Video extraction capacity is temporarily unavailable", 503, {
+        "Retry-After": "1",
+      });
+    }
+    return invalid("Video extraction failed", 422);
+  }
 }
 
 export async function handleVideoExtractionBrokerRequest(
@@ -133,6 +241,9 @@ export async function handleVideoExtractionBrokerRequest(
   }
   if (request.headers.get("content-type")?.toLowerCase() !== "application/octet-stream") {
     return invalid("Video Bridge broker requires application/octet-stream");
+  }
+  if (isSubtitleProbeRequest(url)) {
+    return handleSubtitleProbeBrokerRequest(request, url, dependencies);
   }
   const frameCount = parseFrameCount(url);
   if (!frameCount) return invalid("Video Bridge frame count must be between 1 and 16");
