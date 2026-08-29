@@ -464,6 +464,10 @@ export const updateSettingsSchema = z.object({
     .min(VIDEO_BRIDGE_TIMEOUT_MIN_MS)
     .max(VIDEO_BRIDGE_TIMEOUT_MAX_MS)
     .optional(),
+  // Operator half of the FU-06 dual opt-in (#11654) for server-orchestrated
+  // Audio Bridge STT over Video Bridge audio extraction — defaults false
+  // (Hard Rule #20). A request-side opt-in is required in addition to this.
+  modalityBridgeVideoAudioTranscriptionEnabled: z.boolean().optional(),
   modalityBridgeCacheEnabled: z.boolean().optional(),
   modalityBridgeCacheTtlMinutes: z.number().int().min(1).max(1440).optional(),
   modalityBridgeCacheMaxEntries: z.number().int().min(10).max(5000).optional(),

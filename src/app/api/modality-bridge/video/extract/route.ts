@@ -10,6 +10,10 @@ import {
   VideoExtractionQueueError,
 } from "@/lib/guardrails/videoBridgeBrokerQueue";
 import {
+  extractVideoAudioFromBytes,
+  type ExtractedVideoAudio,
+} from "@/lib/guardrails/videoBridgeAudioExtraction";
+import {
   extractVideoFramesFromBytes,
   type VideoFocusBounds,
   type VideoSamplingPolicy,
@@ -42,15 +46,35 @@ function invalid(message: string, status = 400, headers?: Record<string, string>
   return response;
 }
 
-/** The extract route serves two mutually exclusive operations behind one authenticated path. */
+/**
+ * The extract route serves up to three mutually exclusive operations behind one authenticated
+ * path: subtitle probe (`?subtitles=1`), audio extraction (`?mode=audio`), and frame sampling
+ * (default / `?mode=frames`).
+ */
 function isSubtitleProbeRequest(url: URL): boolean {
   return url.searchParams.get("subtitles") === "1";
+}
+
+export type VideoBrokerMode = "audio" | "frames";
+
+const FRAME_ONLY_QUERY_KEYS = ["frames", "samplingPolicy", "start", "end"];
+
+/** `mode` is opt-in and defaults to the pre-existing frame path (back-compat). */
+function parseBrokerMode(url: URL): VideoBrokerMode | null {
+  const raw = url.searchParams.get("mode");
+  if (raw === null) return "frames";
+  return raw === "frames" || raw === "audio" ? raw : null;
+}
+
+/** Audio mode shares this route/queue but takes no frame-shaping parameters (v1). */
+function hasFrameOnlyParams(url: URL): boolean {
+  return FRAME_ONLY_QUERY_KEYS.some((key) => url.searchParams.has(key));
 }
 
 function parseFrameCount(url: URL): number | null {
   if (
     [...url.searchParams.keys()].some(
-      (key) => !["frames", "samplingPolicy", "start", "end"].includes(key)
+      (key) => !["mode", ...FRAME_ONLY_QUERY_KEYS].includes(key)
     )
   ) {
     return null;
@@ -126,12 +150,13 @@ export async function readBoundedVideoBrokerBody(
 
 interface VideoExtractionBrokerRouteDependencies {
   deadlineSignal?: AbortSignal;
+  extractAudio?: typeof extractVideoAudioFromBytes;
   extractFrames?: typeof extractVideoFramesFromBytes;
   extractSubtitles?: typeof extractVideoSubtitlesFromBytes;
   queue?: VideoExtractionQueue;
 }
 
-/** Shared by both operations: declared-length pre-check, bounded read, actual-size check. */
+/** Shared by all three operations: declared-length pre-check, bounded read, actual-size check. */
 async function readValidatedVideoBrokerBytes(request: Request): Promise<Buffer | Response> {
   const declaredHeader = request.headers.get("content-length");
   const declaredLength = declaredHeader === null ? null : Number(declaredHeader);
@@ -159,6 +184,56 @@ async function readValidatedVideoBrokerBytes(request: Request): Promise<Buffer |
     return invalid("Video Bridge input exceeds the byte limit", 413);
   }
   return bytes;
+}
+
+/** Same status/telemetry mapping for both broker operations — one failure taxonomy. */
+function mapBrokerExtractionError(
+  error: unknown,
+  context: { deadline: AbortSignal; inputBytes: number; mode: VideoBrokerMode; request: Request }
+): Response {
+  const unavailable =
+    error && typeof error === "object" && "code" in error && error.code === "ENOENT";
+  const queueCapacity =
+    error instanceof VideoExtractionQueueError && error.code === "QUEUE_CAPACITY";
+  const clientAborted = context.request.signal.aborted;
+  const deadlineExceeded = !clientAborted && context.deadline.aborted;
+  log.warn(
+    {
+      aborted: clientAborted,
+      code: clientAborted
+        ? "CLIENT_ABORTED"
+        : queueCapacity
+          ? "QUEUE_CAPACITY"
+          : deadlineExceeded
+            ? "DEADLINE_EXCEEDED"
+            : unavailable
+              ? "RUNTIME_UNAVAILABLE"
+              : "EXTRACTION_FAILED",
+      inputBytes: context.inputBytes,
+      mode: context.mode,
+    },
+    "Video Bridge broker extraction failed"
+  );
+  if (clientAborted) return invalid("Video extraction was aborted", 499);
+  if (deadlineExceeded) return invalid("Video extraction deadline exceeded", 504);
+  if (queueCapacity) {
+    return invalid("Video extraction capacity is temporarily unavailable", 503, {
+      "Retry-After": "1",
+    });
+  }
+  if (unavailable) return invalid("Video extraction runtime is unavailable", 503);
+  return invalid("Video extraction failed", 422);
+}
+
+function serializeAudioResult(result: ExtractedVideoAudio & { durationSeconds: number }): unknown {
+  return {
+    audio: {
+      channels: result.channels,
+      dataUri: result.dataUri,
+      sampleRateHz: result.sampleRateHz,
+    },
+    durationSeconds: result.durationSeconds,
+  };
 }
 
 /**
@@ -245,6 +320,45 @@ export async function handleVideoExtractionBrokerRequest(
   if (isSubtitleProbeRequest(url)) {
     return handleSubtitleProbeBrokerRequest(request, url, dependencies);
   }
+  const mode = parseBrokerMode(url);
+  if (!mode) return invalid("Video Bridge broker mode must be frames or audio");
+
+  if (mode === "audio") {
+    if (hasFrameOnlyParams(url)) {
+      return invalid("Video Bridge audio mode does not accept frame parameters");
+    }
+    const bytes = await readValidatedVideoBrokerBytes(request);
+    if (bytes instanceof Response) return bytes;
+
+    // Same deadline/queue/byte budget the frame path uses — not a parallel set of limits.
+    const deadline = dependencies.deadlineSignal ?? AbortSignal.timeout(BROKER_TIMEOUT_MS);
+    const signal = AbortSignal.any([request.signal, deadline]);
+    const queue = dependencies.queue ?? extractionQueue;
+    const extractAudio = dependencies.extractAudio ?? extractVideoAudioFromBytes;
+    try {
+      const result = await queue.run(
+        bytes.byteLength,
+        () =>
+          extractAudio(bytes, {
+            maxDurationSeconds: MAX_DURATION_SECONDS,
+            signal,
+            timeoutMs: BROKER_TIMEOUT_MS,
+          }),
+        signal
+      );
+      return Response.json(serializeAudioResult(result), {
+        headers: { "Cache-Control": "no-store" },
+      });
+    } catch (error) {
+      return mapBrokerExtractionError(error, {
+        deadline,
+        inputBytes: bytes.byteLength,
+        mode,
+        request,
+      });
+    }
+  }
+
   const frameCount = parseFrameCount(url);
   if (!frameCount) return invalid("Video Bridge frame count must be between 1 and 16");
   const samplingPolicy = parseSamplingPolicy(url);
@@ -252,32 +366,8 @@ export async function handleVideoExtractionBrokerRequest(
   if (focusWindow === null && (url.searchParams.has("start") || url.searchParams.has("end"))) {
     return invalid("Video Bridge focus window bounds are invalid");
   }
-  const declaredHeader = request.headers.get("content-length");
-  const declaredLength = declaredHeader === null ? null : Number(declaredHeader);
-  if (
-    declaredLength !== null &&
-    (!Number.isFinite(declaredLength) || declaredLength < 1 || declaredLength > MAX_INPUT_BYTES)
-  ) {
-    await request.body?.cancel("Video Bridge input exceeds the byte limit");
-    return invalid("Video Bridge input exceeds the byte limit", 413);
-  }
-
-  let bytes: Buffer;
-  try {
-    bytes = await readBoundedVideoBrokerBody(request);
-  } catch (error) {
-    if (error instanceof Error && error.message === "VIDEO_INPUT_TOO_LARGE") {
-      return invalid("Video Bridge input exceeds the byte limit", 413);
-    }
-    return invalid("Video Bridge input could not be read");
-  }
-  if (
-    bytes.byteLength < 1 ||
-    bytes.byteLength > MAX_INPUT_BYTES ||
-    (declaredLength !== null && bytes.byteLength !== declaredLength)
-  ) {
-    return invalid("Video Bridge input exceeds the byte limit", 413);
-  }
+  const bytes = await readValidatedVideoBrokerBytes(request);
+  if (bytes instanceof Response) return bytes;
 
   const deadline = dependencies.deadlineSignal ?? AbortSignal.timeout(BROKER_TIMEOUT_MS);
   const signal = AbortSignal.any([request.signal, deadline]);
@@ -299,38 +389,7 @@ export async function handleVideoExtractionBrokerRequest(
     );
     return Response.json(result, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    const unavailable =
-      error && typeof error === "object" && "code" in error && error.code === "ENOENT";
-    const queueCapacity =
-      error instanceof VideoExtractionQueueError && error.code === "QUEUE_CAPACITY";
-    const clientAborted = request.signal.aborted;
-    const deadlineExceeded = !clientAborted && deadline.aborted;
-    log.warn(
-      {
-        aborted: clientAborted,
-        code: clientAborted
-          ? "CLIENT_ABORTED"
-          : queueCapacity
-            ? "QUEUE_CAPACITY"
-            : deadlineExceeded
-              ? "DEADLINE_EXCEEDED"
-              : unavailable
-                ? "RUNTIME_UNAVAILABLE"
-                : "EXTRACTION_FAILED",
-        frameCount,
-        inputBytes: bytes.byteLength,
-      },
-      "Video Bridge broker extraction failed"
-    );
-    if (clientAborted) return invalid("Video extraction was aborted", 499);
-    if (deadlineExceeded) return invalid("Video extraction deadline exceeded", 504);
-    if (queueCapacity) {
-      return invalid("Video extraction capacity is temporarily unavailable", 503, {
-        "Retry-After": "1",
-      });
-    }
-    if (unavailable) return invalid("Video extraction runtime is unavailable", 503);
-    return invalid("Video extraction failed", 422);
+    return mapBrokerExtractionError(error, { deadline, inputBytes: bytes.byteLength, mode, request });
   }
 }
 
