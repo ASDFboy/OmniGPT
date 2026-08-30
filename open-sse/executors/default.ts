@@ -67,6 +67,25 @@ import { resolveAlibabaProviderBaseUrl } from "@/shared/constants/alibabaProvide
 import { usesCcWireImage } from "../services/ccWireImageBuiltins.ts";
 
 const NVIDIA_TOOL_CALL_ID_PATTERN = /^[A-Za-z0-9]{9}$/;
+const PERPLEXITY_AGENT_DEFAULT_MAX_OUTPUT_TOKENS = 4096;
+
+function defaultPerplexityAgentMaxOutputTokens<T>(body: T): T {
+  if (!body || typeof body !== "object" || Array.isArray(body)) return body;
+
+  const record = body as Record<string, unknown>;
+  if (
+    record.max_output_tokens !== undefined ||
+    record.max_completion_tokens !== undefined ||
+    record.max_tokens !== undefined
+  ) {
+    return body;
+  }
+
+  return {
+    ...record,
+    max_output_tokens: PERPLEXITY_AGENT_DEFAULT_MAX_OUTPUT_TOKENS,
+  } as T;
+}
 
 function normalizeNvidiaToolCallId(id: unknown): unknown {
   if (id === null || id === undefined) return id;
@@ -198,6 +217,8 @@ export class DefaultExecutor extends BaseExecutor {
       }
     }
     switch (this.provider) {
+      case "perplexity-agent":
+        return this.config.baseUrl;
       case "openai": {
         // #5842: responses-only models (o1-pro / gpt-5.x-pro) 404 on
         // /v1/chat/completions ("only supported in v1/responses"). Route them to
@@ -724,6 +745,9 @@ export class DefaultExecutor extends BaseExecutor {
 
     withDefaults = this.applyJsonSchemaFallback(withDefaults);
     withDefaults = this.defaultResponsesTextFormat(withDefaults);
+    if (this.provider === "perplexity-agent") {
+      withDefaults = defaultPerplexityAgentMaxOutputTokens(withDefaults);
+    }
 
     if (this.provider === "nvidia") {
       normalizeNvidiaToolCallIds(withDefaults);
