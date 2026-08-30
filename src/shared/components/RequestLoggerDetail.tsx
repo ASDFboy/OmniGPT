@@ -2,9 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import JsonView from "react18-json-view";
-import "react18-json-view/src/style.css";
-import "react18-json-view/src/dark.css";
+import { JsonView } from "@/shared/components/jsonView";
 import {
   PROVIDER_COLORS,
   getHttpStatusStyle as getStatusStyle,
