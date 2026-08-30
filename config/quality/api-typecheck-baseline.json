@@ -158,7 +158,7 @@
   "src/app/api/providers/route.ts": {
     "TS2352": 1,
     "TS2322": 2,
-    "TS2345": 4
+    "TS2345": 3
   },
   "src/app/api/providers/test-batch/route.ts": {
     "TS2345": 4
@@ -182,8 +182,7 @@
     "TS2739": 1
   },
   "src/app/api/providers/volcengine-plan/connect/route.ts": {
-    "TS2739": 1,
-    "TS2339": 1
+    "TS2739": 1
   },
   "src/app/api/radar/local-model-state/route.ts": {
     "TS2339": 4
@@ -256,15 +255,6 @@
     "TS2345": 1,
     "TS2322": 1
   },
-  "src/app/api/tunnels/cloudflared/route.ts": {
-    "TS2339": 1
-  },
-  "src/app/api/tunnels/ngrok/route.ts": {
-    "TS2339": 1
-  },
-  "src/app/api/tunnels/tailscale/routeUtils.ts": {
-    "TS2339": 1
-  },
   "src/app/api/usage/analytics/route.ts": {
     "TS2352": 15
   },
@@ -273,9 +263,6 @@
   },
   "src/app/api/v1/batches/route.ts": {
     "TS2339": 1
-  },
-  "src/app/api/v1/chatgpt-web/image/[id]/route.ts": {
-    "TS2345": 1
   },
   "src/app/api/v1/classify/route.ts": {
     "TS2322": 1
@@ -287,8 +274,8 @@
     "TS2339": 1
   },
   "src/app/api/v1/images/edits/route.ts": {
-    "TS2339": 21,
-    "TS2322": 5
+    "TS2339": 18,
+    "TS2322": 4
   },
   "src/app/api/v1/messages/count_tokens/route.ts": {
     "TS2339": 2,
@@ -355,12 +342,6 @@
   },
   "src/lib/db/tierConfig.ts": {
     "TS2345": 2
-  },
-  "src/lib/guardrails/videoBridgeHelpers.ts": {
-    "TS2488": 1,
-    "TS2365": 2,
-    "TS2322": 1,
-    "TS2345": 1
   },
   "src/lib/monitoring/comboHealthAutopilot.ts": {
     "TS2305": 1,
