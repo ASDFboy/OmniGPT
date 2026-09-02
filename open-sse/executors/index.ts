@@ -44,6 +44,7 @@ const lazyExecutors: Record<string, () => Promise<BaseExecutor>> = {
     import("./codex-app-server.ts").then(
       (m) => new m.CodexAppServerExecutor({}, "codex-app-server")
     ),
+  maxai: () => import("./maxai.ts").then((m) => new m.MaxAiExecutor()),
   "chatgpt-web-codex": () =>
     import("./chatgpt-web-codex.ts").then((m) => new m.ChatGptWebCodexExecutor()),
   "cgpt-codex": () =>

@@ -56,6 +56,7 @@ import { handleNvidiaNimImageGeneration } from "./imageGeneration/providers/nvid
 import { handleSegmindImageGeneration } from "./imageGeneration/providers/segmind.ts";
 import { handleCursorAgentImageGeneration } from "./imageGeneration/providers/cursorAgentImage.ts";
 import { handleMinimaxImageGeneration } from "./imageGeneration/providers/minimax.ts";
+import { handleMaxaiImageGeneration } from "./imageGeneration/providers/maxaiImage.ts";
 import { handleAdobeFireflyImageGeneration } from "./imageGeneration/providers/adobeFirefly.ts";
 import { handleAlibabaImageGeneration } from "./imageGeneration/providers/alibabaImage.ts";
 import { handleAiHordeImageGeneration } from "./imageGeneration/providers/aihorde.ts";
@@ -613,6 +614,17 @@ export async function handleImageGeneration({
       credentials,
       log,
       peerLocality,
+    });
+  }
+
+  if (providerConfig.format === "maxai-image") {
+    return handleMaxaiImageGeneration({
+      model,
+      provider,
+      body,
+      credentials,
+      log,
+      signal,
     });
   }
 
