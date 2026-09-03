@@ -107,5 +107,25 @@ export function resolvePreviousResponseState(
   if (!Array.isArray(input) || !Array.isArray(output)) return null;
   if (containsTruncatedArrayMarker(input) || containsTruncatedArrayMarker(output)) return null;
 
+  // Live incident (2026-09-02): a huge/reasoning-heavy response can blow past
+  // createStructuredSSECollector's own event-count cap mid-stream -- the
+  // stored clientResponse then carries `_truncated: true` and
+  // `summary.status: "in_progress"` (never reached "completed") with a
+  // genuinely EMPTY `summary.output`, not a bounded array with a
+  // containsTruncatedArrayMarker sentinel (that marker only covers an
+  // array capped mid-array, not a collector that stopped before ever
+  // populating output at all). An empty output array passed the checks
+  // above and got merged into the next turn's request as this response's
+  // entire contribution -- reconstructing to zero real messages, which the
+  // upstream provider then rejected outright ("Input required: specify
+  // prompt or messages"), breaking the conversation with no client-visible
+  // continuation path. A response the client received as real (successful,
+  // non-empty) always has at least one output item; failing closed here
+  // makes the caller ask the client to resend full history instead of
+  // silently reconstructing an empty one, exactly like a real
+  // previous_response_not_found from OpenAI itself.
+  if ((clientResponse as { _truncated?: unknown } | undefined)?._truncated === true) return null;
+  if (output.length === 0) return null;
+
   return { input, output };
 }
