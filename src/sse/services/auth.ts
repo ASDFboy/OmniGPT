@@ -2467,6 +2467,26 @@ export function isAgentrouterConnectionQuotaScope(
   );
 }
 
+async function resolveDailyResetForProvider(
+  provider: string | null,
+): Promise<{ timezone?: unknown; hour?: unknown } | null> {
+  if (!provider) return null;
+  try {
+    const nodes = await getCachedProviderNodes();
+    const node = nodes.find((candidate) => {
+      if (!candidate) return false;
+      return candidate.id === provider || candidate.prefix === provider;
+    });
+    if (!node) return null;
+    return {
+      timezone: node.dailyQuotaResetTimezone,
+      hour: node.dailyQuotaResetHour,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /**
  * #10880 — cools down every connection sharing the failing connection's last
  * known egress IP. Best-effort and side-effect-safe by design:
@@ -2683,7 +2703,10 @@ export async function markAccountUnavailable(
       model,
       provider,
       options.headers ?? null,
-      effectiveProviderProfile
+      effectiveProviderProfile,
+      null,
+      null,
+      await resolveDailyResetForProvider(provider),
     );
 
     // T-PROBE: probe-origin failures (model test-all) must never remove the
