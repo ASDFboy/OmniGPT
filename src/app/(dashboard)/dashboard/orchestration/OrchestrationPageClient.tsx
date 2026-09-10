@@ -115,6 +115,13 @@ export default function OrchestrationPageClient() {
     [collapsed, setParams]
   );
   const closeDrawer = useCallback(() => setParams({ node: null }), [setParams]);
+  const onActionDone = useCallback(
+    (newNodeId?: string) => {
+      refetch();
+      if (newNodeId) setParams({ node: newNodeId });
+    },
+    [refetch, setParams]
+  );
   const clearFilters = useCallback(
     () => setParams({ q: null, state: null, source: null, provider: null }),
     [setParams]
@@ -176,8 +183,17 @@ export default function OrchestrationPageClient() {
           {tab === "history" && <HistoryTab />}
         </div>
       </div>
+      {/* A successful repeat hands back the CANVAS id of the task it created: refetch, then
+          focus it (`?node=`) so the operator lands on the new run instead of staring at the
+          finished one. No id (approve/cancel, or a creation response without one) keeps the
+          current selection. The History tab renders its own drawer and deliberately does NOT
+          navigate (HistoryTab.tsx) — its runs are not addressable in the live snapshot. */}
       {tab !== "history" && (
-        <OrchestrationDrawer node={selectedNode} onClose={closeDrawer} onActionDone={refetch} />
+        <OrchestrationDrawer
+          node={selectedNode}
+          onClose={closeDrawer}
+          onActionDone={onActionDone}
+        />
       )}
     </div>
   );
