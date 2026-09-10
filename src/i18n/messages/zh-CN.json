@@ -14017,6 +14017,7 @@
     "stateCancelled": "已取消",
     "overflowMore": "还有 {count} 个",
     "emptyTitle": "目前没有正在运行的内容",
+    "noMatches": "没有任务符合这些筛选条件",
     "emptyCloudAgentCta": "设置云代理",
     "emptyA2ACta": "打开 A2A",
     "emptyConductorCta": "打开导体",

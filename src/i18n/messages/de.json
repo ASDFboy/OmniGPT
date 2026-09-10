@@ -14024,6 +14024,7 @@
     "stateCancelled": "Abgebrochen",
     "overflowMore": "+{count} weitere",
     "emptyTitle": "Noch nichts läuft",
+    "noMatches": "Keine Aufgaben entsprechen diesen Filtern",
     "emptyCloudAgentCta": "Cloud-Agenten einrichten",
     "emptyA2ACta": "A2A öffnen",
     "emptyConductorCta": "Leiter öffnen",

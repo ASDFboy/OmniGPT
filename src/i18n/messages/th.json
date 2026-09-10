@@ -14017,6 +14017,7 @@
     "stateCancelled": "ยกเลิกแล้ว",
     "overflowMore": "อีก {count} รายการ",
     "emptyTitle": "ยังไม่มีอะไรทำงานอยู่",
+    "noMatches": "ไม่มีงานที่ตรงกับตัวกรองเหล่านี้",
     "emptyCloudAgentCta": "ตั้งค่าเอเจนต์คลาวด์",
     "emptyA2ACta": "เปิด A2A",
     "emptyConductorCta": "เปิดตัวนำ",

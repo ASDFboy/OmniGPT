@@ -14017,6 +14017,7 @@
     "stateCancelled": "Скасовано",
     "overflowMore": "ще {count}",
     "emptyTitle": "Поки що нічого не виконується",
+    "noMatches": "Немає завдань, що відповідають цим фільтрам",
     "emptyCloudAgentCta": "Налаштувати хмарні агенти",
     "emptyA2ACta": "Відкрити A2A",
     "emptyConductorCta": "Відкрити Кондуктор",

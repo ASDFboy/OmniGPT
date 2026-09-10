@@ -14017,6 +14017,7 @@
     "stateCancelled": "Kansellert",
     "overflowMore": "+{count} til",
     "emptyTitle": "Ingenting kjører ennå",
+    "noMatches": "Ingen oppgaver samsvarer med disse filtrene",
     "emptyCloudAgentCta": "Sett opp skyagenter",
     "emptyA2ACta": "Åpne A2A",
     "emptyConductorCta": "Åpne konduktør",

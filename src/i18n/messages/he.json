@@ -14017,6 +14017,7 @@
     "stateCancelled": "בוטל",
     "overflowMore": "+{count} נוספים",
     "emptyTitle": "שום דבר לא פועל עדיין",
+    "noMatches": "אין משימות התואמות למסננים אלה",
     "emptyCloudAgentCta": "הגדר סוכני ענן",
     "emptyA2ACta": "פתח A2A",
     "emptyConductorCta": "פתח מנחה",

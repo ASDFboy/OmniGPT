@@ -14017,6 +14017,7 @@
     "stateCancelled": "Anulat",
     "overflowMore": "+{count} în plus",
     "emptyTitle": "Nimic nu rulează încă",
+    "noMatches": "Nicio sarcină nu corespunde acestor filtre",
     "emptyCloudAgentCta": "Configurează Agenți Cloud",
     "emptyA2ACta": "Deschide A2A",
     "emptyConductorCta": "Deschide Conductor",

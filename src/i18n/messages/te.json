@@ -14017,6 +14017,7 @@
     "stateCancelled": "రద్దు చేయబడింది",
     "overflowMore": "+{count} మరిన్ని",
     "emptyTitle": "ఇంకా ఏమీ నడవడం లేదు",
+    "noMatches": "ఈ ఫిల్టర్‌లకు సరిపోలే పనులు ఏవీ లేవు",
     "emptyCloudAgentCta": "క్లౌడ్ ఏజెంట్లను సెటప్ చేయండి",
     "emptyA2ACta": "A2A తెరవండి",
     "emptyConductorCta": "కండక్టర్‌ని తెరవండి",

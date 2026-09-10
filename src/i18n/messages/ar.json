@@ -14017,6 +14017,7 @@
     "stateCancelled": "ملغى",
     "overflowMore": "+{count} أخرى",
     "emptyTitle": "لا شيء يعمل بعد",
+    "noMatches": "لا توجد مهام تطابق عوامل التصفية هذه",
     "emptyCloudAgentCta": "إعداد الوكلاء السحابيين",
     "emptyA2ACta": "فتح A2A",
     "emptyConductorCta": "فتح موصل",

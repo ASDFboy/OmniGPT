@@ -14017,6 +14017,7 @@
     "stateCancelled": "キャンセル済み",
     "overflowMore": "他 {count} 件",
     "emptyTitle": "まだ何も実行されていません",
+    "noMatches": "これらのフィルターに一致するタスクはありません",
     "emptyCloudAgentCta": "クラウドエージェントを設定",
     "emptyA2ACta": "A2Aを開く",
     "emptyConductorCta": "指揮者を開く",

@@ -14017,6 +14017,7 @@
     "stateCancelled": "Ləğv edildi",
     "overflowMore": "+{count} daha",
     "emptyTitle": "Hələ heç nə işləmir",
+    "noMatches": "Bu filtrlərə uyğun tapşırıq yoxdur",
     "emptyCloudAgentCta": "Bulud agentlərini qurun",
     "emptyA2ACta": "A2A-nı aç",
     "emptyConductorCta": "İdarəçini aç",

@@ -14017,6 +14017,7 @@
     "stateCancelled": "Dibatalkan",
     "overflowMore": "+{count} lainnya",
     "emptyTitle": "Belum ada yang berjalan",
+    "noMatches": "Tidak ada tugas yang cocok dengan filter ini",
     "emptyCloudAgentCta": "Siapkan Agen Cloud",
     "emptyA2ACta": "Buka A2A",
     "emptyConductorCta": "Buka Konduktor",

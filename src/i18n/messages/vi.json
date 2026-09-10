@@ -14032,6 +14032,7 @@
     "stateCancelled": "Đã hủy",
     "overflowMore": "+{count} nữa",
     "emptyTitle": "Chưa có gì đang chạy",
+    "noMatches": "Không có tác vụ nào khớp với các bộ lọc này",
     "emptyCloudAgentCta": "Thiết lập Tác nhân đám mây",
     "emptyA2ACta": "Mở A2A",
     "emptyConductorCta": "Mở Người dẫn dắt",

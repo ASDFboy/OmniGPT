@@ -14017,6 +14017,7 @@
     "stateCancelled": "لغو شده",
     "overflowMore": "+{count} بیشتر",
     "emptyTitle": "هنوز چیزی در حال اجرا نیست",
+    "noMatches": "هیچ وظیفه‌ای با این فیلترها مطابقت ندارد",
     "emptyCloudAgentCta": "راه‌اندازی ایجنت‌های ابری",
     "emptyA2ACta": "باز کردن A2A",
     "emptyConductorCta": "باز کردن هدایتگر",

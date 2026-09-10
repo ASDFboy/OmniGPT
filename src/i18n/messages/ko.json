@@ -14017,6 +14017,7 @@
     "stateCancelled": "취소됨",
     "overflowMore": "+{count}개 더보기",
     "emptyTitle": "아직 실행 중인 항목이 없습니다",
+    "noMatches": "이 필터와 일치하는 작업이 없습니다",
     "emptyCloudAgentCta": "클라우드 에이전트 설정",
     "emptyA2ACta": "A2A 열기",
     "emptyConductorCta": "지휘자 열기",

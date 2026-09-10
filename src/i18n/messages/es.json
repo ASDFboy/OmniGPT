@@ -14017,6 +14017,7 @@
     "stateCancelled": "Cancelado",
     "overflowMore": "+{count} más",
     "emptyTitle": "Nada en ejecución todavía",
+    "noMatches": "Ninguna tarea coincide con estos filtros",
     "emptyCloudAgentCta": "Configurar agentes en la nube",
     "emptyA2ACta": "Abrir A2A",
     "emptyConductorCta": "Abrir Conductor",

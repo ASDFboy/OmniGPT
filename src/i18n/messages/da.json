@@ -14017,6 +14017,7 @@
     "stateCancelled": "Annulleret",
     "overflowMore": "+{count} mere",
     "emptyTitle": "Intet kører endnu",
+    "noMatches": "Ingen opgaver matcher disse filtre",
     "emptyCloudAgentCta": "Konfigurer cloud-agenter",
     "emptyA2ACta": "Åbn A2A",
     "emptyConductorCta": "Åbn Konduktør",

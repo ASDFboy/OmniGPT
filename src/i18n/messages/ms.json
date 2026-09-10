@@ -14017,6 +14017,7 @@
     "stateCancelled": "Dibatalkan",
     "overflowMore": "+{count} lagi",
     "emptyTitle": "Belum ada yang berjalan",
+    "noMatches": "Tiada tugas yang sepadan dengan penapis ini",
     "emptyCloudAgentCta": "Sediakan Ejen Awan",
     "emptyA2ACta": "Buka A2A",
     "emptyConductorCta": "Buka Pengendali",

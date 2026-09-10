@@ -14017,6 +14017,7 @@
     "stateCancelled": "Annullato",
     "overflowMore": "+{count} altri",
     "emptyTitle": "Ancora nulla in esecuzione",
+    "noMatches": "Nessuna attività corrisponde a questi filtri",
     "emptyCloudAgentCta": "Configura agenti cloud",
     "emptyA2ACta": "Apri A2A",
     "emptyConductorCta": "Apri Conduttore",

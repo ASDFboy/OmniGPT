@@ -14017,6 +14017,7 @@
     "stateCancelled": "Отменено",
     "overflowMore": "+ещё {count}",
     "emptyTitle": "Пока ничего не выполняется",
+    "noMatches": "Нет задач, соответствующих этим фильтрам",
     "emptyCloudAgentCta": "Настроить облачных агентов",
     "emptyA2ACta": "Открыть A2A",
     "emptyConductorCta": "Открыть Кондуктор",

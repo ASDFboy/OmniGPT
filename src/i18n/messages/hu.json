@@ -14017,6 +14017,7 @@
     "stateCancelled": "Megszakítva",
     "overflowMore": "+{count} további",
     "emptyTitle": "Még semmi sem fut",
+    "noMatches": "Egyetlen feladat sem felel meg ezeknek a szűrőknek",
     "emptyCloudAgentCta": "Felhőügynökök beállítása",
     "emptyA2ACta": "A2A megnyitása",
     "emptyConductorCta": "Vezető megnyitása",

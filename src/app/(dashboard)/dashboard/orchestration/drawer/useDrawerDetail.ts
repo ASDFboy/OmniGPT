@@ -273,7 +273,8 @@ async function jsonRpcErrorCode(res: {
 
 async function performAction(
   req: { url: string; init: RequestInit } | null,
-  setActionError: (text: string) => void
+  setActionError: (text: string) => void,
+  clearError: () => void
 ): Promise<boolean> {
   if (!req) return false;
   try {
@@ -283,6 +284,10 @@ async function performAction(
       const code = await jsonRpcErrorCode(res);
       if (code !== undefined) throw new Error(`RPC ${code}`);
     }
+    // The banner is not sticky: a retry (or any later action) that works clears whatever
+    // detail/action error was on screen, so the drawer never shows a failure the operator
+    // already recovered from.
+    clearError();
     return true;
   } catch (err) {
     setActionError(toSafeErrorText(err));
@@ -310,7 +315,7 @@ export function useDrawerDetail(node: OrchNode | null) {
     if (busy) return false;
     setBusy(true);
     try {
-      return await performAction(req, setActionError);
+      return await performAction(req, setActionError, () => setErrorState(null));
     } finally {
       setBusy(false);
     }

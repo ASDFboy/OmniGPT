@@ -14017,6 +14017,7 @@
     "stateCancelled": "रद्द किया गया",
     "overflowMore": "+{count} और",
     "emptyTitle": "अभी तक कुछ भी नहीं चल रहा",
+    "noMatches": "इन फ़िल्टर से मेल खाता कोई कार्य नहीं है",
     "emptyCloudAgentCta": "क्लाउड एजेंट सेट करें",
     "emptyA2ACta": "A2A खोलें",
     "emptyConductorCta": "संवहनकर्ता खोलें",

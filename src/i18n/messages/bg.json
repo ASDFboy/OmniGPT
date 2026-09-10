@@ -14017,6 +14017,7 @@
     "stateCancelled": "Отказано",
     "overflowMore": "+{count} още",
     "emptyTitle": "Все още нищо не работи",
+    "noMatches": "Няма задачи, отговарящи на тези филтри",
     "emptyCloudAgentCta": "Настройте облачни агенти",
     "emptyA2ACta": "Отвори A2A",
     "emptyConductorCta": "Отвори кондуктор",

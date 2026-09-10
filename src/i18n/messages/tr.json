@@ -14017,6 +14017,7 @@
     "stateCancelled": "İptal edildi",
     "overflowMore": "+{count} tane daha",
     "emptyTitle": "Henüz çalışan bir şey yok",
+    "noMatches": "Bu filtrelerle eşleşen görev yok",
     "emptyCloudAgentCta": "Bulut Ajanlarını kur",
     "emptyA2ACta": "A2A'yı aç",
     "emptyConductorCta": "İletken'i aç",

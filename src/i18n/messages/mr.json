@@ -14017,6 +14017,7 @@
     "stateCancelled": "रद्द केले",
     "overflowMore": "+{count} अधिक",
     "emptyTitle": "अजून काहीही सुरू नाही",
+    "noMatches": "या फिल्टरशी जुळणारी कोणतीही कार्ये नाहीत",
     "emptyCloudAgentCta": "क्लाउड एजंट सेट करा",
     "emptyA2ACta": "A2A उघडा",
     "emptyConductorCta": "संवहनकर्ता उघडा",

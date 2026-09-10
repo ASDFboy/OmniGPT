@@ -14017,6 +14017,7 @@
     "stateCancelled": "Avbruten",
     "overflowMore": "+{count} till",
     "emptyTitle": "Inget körs ännu",
+    "noMatches": "Inga uppgifter matchar dessa filter",
     "emptyCloudAgentCta": "Konfigurera molnagenter",
     "emptyA2ACta": "Öppna A2A",
     "emptyConductorCta": "Öppna Ledare",

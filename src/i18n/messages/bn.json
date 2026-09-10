@@ -14017,6 +14017,7 @@
     "stateCancelled": "বাতিল করা হয়েছে",
     "overflowMore": "+{count} আরও",
     "emptyTitle": "এখনো কিছু চলছে না",
+    "noMatches": "এই ফিল্টারগুলির সাথে মেলে এমন কোনো কাজ নেই",
     "emptyCloudAgentCta": "ক্লাউড এজেন্ট সেট আপ করুন",
     "emptyA2ACta": "A2A খুলুন",
     "emptyConductorCta": "কন্ডাক্টর খুলুন",
