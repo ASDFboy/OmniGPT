@@ -90,6 +90,10 @@ export class AcpManager extends EventEmitter {
 
     child.on("exit", (code, signal) => {
       session.alive = false;
+      // Only kill() used to remove entries, so any agent that exited on its own
+      // stayed in the map forever. getActiveSessions() filters on `alive`, which
+      // hid the growth from callers.
+      this.sessions.delete(sessionId);
       this.emit("exit", { sessionId, code, signal });
     });
 
@@ -129,31 +133,35 @@ export class AcpManager extends EventEmitter {
 
     // Wait for response (collect until process goes idle or timeout)
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
-        reject(new Error(`ACP timeout after ${timeoutMs}ms`));
-      }, timeoutMs);
+      let idleTimer: ReturnType<typeof setTimeout> | undefined;
 
-      let idleTimer: ReturnType<typeof setTimeout>;
+      // Every outcome -- idle, exit, or timeout -- has to release the same
+      // resources. `acpManager` is a module-level singleton, so a branch that
+      // skips this leaks a listener per call for the lifetime of the process.
+      const settle = (finish: () => void) => {
+        clearTimeout(timer);
+        clearTimeout(idleTimer);
+        this.removeListener("stdout", onData);
+        this.removeListener("exit", onExit);
+        finish();
+      };
+
+      const timer = setTimeout(() => {
+        settle(() => reject(new Error(`ACP timeout after ${timeoutMs}ms`)));
+      }, timeoutMs);
 
       const onData = ({ sessionId: sid }: { sessionId: string }) => {
         if (sid !== sessionId) return;
         // Reset idle timer on new data
         clearTimeout(idleTimer);
         idleTimer = setTimeout(() => {
-          clearTimeout(timer);
-          this.removeListener("stdout", onData);
-          this.removeListener("exit", onExit);
-          resolve(session.stdoutBuffer);
+          settle(() => resolve(session.stdoutBuffer));
         }, 2000); // 2s idle = response complete
       };
 
       const onExit = ({ sessionId: sid }: { sessionId: string }) => {
         if (sid !== sessionId) return;
-        clearTimeout(timer);
-        clearTimeout(idleTimer);
-        this.removeListener("stdout", onData);
-        this.removeListener("exit", onExit);
-        resolve(session.stdoutBuffer);
+        settle(() => resolve(session.stdoutBuffer));
       };
 
       this.on("stdout", onData);
