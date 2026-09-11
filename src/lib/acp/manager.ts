@@ -31,6 +31,34 @@ export interface AcpSession {
 }
 
 /**
+ * Upper bound for each per-session output buffer.
+ *
+ * Both buffers grow on every chunk a CLI agent writes and are only reset when
+ * the next prompt starts, so a chatty or looping agent can grow them without
+ * limit while the session stays alive. 1 MiB is far above a realistic agent
+ * response while keeping a stuck session's footprint bounded.
+ */
+const MAX_BUFFER_CHARS = 1_048_576;
+
+const TRUNCATION_NOTICE = "\n[...output truncated...]\n";
+
+/**
+ * Append to a buffer, keeping the most recent output when the cap is exceeded.
+ *
+ * The tail is what callers care about: `sendPrompt` resolves with the stdout
+ * collected since the prompt was written, and stderr is read for diagnostics
+ * after a failure. Dropping from the front keeps both useful.
+ */
+function appendCapped(buffer: string, chunk: string): string {
+  const combined = buffer + chunk;
+  if (combined.length <= MAX_BUFFER_CHARS) return combined;
+
+  const keep = MAX_BUFFER_CHARS - TRUNCATION_NOTICE.length;
+  if (keep <= 0) return combined.slice(-MAX_BUFFER_CHARS);
+  return TRUNCATION_NOTICE + combined.slice(-keep);
+}
+
+/**
  * ACP Session Manager
  *
  * Manages the lifecycle of CLI agent processes.
@@ -79,12 +107,12 @@ export class AcpManager extends EventEmitter {
     };
 
     child.stdout?.on("data", (chunk: Buffer) => {
-      session.stdoutBuffer += chunk.toString();
+      session.stdoutBuffer = appendCapped(session.stdoutBuffer, chunk.toString());
       this.emit("stdout", { sessionId, data: chunk.toString() });
     });
 
     child.stderr?.on("data", (chunk: Buffer) => {
-      session.stderrBuffer += chunk.toString();
+      session.stderrBuffer = appendCapped(session.stderrBuffer, chunk.toString());
       this.emit("stderr", { sessionId, data: chunk.toString() });
     });
 
@@ -125,8 +153,11 @@ export class AcpManager extends EventEmitter {
     const session = this.sessions.get(sessionId);
     if (!session?.alive) throw new Error(`Session ${sessionId} is not alive`);
 
-    // Clear buffer before sending
+    // Clear buffers before sending. stderr is reset too: it was previously only
+    // ever appended to, so diagnostics for one prompt carried stale output from
+    // every earlier prompt in the session.
     session.stdoutBuffer = "";
+    session.stderrBuffer = "";
 
     // Send prompt
     this.sendInput(sessionId, prompt + "\n");
