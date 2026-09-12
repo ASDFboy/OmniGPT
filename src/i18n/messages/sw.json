@@ -8699,6 +8699,7 @@
     "run": "Endesha",
     "laneRejected": "imekataliwa: {reason}",
     "error": "hitilafu",
+    "combinedError": "__MISSING__:Combined pipeline preview failed: {reason}",
     "combinedFlow": "Mtiririko uliounganishwa",
     "eachLayer": "Kila safu kando",
     "diff": "Tofauti",

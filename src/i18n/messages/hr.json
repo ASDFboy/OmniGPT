@@ -8674,6 +8674,7 @@
     "run": "Pokreni",
     "laneRejected": "odbijeno: {reason}",
     "error": "pogreška",
+    "combinedError": "__MISSING__:Combined pipeline preview failed: {reason}",
     "combinedFlow": "Kombinirani tok",
     "eachLayer": "Svaki sloj zasebno",
     "diff": "Razlika",

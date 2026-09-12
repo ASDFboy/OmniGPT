@@ -8699,6 +8699,7 @@
     "run": "تشغيل",
     "laneRejected": "تم الرفض: {reason}",
     "error": "خطأ",
+    "combinedError": "__MISSING__:Combined pipeline preview failed: {reason}",
     "combinedFlow": "التدفق المدمج",
     "eachLayer": "كل طبقة على حدة",
     "diff": "الفرق",
