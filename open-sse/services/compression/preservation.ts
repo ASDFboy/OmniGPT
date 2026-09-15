@@ -87,6 +87,23 @@ export function extractPreservedBlocks(
   let result = text;
 
   result = extractFrontmatter(result, addBlock);
+
+  // Whole-region patterns run before fenced code and the inline built-ins: those leave
+  // sentinels inside a region, and replacePattern skips any match that already holds one.
+  // #13453: the instruction envelopes agentic CLIs inject into user messages —
+  // compressing them inverts negations, drops emphasis and breaks the XML tags.
+  const regionPatterns: CompiledPattern[] = [
+    { pattern: /<system-reminder>[\s\S]*?<\/system-reminder>/g, kind: "system_instruction" },
+    { pattern: /<instructions?>[\s\S]*?<\/instructions?>/g, kind: "system_instruction" },
+    {
+      pattern: /<project[- ]instructions?>[\s\S]*?<\/project[- ]instructions?>/g,
+      kind: "system_instruction",
+    },
+  ];
+  for (const { pattern, kind } of regionPatterns) {
+    result = replacePattern(result, ensureGlobal(pattern), kind, addBlock);
+  }
+
   result = extractFencedCodeBlocks(result, (content) => addBlock(content, "fenced_code"));
 
   const builtIns: CompiledPattern[] = [
