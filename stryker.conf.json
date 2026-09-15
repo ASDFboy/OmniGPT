@@ -247,6 +247,7 @@
       "tests/unit/correctness/sanitizers.property.test.ts",
       "tests/unit/cursor-renewal.test.ts",
       "tests/unit/custom-model-target-format.test.ts",
+      "tests/unit/daily-reset-dst-gap.test.ts",
       "tests/unit/db-reset-module-state.test.ts",
       "tests/unit/db-server-tool-executions-migration.test.ts",
       "tests/unit/db/stats-dbstat-optional.test.ts",
