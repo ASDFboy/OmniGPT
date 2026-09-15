@@ -189,6 +189,22 @@ export function isProxySkipRecentlyFailedEnabled(): boolean {
   }
 }
 
+/**
+ * Pool egress observation panel (#13581): read-only dashboard line under a proxy pool.
+ * Opt-in; an unreadable flag store keeps it hidden.
+ */
+export function isPoolEgressObservationEnabled(): boolean {
+  try {
+    return isFeatureFlagEnabled("PROXY_POOL_EGRESS_OBSERVATION");
+  } catch (error) {
+    console.error(
+      "[featureFlags] Failed to resolve PROXY_POOL_EGRESS_OBSERVATION, defaulting to disabled:",
+      error instanceof Error ? error.message : error
+    );
+    return false;
+  }
+}
+
 export function isServerOwnedToolLoopEnabled(
   reader: (key: string) => boolean = isFeatureFlagEnabled
 ): boolean {

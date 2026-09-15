@@ -996,6 +996,7 @@
   "featureFlagFreeBadgeRequiresProviderFreeTierDescription": "Dashboard provider pages: show the Free badge only on signals the provider honors — drops the display-name heuristic, non-boolean free fields and :free suffixes on registered providers without a documented free tier. Off keeps the historical badge rule.",
   "featureFlagProxySkipRecentlyFailedDescription": "Pools de proxy e a rotação por conta do opencode deixam de reutilizar um proxy que acabou de falhar (sonda TCP recusada, ou um 429 recebido por ele) por um período por processo que dobra a cada repetição, até um limite. Nenhum status de proxy é gravado; com todos os candidatos deixados de lado, a escolha não muda. Desligado por padrão: a ordem de seleção é exatamente a rotação simples.",
   "featureFlagProxySkipRecentlyFailedDescription": "Pools de proxy e a rotação por conta do opencode deixam de reutilizar um proxy que acabou de falhar (sonda TCP recusada, ou um 429 recebido por ele) por um período por processo que dobra a cada repetição, até um limite. Nenhum status de proxy é gravado; com todos os candidatos deixados de lado, a escolha não muda. Desligado por padrão: a ordem de seleção é exatamente a rotação simples.",
+  "featureFlagProxyPoolEgressObservationDescription": "Mostra, abaixo de um pool de proxy no painel, quantos IPs de saída observados atenderam seus membros nas últimas 24 h, quantas conexões os usaram e o máximo visto atrás de um mesmo IP. Somente leitura, calculado a partir do log de proxy, nunca usado para roteamento. Desligado por padrão: o editor de pool não muda e a rota de observação responde null.",
   "sidebar": {
     "home": "Início",
     "dashboard": "Painel",
@@ -10968,6 +10969,9 @@
     "strategyLatency": "Otimizado por latência",
     "poolMembersLabel": "Membros do pool ({count})",
     "poolNoMembers": "Ainda não há proxies neste pool.",
+    "poolEgressObservation": "{exits, plural, one {# saída} other {# saídas}} usada(s) por {connections, plural, one {# conexão} other {# conexões}} · até {max} em uma saída · últimas {hours} h",
+    "poolEgressObservationEmpty": "Nenhum tráfego observado nas últimas {hours} h",
+    "poolEgressObservationHint": "Contado a partir do log de proxy na janela: IPs de saída distintos observados para os membros deste pool e as conexões do OmniRoute que os usaram. \"Em uma saída\" significa ao longo da janela, não ao mesmo tempo. O bloqueio de 429 por IP só pausa conexões da mesma família de provedor.",
     "poolRemove": "Remover",
     "poolRemoveFailed": "Falha ao remover o proxy do pool",
     "poolAddLabel": "Adicionar um proxy",

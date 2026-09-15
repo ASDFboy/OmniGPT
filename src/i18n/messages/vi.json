@@ -996,6 +996,7 @@
   "featureFlagFreeBadgeRequiresProviderFreeTierDescription": "Dashboard provider pages: show the Free badge only on signals the provider honors — drops the display-name heuristic, non-boolean free fields and :free suffixes on registered providers without a documented free tier. Off keeps the historical badge rule.",
   "featureFlagProxySkipRecentlyFailedDescription": "Các pool proxy và cơ chế xoay vòng theo tài khoản của opencode ngừng dùng lại một proxy vừa thất bại (thăm dò TCP bị từ chối, hoặc nhận 429 qua proxy đó) trong một khoảng thời gian theo tiến trình, tăng gấp đôi sau mỗi lần lặp lại, tối đa đến một giới hạn. Không ghi trạng thái proxy nào; khi mọi ứng viên đều bị tạm gác, lựa chọn vẫn như cũ. Tắt theo mặc định: thứ tự chọn giữ nguyên xoay vòng thông thường.",
   "featureFlagProxySkipRecentlyFailedDescription": "Các pool proxy và cơ chế xoay vòng theo tài khoản của opencode ngừng dùng lại một proxy vừa thất bại (thăm dò TCP bị từ chối, hoặc nhận 429 qua proxy đó) trong một khoảng thời gian theo tiến trình, tăng gấp đôi sau mỗi lần lặp lại, tối đa đến một giới hạn. Không ghi trạng thái proxy nào; khi mọi ứng viên đều bị tạm gác, lựa chọn vẫn như cũ. Tắt theo mặc định: thứ tự chọn giữ nguyên xoay vòng thông thường.",
+  "featureFlagProxyPoolEgressObservationDescription": "Hiển thị, bên dưới một nhóm proxy trong bảng điều khiển, số IP đầu ra quan sát được đã phục vụ các thành viên của nhóm trong 24 giờ qua, số kết nối đã dùng chúng và số lớn nhất thấy sau cùng một IP. Chỉ đọc, tính từ nhật ký proxy, không bao giờ dùng để định tuyến. Tắt theo mặc định: trình chỉnh sửa nhóm không đổi và tuyến quan sát trả về null.",
   "sidebar": {
     "home": "Trang chủ",
     "dashboard": "Trang tổng quan",
@@ -10968,6 +10969,9 @@
     "strategyLatency": "Tối ưu độ trễ (Latency-optimized)",
     "poolMembersLabel": "Thành viên nhóm proxy ({count})",
     "poolNoMembers": "Chưa có proxy nào trong nhóm này.",
+    "poolEgressObservation": "{exits, plural, other {# lối ra}} được dùng bởi {connections, plural, other {# kết nối}} · tối đa {max} trên một lối ra · {hours} giờ qua",
+    "poolEgressObservationEmpty": "Không ghi nhận lưu lượng trong {hours} giờ qua",
+    "poolEgressObservationHint": "Tính từ nhật ký proxy trong khoảng thời gian: số IP đầu ra khác nhau quan sát được của các thành viên nhóm proxy này và số kết nối OmniRoute đã dùng chúng. \"Trên một lối ra\" nghĩa là trong cả khoảng thời gian, không phải cùng lúc. Khóa 429 theo IP chỉ tạm dừng các kết nối cùng họ nhà cung cấp.",
     "poolRemove": "Gỡ bỏ",
     "poolRemoveFailed": "Không thể gỡ proxy khỏi nhóm",
     "poolAddLabel": "Thêm proxy",

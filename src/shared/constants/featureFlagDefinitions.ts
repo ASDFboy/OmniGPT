@@ -204,6 +204,18 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     warningLevel: "caution",
   },
   {
+    key: "PROXY_POOL_EGRESS_OBSERVATION",
+    label: "Proxy Pool Egress Observation",
+    description:
+      "Show, under a proxy pool in the dashboard, how many observed egress IPs served its members over the last 24 h, how many connections used them and the most seen behind one IP. Read-only, computed from the proxy log, never used for routing. Off by default: the pool editor is unchanged and the observation route answers null.",
+    descriptionI18nKey: "featureFlagProxyPoolEgressObservationDescription",
+    category: "network",
+    defaultValue: "false",
+    type: "boolean",
+    requiresRestart: false,
+    warningLevel: "info",
+  },
+  {
     key: "MITM_DISABLE_TLS_VERIFY",
     label: "Disable TLS Verify (MITM)",
     description: "Disable TLS certificate verification for MITM proxy",
