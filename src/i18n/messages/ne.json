@@ -13021,6 +13021,10 @@
       "SERVER_OWNED_TOOL_LOOP_ENABLED": {
         "label": "सर्भर-स्वामित्वको उपकरण लूप",
         "description": "मोडेलले क्लाइन्टले प्रयोग गर्न मिल्ने प्रतिक्रिया नफर्काएसम्म नन-स्ट्रिमिङ सर्भर-स्वामित्वका उपकरण कलहरू जारी राख्नुहोस्।"
+      },
+      "RETRY_AFTER_PROVENANCE_ENABLED": {
+        "label": "__MISSING__:Retry-After Provenance",
+        "description": "__MISSING__:On aggregated 429/503 unavailable responses, omit Retry-After when no concrete future retry time is known instead of sending a synthetic 1s, add error.retry_after_provenance, and read prose retry hints on combo drain paths."
       }
     }
   },

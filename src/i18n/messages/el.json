@@ -13021,6 +13021,10 @@
       "SERVER_OWNED_TOOL_LOOP_ENABLED": {
         "label": "Βρόχος εργαλείων ελεγχόμενος από τον διακομιστή",
         "description": "Συνέχιση των μη συνεχιζόμενων κλήσεων εργαλείων που ελέγχονται από τον διακομιστή, έως ότου το μοντέλο επιστρέψει μια απόκριση που μπορεί να χρησιμοποιήσει ο πελάτης."
+      },
+      "RETRY_AFTER_PROVENANCE_ENABLED": {
+        "label": "__MISSING__:Retry-After Provenance",
+        "description": "__MISSING__:On aggregated 429/503 unavailable responses, omit Retry-After when no concrete future retry time is known instead of sending a synthetic 1s, add error.retry_after_provenance, and read prose retry hints on combo drain paths."
       }
     }
   },

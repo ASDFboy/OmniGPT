@@ -13010,6 +13010,10 @@
       },
       "SKILLS_SANDBOX_NETWORK_ENABLED": {
         "description": "Abilita l'accesso alla rete nella sandbox delle skill."
+      },
+      "RETRY_AFTER_PROVENANCE_ENABLED": {
+        "label": "__MISSING__:Retry-After Provenance",
+        "description": "__MISSING__:On aggregated 429/503 unavailable responses, omit Retry-After when no concrete future retry time is known instead of sending a synthetic 1s, add error.retry_after_provenance, and read prose retry hints on combo drain paths."
       }
     }
   },

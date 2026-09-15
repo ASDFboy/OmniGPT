@@ -13021,6 +13021,10 @@
       "SERVER_OWNED_TOOL_LOOP_ENABLED": {
         "label": "സെർവർ ഉടമസ്ഥതയിലുള്ള ടൂൾ ലൂപ്പ്",
         "description": "മോഡൽ ക്ലയന്റിന് ഉപയോഗിക്കാവുന്ന പ്രതികരണം നൽകുന്നതുവരെ സ്ട്രീമിംഗ് അല്ലാത്ത, സെർവർ ഉടമസ്ഥതയിലുള്ള ടൂൾ കോളുകൾ തുടരുക."
+      },
+      "RETRY_AFTER_PROVENANCE_ENABLED": {
+        "label": "__MISSING__:Retry-After Provenance",
+        "description": "__MISSING__:On aggregated 429/503 unavailable responses, omit Retry-After when no concrete future retry time is known instead of sending a synthetic 1s, add error.retry_after_provenance, and read prose retry hints on combo drain paths."
       }
     }
   },

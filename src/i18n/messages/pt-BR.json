@@ -13022,6 +13022,10 @@
       "SERVER_OWNED_TOOL_LOOP_ENABLED": {
         "label": "Server-Owned Tool Loop",
         "description": "Continue chamadas de ferramentas do servidor (server-owned) em não-streaming até que o modelo retorne uma resposta utilizável pelo cliente."
+      },
+      "RETRY_AFTER_PROVENANCE_ENABLED": {
+        "label": "__MISSING__:Retry-After Provenance",
+        "description": "__MISSING__:On aggregated 429/503 unavailable responses, omit Retry-After when no concrete future retry time is known instead of sending a synthetic 1s, add error.retry_after_provenance, and read prose retry hints on combo drain paths."
       }
     }
   },

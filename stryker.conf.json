@@ -371,6 +371,7 @@
       "tests/unit/resilience-connections.test.ts",
       "tests/unit/responses-handler.test.ts",
       "tests/unit/responses-passthrough-openai-compatible.test.ts",
+      "tests/unit/retry-after-provenance.test.ts",
       "tests/unit/rotation-config-omniroute.test.ts",
       "tests/unit/route-explainability.test.ts",
       "tests/unit/route-guard-acp-agents-local-only.test.ts",

@@ -13021,6 +13021,10 @@
       "SERVER_OWNED_TOOL_LOOP_ENABLED": {
         "label": "Ċiklu tal-Għodod Immexxi mis-Server",
         "description": "Kompli s-sejħiet mhux streaming tal-għodod immexxija mis-server sakemm il-mudell jirritorna tweġiba li tista’ tintuża mill-klijent."
+      },
+      "RETRY_AFTER_PROVENANCE_ENABLED": {
+        "label": "__MISSING__:Retry-After Provenance",
+        "description": "__MISSING__:On aggregated 429/503 unavailable responses, omit Retry-After when no concrete future retry time is known instead of sending a synthetic 1s, add error.retry_after_provenance, and read prose retry hints on combo drain paths."
       }
     }
   },

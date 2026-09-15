@@ -13010,6 +13010,10 @@
       },
       "SKILLS_SANDBOX_NETWORK_ENABLED": {
         "description": "在技能沙盒中啟用網路存取。"
+      },
+      "RETRY_AFTER_PROVENANCE_ENABLED": {
+        "label": "__MISSING__:Retry-After Provenance",
+        "description": "__MISSING__:On aggregated 429/503 unavailable responses, omit Retry-After when no concrete future retry time is known instead of sending a synthetic 1s, add error.retry_after_provenance, and read prose retry hints on combo drain paths."
       }
     }
   },

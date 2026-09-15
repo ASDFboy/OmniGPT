@@ -594,6 +594,18 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     requiresRestart: false,
     warningLevel: "info",
   },
+  {
+    key: "RETRY_AFTER_PROVENANCE_ENABLED",
+    label: "Retry-After Provenance",
+    description:
+      "On aggregated 429/503 unavailable responses, omit Retry-After when no concrete future retry time is known (instead of a synthetic 1s), add error.retry_after_provenance (signal | none), and let combo drain paths read prose retry hints from JSON and plain-text upstream bodies.",
+    descriptionI18nKey: "featureFlagRetryAfterProvenanceEnabledDescription",
+    category: "runtime",
+    defaultValue: "false",
+    type: "boolean",
+    requiresRestart: false,
+    warningLevel: "caution",
+  },
 
   // ──────────────── CLI (5) ────────────────
   {

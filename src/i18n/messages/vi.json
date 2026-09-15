@@ -13022,6 +13022,10 @@
       "SERVER_OWNED_TOOL_LOOP_ENABLED": {
         "label": "Vòng lặp công cụ do máy chủ sở hữu",
         "description": "Tiếp tục các lời gọi công cụ do máy chủ sở hữu ở chế độ không streaming cho đến khi mô hình trả về phản hồi mà máy khách dùng được."
+      },
+      "RETRY_AFTER_PROVENANCE_ENABLED": {
+        "label": "Nguồn gốc của Retry-After",
+        "description": "Với các phản hồi không khả dụng 429/503 tổng hợp, bỏ Retry-After khi không biết thời điểm thử lại cụ thể thay vì gửi giá trị giả 1 giây, thêm error.retry_after_provenance và đọc gợi ý thử lại dạng văn bản trên các đường thoát của combo."
       }
     }
   },

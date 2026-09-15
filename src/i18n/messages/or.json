@@ -13021,6 +13021,10 @@
       "SERVER_OWNED_TOOL_LOOP_ENABLED": {
         "label": "ସର୍ଭର-ମାଲିକାନାଧୀନ ଟୁଲ୍ ଲୁପ୍",
         "description": "ମଡେଲ୍ ଏକ କ୍ଲାଏଣ୍ଟ-ବ୍ୟବହାରଯୋଗ୍ୟ ପ୍ରତିକ୍ରିୟା ଫେରାଇବା ପର୍ଯ୍ୟନ୍ତ ନନ୍-ଷ୍ଟ୍ରିମିଂ ସର୍ଭର-ମାଲିକାନାଧୀନ ଟୁଲ୍ କଲ୍ଗୁଡ଼ିକୁ ଜାରି ରଖନ୍ତୁ।"
+      },
+      "RETRY_AFTER_PROVENANCE_ENABLED": {
+        "label": "__MISSING__:Retry-After Provenance",
+        "description": "__MISSING__:On aggregated 429/503 unavailable responses, omit Retry-After when no concrete future retry time is known instead of sending a synthetic 1s, add error.retry_after_provenance, and read prose retry hints on combo drain paths."
       }
     }
   },

@@ -18,7 +18,12 @@ import {
   retryHintBypassesMaxCooldownMs,
   selectLockoutCooldownMs,
 } from "../accountFallback.ts";
-import { errorResponse, errorResponseWithComboDiagnostics } from "../../utils/error.ts";
+import {
+  errorResponse,
+  errorResponseWithComboDiagnostics,
+  logRetryHintUnreadable,
+  readProseRetryAfter,
+} from "../../utils/error.ts";
 import { recordComboFailure, clearComboFailureTracking } from "./failureTracker.ts";
 import { buildRecoveryHint } from "./pinRecovery.ts";
 import { formatExhaustedConnectionKey } from "./comboDiagFormat.ts";
@@ -668,10 +673,12 @@ export async function executeTargetAttempt(opts: {
     let errorText = result.statusText || "";
     let errorBody: ComboErrorBody = null;
     let retryAfter: ComboRetryAfter | null = null;
+    let bodyText = "";
     try {
       const cloned = result.clone();
       try {
         const text = await cloned.text();
+        bodyText = text;
         if (text) {
           errorText = text.substring(0, 500);
           errorBody = JSON.parse(text);
@@ -703,11 +710,12 @@ export async function executeTargetAttempt(opts: {
               : null);
         }
       } catch {
-        /* Clone parse failed */
+        logRetryHintUnreadable(deps.log, "COMBO", modelStr, result.status, "unparseable body");
       }
     } catch {
-      /* Clone failed */
+      logRetryHintUnreadable(deps.log, "COMBO", modelStr, result.status, "clone failed");
     }
+    retryAfter ||= readProseRetryAfter(bodyText); // #13672 opt-in prose retry hints
 
     // Track earliest retryAfter
     if (
