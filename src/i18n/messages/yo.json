@@ -14159,5 +14159,6 @@
   },
   "featureFlagOmnirouteDisableThinkingLevelVariantsDescription": "Mú ṣíṣẹ̀dá àwọn ẹ̀yà ìpele ìrònú (fún àpẹẹrẹ -low, -medium, -high) nínú àkójọ /v1/models ṣiṣẹ́ mọ́.",
   "featureFlagSearchStatsHideDeletedConnectionsDescription": "__MISSING__:Search stats and recent searches only count providers that still have a live connection (keyless providers such as duckduckgo-free always count). Off keeps every retained search row with a provider id.",
-  "featureFlagFreeBadgeRequiresProviderFreeTierDescription": "__MISSING__:Dashboard provider pages: show the Free badge only on signals the provider honors — drops the display-name heuristic, non-boolean free fields and :free suffixes on registered providers without a documented free tier. Off keeps the historical badge rule."
+  "featureFlagFreeBadgeRequiresProviderFreeTierDescription": "__MISSING__:Dashboard provider pages: show the Free badge only on signals the provider honors — drops the display-name heuristic, non-boolean free fields and :free suffixes on registered providers without a documented free tier. Off keeps the historical badge rule.",
+  "featureFlagProxySkipRecentlyFailedDescription": "__MISSING__:Proxy pools and the per-account rotation of opencode stop re-serving a proxy that just failed (refused TCP probe, or a 429 received through it) for a per-process period that doubles on each repeat, up to a cap. No proxy status is written; with every candidate set aside the choice is unchanged. Off by default: selection order is exactly the plain rotation."
 }
