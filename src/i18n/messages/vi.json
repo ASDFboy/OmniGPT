@@ -13026,6 +13026,10 @@
       "RETRY_AFTER_PROVENANCE_ENABLED": {
         "label": "Nguồn gốc của Retry-After",
         "description": "Với các phản hồi không khả dụng 429/503 tổng hợp, bỏ Retry-After khi không biết thời điểm thử lại cụ thể thay vì gửi giá trị giả 1 giây, thêm error.retry_after_provenance và đọc gợi ý thử lại dạng văn bản trên các đường thoát của combo."
+      },
+      "PROTECTED_PRIORITY_INFRA_502_ENABLED": {
+        "label": "Dừng ưu tiên được bảo vệ do hạ tầng trả 502",
+        "description": "Trả 502 thay vì 503 khi một mục tiêu ưu tiên chỉ dự phòng theo hạn mức dừng combo vì một nguyên nhân chắc chắn không phải hạn mức: bộ ngắt mạch của nhà cung cấp đang mở hoặc bỏ qua do dự đoán độ trễ."
       }
     }
   },
