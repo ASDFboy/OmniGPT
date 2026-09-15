@@ -40,7 +40,7 @@ const {
 // the dead ONEPROXY_ENABLED (readerless since the 1proxy purge, #12091)
 // brought it back to 53. UNIVERSAL_CONTEXT_HANDOFF_ENABLED bumped it to 54.
 // #13641 added SEARCH_STATS_HIDE_DELETED_CONNECTIONS, bumping the count to 56.
-const EXPECTED_FEATURE_FLAG_COUNT = 64;
+const EXPECTED_FEATURE_FLAG_COUNT = 65;
 
 // ──────────────────────────────────────────────────────
 // Test group 1 — Flag definitions registry
@@ -200,6 +200,15 @@ describe("featureFlagDefinitions", () => {
     assert.strictEqual(def.defaultValue, "false");
     assert.strictEqual(def.requiresRestart, false);
     assert.strictEqual(def.warningLevel, "danger");
+  });
+
+  it("defines OPENCODE_RESPONSES_STALL_ROTATION as an opt-in network boolean flag disabled by default", () => {
+    const def = FEATURE_FLAG_DEFINITIONS.find((d) => d.key === "OPENCODE_RESPONSES_STALL_ROTATION");
+    assert.ok(def, "OPENCODE_RESPONSES_STALL_ROTATION should exist");
+    assert.strictEqual(def.category, "network");
+    assert.strictEqual(def.type, "boolean");
+    assert.strictEqual(def.defaultValue, "false");
+    assert.strictEqual(def.requiresRestart, false);
   });
 
   it("defines network rotation shared-egress guard as a network boolean flag enabled by default", () => {

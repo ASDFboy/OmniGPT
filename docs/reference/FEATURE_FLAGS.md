@@ -46,7 +46,7 @@ A boolean flag is considered **enabled** when its effective value is `"true"`,
 
 ## Flag Catalog
 
-64 flags across 6 categories. **Default** is the definition default — the value
+65 flags across 6 categories. **Default** is the definition default — the value
 used when neither a DB override nor an environment variable is present.
 
 ### Security (10)
@@ -64,7 +64,7 @@ used when neither a DB override nor an environment variable is present.
 | `AUTH_LOG_INCLUDE_ACCOUNT_ID`           | boolean | `false`  | Include account prefix in AUTH log lines (e.g. "Using <provider> account: abc12345..."). Disabled by default so account identifiers are redacted from shared/multi-tenant process logs. Independent from Debug Mode; flipping Debug Mode does not reveal this. |
 | `OMNIROUTE_OIDC_DISABLE_PASSWORD_LOGIN` | boolean | `false`  | When OIDC is enabled, disable password login so users can only authenticate via OIDC Single Sign-On. When disabled (default), both password login and OIDC are available.                                                                                      |
 
-### Network (11)
+### Network (12)
 
 | Key                                             | Type    | Default | Restart | Description                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | ----------------------------------------------- | ------- | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -75,6 +75,7 @@ used when neither a DB override nor an environment variable is present.
 | `NETWORK_ROTATION_SHARED_EGRESS_GUARD`          | boolean | `true`  |         | On a network exception (timeout, connection refused/reset) for a multi-account rotation executor, when the failing account has no dedicated proxy, apply a short cooldown and skip other proxy-less accounts for the rest of the request instead of retrying each one. On by default (safe: no egress IP change, only reduces latency/cooldown risk on shared-egress accounts). Disable to restore immediate propagation on the first proxy-less throw. |
 | `PROXY_SKIP_RECENTLY_FAILED`                    | boolean | `false` |         | Proxy pools and the per-account rotation of opencode stop re-serving a proxy that just failed (refused TCP probe, or a 429 received through it) for a per-process period that doubles on each repeat, up to a cap. No proxy status is written; with every candidate set aside the choice is unchanged. Off by default.                                                                                                                                  |
 | `PROXY_POOL_EGRESS_OBSERVATION`                 | boolean | `false` |         | Show, under a proxy pool in the dashboard, how many observed egress IPs served its members over the last 24 h and how many connections used them. Read-only, computed from the proxy log, never used for routing. Off by default.                                                                                                                                                                                                                       |
+| `OPENCODE_RESPONSES_STALL_ROTATION`             | boolean | `false` |         | For the OpenCode executor, watch the first body byte of a streamed Responses reply (window: `RESPONSES_FIRST_BYTE_TIMEOUT_MS`, default `15000`). A 2xx Responses stream that stays silent past the window is treated as stalled: the account is cooled down and the request rotates to the next account once; a second stall fails fast. Off by default: stalled streams keep today's wait until the stream readiness timeout.                          |
 | `MITM_DISABLE_TLS_VERIFY`                       | boolean | `false` | ✓       | Disable TLS certificate verification for the MITM proxy. **Danger.**                                                                                                                                                                                                                                                                                                                                                                                    |
 | `OMNIROUTE_ALLOW_PRIVATE_PROVIDER_URLS`         | boolean | `false` |         | Allow provider URLs pointing to private/internal networks.                                                                                                                                                                                                                                                                                                                                                                                              |
 | `OMNIROUTE_ALLOW_LOCAL_PROVIDER_URLS`           | boolean | `true`  |         | Allow adding/validating providers on local/private addresses (127.0.0.1, localhost, LAN). On by default (local-first); disable for strict public-only blocking. Cloud-metadata stays blocked.                                                                                                                                                                                                                                                           |
@@ -204,7 +205,7 @@ Returns every flag with its effective value, source, and a summary.
       "requiresRestart": false,
       "warningLevel": "caution",
     },
-    // ... all 64 flags
+    // ... all 65 flags
   ],
   "summary": {
     "total": 56,
