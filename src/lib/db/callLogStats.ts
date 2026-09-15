@@ -1,4 +1,5 @@
 import { getDbInstance } from "./core";
+import { ERROR_TYPE_CONTRACT } from "@omniroute/open-sse/services/errorClassifier.ts";
 
 /**
  * Aggregation queries over `call_logs` extracted from route handlers.
@@ -285,12 +286,30 @@ export function getFallbackStats(
   return row ?? { total: 0, with_requested: 0, fallback_eligible: 0, fallbacks: 0 };
 }
 
+// ERROR_TYPE_CUTOVER_ISO — single source of truth for the cutover: date of
+// migration 158 (commit 4c15c05f9) that added `call_logs.error_type`.
+export const ERROR_TYPE_CUTOVER_ISO = "2026-08-20";
+
+// SQL `IN (...)` list of the persisted vocabulary. Built lazily (not at module
+// evaluation) so an import cycle through the classifier can never observe the
+// contract before it is initialised. Values are fixed identifiers; quotes are
+// still escaped defensively.
+let errorTypeVocabSql: string | null = null;
+function getErrorTypeVocabSql(): string {
+  if (errorTypeVocabSql === null) {
+    errorTypeVocabSql = ERROR_TYPE_CONTRACT.map((v) => `'${v.replace(/'/g, "''")}'`).join(", ");
+  }
+  return errorTypeVocabSql;
+}
+
 /**
  * Failure-family breakdown over `call_logs` for the usage analytics endpoint.
  * Failures are rows with status >= 400 or a non-empty error summary; successes
  * are excluded in SQL. Rows predating migration 158 (`error_type` NULL,
- * `timestamp` before 2026-08-20) land in `pre_migration`; other NULL families
- * land in `unclassified`.
+ * `timestamp` before ERROR_TYPE_CUTOVER_ISO) land in `pre_migration`; other
+ * NULL families land in `unclassified`, and so does any stored value outside
+ * ERROR_TYPE_CONTRACT (free text written out of band). Every failure row lands
+ * in exactly one bucket, so the counts always sum to the failure total.
  *
  * @param whereClause - SQL WHERE clause (may be empty string) using the same
  *                      named params as the usage_history queries.
@@ -305,9 +324,14 @@ export function getErrorTypeBreakdown(
     .prepare(
       `
       SELECT
-        -- '2026-08-20' = commit 4c15c05f9 that added error_type (migration 158).
-        -- Lower bound, not exact: late upgraders have post-cutoff rows with NULL values.
-        CASE WHEN error_type IS NULL AND timestamp < '2026-08-20' THEN 'pre_migration' WHEN error_type IS NULL THEN 'unclassified' ELSE error_type END AS errorType,
+        -- ERROR_TYPE_CUTOVER_ISO (migration 158). Lower bound, not exact: late
+        -- upgraders have post-cutoff rows with NULL values.
+        CASE
+          WHEN error_type IS NULL AND timestamp < '${ERROR_TYPE_CUTOVER_ISO}' THEN 'pre_migration'
+          WHEN error_type IS NULL THEN 'unclassified'
+          WHEN error_type NOT IN (${getErrorTypeVocabSql()}) THEN 'unclassified'
+          ELSE error_type
+        END AS errorType,
         COUNT(*) AS count
       FROM call_logs
       ${whereClause} ${whereClause ? "AND" : "WHERE"} (status >= 400 OR error_summary IS NOT NULL)
