@@ -11316,6 +11316,7 @@ paths:
       tags:
         - Settings
       summary: "DELETE settings › obsidian"
+      x-always-protected: true
       responses:
         "200":
           description: OK
@@ -11323,6 +11324,7 @@ paths:
       tags:
         - Settings
       summary: "GET settings › obsidian"
+      x-always-protected: true
       responses:
         "200":
           description: OK
@@ -11330,6 +11332,7 @@ paths:
       tags:
         - Settings
       summary: "POST settings › obsidian"
+      x-always-protected: true
       responses:
         "200":
           description: OK
@@ -11338,6 +11341,7 @@ paths:
       tags:
         - Settings
       summary: "DELETE settings › obsidian › webdav"
+      x-always-protected: true
       responses:
         "200":
           description: OK
@@ -11345,6 +11349,7 @@ paths:
       tags:
         - Settings
       summary: "GET settings › obsidian › webdav"
+      x-always-protected: true
       responses:
         "200":
           description: OK
@@ -11352,6 +11357,7 @@ paths:
       tags:
         - Settings
       summary: "POST settings › obsidian › webdav"
+      x-always-protected: true
       responses:
         "200":
           description: OK
