@@ -228,6 +228,18 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     warningLevel: "caution",
   },
   {
+    key: "OPENCODE_USER_BLOCKED_ROTATION",
+    label: "OpenCode user_blocked Rotation",
+    description:
+      "For the OpenCode executor, when an upstream answers 403 or 451 carrying a user_blocked refusal (not a geo block, not a Cloudflare fingerprint rejection), cool the refused account down and rotate to the next account at most once per request; a second refusal is returned as-is without a success mark. Off by default: routing around an upstream user block can look like evasion and spread the flag across the account fleet, so the refusal is returned unchanged unless the operator opts in.",
+    descriptionI18nKey: "featureFlagOpencodeUserBlockedRotationDescription",
+    category: "network",
+    defaultValue: "false",
+    type: "boolean",
+    requiresRestart: false,
+    warningLevel: "caution",
+  },
+  {
     key: "MITM_DISABLE_TLS_VERIFY",
     label: "Disable TLS Verify (MITM)",
     description: "Disable TLS certificate verification for MITM proxy",

@@ -238,6 +238,23 @@ export function isOpencodeResponsesStallRotationEnabled(): boolean {
   }
 }
 
+/**
+ * OpenCode user_blocked 403/451 bounded rotation (#13498). Opt-in: when off, the refusal is
+ * returned unchanged exactly as before.
+ * Fail closed: an unreadable flag store keeps the pre-flag behavior (disabled).
+ */
+export function isOpencodeUserBlockedRotationEnabled(): boolean {
+  try {
+    return isFeatureFlagEnabled("OPENCODE_USER_BLOCKED_ROTATION");
+  } catch (error) {
+    console.error(
+      "[featureFlags] Failed to resolve OPENCODE_USER_BLOCKED_ROTATION, defaulting to disabled:",
+      error instanceof Error ? error.message : error
+    );
+    return false;
+  }
+}
+
 export function isServerOwnedToolLoopEnabled(
   reader: (key: string) => boolean = isFeatureFlagEnabled
 ): boolean {

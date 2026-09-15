@@ -28,12 +28,13 @@ import {
   isEmptyUpstreamRejection,
   extractChatcmplId,
 } from "./accountRotation.ts";
-import { isOpencodeGeoBlocked, proxyKeyOf } from "./opencodeGeoBlock.ts";
+import { isOpencodeGeoBlocked, proxyKeyOf, isOpencodeUserBlocked } from "./opencodeGeoBlock.ts";
 import {
   guardResponsesStall,
   isResponsesFirstByteTimeout,
   resolveResponsesStallWindowMs,
 } from "./opencodeResponsesStall.ts";
+import { discardResponseBody } from "./opencodeResponseBody.ts";
 import { isRetriableUpstreamFailure } from "./opencodeTransientFailure.ts";
 import {
   hasProxyRefusals,
@@ -45,6 +46,7 @@ import {
 import {
   isNetworkRotationSharedEgressGuardEnabled,
   isProxySkipRecentlyFailedEnabled,
+  isOpencodeUserBlockedRotationEnabled,
 } from "@/shared/utils/featureFlags";
 
 /**
@@ -616,6 +618,11 @@ export class OpencodeExecutor extends BaseExecutor {
       let directTried = false;
       // Stalls before the first Responses byte: one rotation, then fail fast.
       let stalledAttempts = 0;
+      // A response an opt-in branch rotated away from. It stays lastResult (and
+      // intact) until a newer attempt replaces it, then its body is cancelled.
+      let abandonedResponse: Response | null = null;
+      // OPENCODE_USER_BLOCKED_ROTATION: rotations spent on user_blocked refusals (max 1).
+      let userBlockedRotations = 0;
 
       for (let attempt = 0; attempt < this.accounts.length + emptyRejectionBudget; attempt++) {
         const isProxiedCandidate = (a: OpencodeAccountState): boolean => {
@@ -742,6 +749,8 @@ export class OpencodeExecutor extends BaseExecutor {
           );
           continue;
         }
+        discardResponseBody(abandonedResponse);
+        abandonedResponse = null;
         lastResult = result;
 
         const status = result.response.status;
@@ -797,6 +806,29 @@ export class OpencodeExecutor extends BaseExecutor {
             // Single account with a proxy: 0 retries (same egress = dead latency).
             // (The fast path above already covers single-without-proxy; here length===1 WITH proxy.)
             if (this.accounts.length === 1) return result;
+            continue;
+          }
+          // Opt-in (#13498): an upstream user_blocked refusal (403 or 451, same
+          // predicate) cools the refused account down, joins the tried-set and
+          // rotates at most once per request. Never a success mark. Flag off →
+          // falls through to the unchanged path below.
+          if (
+            bodyText !== null &&
+            isOpencodeUserBlocked(status, bodyText) &&
+            isOpencodeUserBlockedRotationEnabled()
+          ) {
+            const key = proxyKeyOf(account.proxy);
+            if (key !== null) geoTriedProxyKeys.add(key);
+            else directTried = true;
+            this.markCooldown(account);
+            const rotate = userBlockedRotations === 0 && this.accounts.length > 1;
+            log?.warn?.(
+              "OPENCODE",
+              `${cid}user_blocked ${status} on account ${masked} (proxy ${key ?? "direct"}), ${rotate ? "rotating to next account once…" : "returning the refusal"}`
+            );
+            if (!rotate) return result;
+            userBlockedRotations++;
+            abandonedResponse = result.response;
             continue;
           }
         }
