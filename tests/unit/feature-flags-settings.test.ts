@@ -40,7 +40,7 @@ const {
 // the dead ONEPROXY_ENABLED (readerless since the 1proxy purge, #12091)
 // brought it back to 53. UNIVERSAL_CONTEXT_HANDOFF_ENABLED bumped it to 54.
 // #13641 added SEARCH_STATS_HIDE_DELETED_CONNECTIONS, bumping the count to 56.
-const EXPECTED_FEATURE_FLAG_COUNT = 63;
+const EXPECTED_FEATURE_FLAG_COUNT = 64;
 
 // ──────────────────────────────────────────────────────
 // Test group 1 — Flag definitions registry
@@ -230,6 +230,18 @@ describe("featureFlagDefinitions", () => {
     const def = FEATURE_FLAG_DEFINITIONS.find((d) => d.key === "PROXY_POOL_EGRESS_OBSERVATION");
     assert.ok(def, "PROXY_POOL_EGRESS_OBSERVATION should exist");
     assert.strictEqual(def.category, "network");
+    assert.strictEqual(def.type, "boolean");
+    assert.strictEqual(def.defaultValue, "false");
+    assert.strictEqual(def.requiresRestart, false);
+  });
+
+  it("defines blocked-resets-streak as a health boolean flag disabled by default", () => {
+    // Guards the #10654 default: a target-refused probe stays neutral unless opted in.
+    const def = FEATURE_FLAG_DEFINITIONS.find(
+      (d) => d.key === "PROXY_HEALTH_BLOCKED_RESETS_STREAK"
+    );
+    assert.ok(def, "PROXY_HEALTH_BLOCKED_RESETS_STREAK should exist");
+    assert.strictEqual(def.category, "health");
     assert.strictEqual(def.type, "boolean");
     assert.strictEqual(def.defaultValue, "false");
     assert.strictEqual(def.requiresRestart, false);

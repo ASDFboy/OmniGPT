@@ -46,7 +46,7 @@ A boolean flag is considered **enabled** when its effective value is `"true"`,
 
 ## Flag Catalog
 
-63 flags across 6 categories. **Default** is the definition default — the value
+64 flags across 6 categories. **Default** is the definition default — the value
 used when neither a DB override nor an environment variable is present.
 
 ### Security (10)
@@ -134,13 +134,14 @@ used when neither a DB override nor an environment variable is present.
 | `OMNIROUTE_AUTO_SYNC_CODEX_PROFILES`  | boolean | `false` |         | After a provider model sync, automatically (re)write ~/.codex/*.config.toml profile files from the live catalog. Never changes the active/default Codex config. Off by default.                          |
 | `OMNIROUTE_AUTO_SYNC_CLAUDE_PROFILES` | boolean | `false` |         | After a provider model sync, automatically (re)write ~/.claude/profiles/<name>/settings.json Claude Code profiles from the live catalog. Never changes the active/default Claude config. Off by default. |
 
-### Health (3)
+### Health (4)
 
-| Key                                   | Type    | Default | Description                                              |
-| ------------------------------------- | ------- | ------- | -------------------------------------------------------- |
-| `OMNIROUTE_DISABLE_LOCAL_HEALTHCHECK` | boolean | `false` | Disable the local instance health check endpoint.        |
-| `OMNIROUTE_DISABLE_TOKEN_HEALTHCHECK` | boolean | `false` | Disable the token validation health check.               |
-| `SKILLS_SANDBOX_NETWORK_ENABLED`      | boolean | `false` | Enable network access in the skills sandbox environment. |
+| Key                                   | Type    | Default | Description                                                                                                                                                                                                                                                          |
+| ------------------------------------- | ------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `OMNIROUTE_DISABLE_LOCAL_HEALTHCHECK` | boolean | `false` | Disable the local instance health check endpoint.                                                                                                                                                                                                                    |
+| `OMNIROUTE_DISABLE_TOKEN_HEALTHCHECK` | boolean | `false` | Disable the token validation health check.                                                                                                                                                                                                                           |
+| `SKILLS_SANDBOX_NETWORK_ENABLED`      | boolean | `false` | Enable network access in the skills sandbox environment.                                                                                                                                                                                                             |
+| `PROXY_HEALTH_BLOCKED_RESETS_STREAK`  | boolean | `false` | In the proxy health sweep, a probe the target refused (401/403/429) resets the proxy's consecutive-failure streak. Off by default: a refusal stays neutral (#10654). A 5xx stays inconclusive either way; a refusal never removes, disables or re-activates a proxy. |
 
 > [!NOTE]
 > `INPUT_SANITIZER_BLOCK_THRESHOLD` and its legacy alias
@@ -203,7 +204,7 @@ Returns every flag with its effective value, source, and a summary.
       "requiresRestart": false,
       "warningLevel": "caution",
     },
-    // ... all 63 flags
+    // ... all 64 flags
   ],
   "summary": {
     "total": 56,

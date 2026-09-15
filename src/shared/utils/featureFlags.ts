@@ -205,6 +205,22 @@ export function isPoolEgressObservationEnabled(): boolean {
   }
 }
 
+/**
+ * Proxy health sweep (#13608): a target-refused probe resets the consecutive-failure streak.
+ * Opt-in; an unreadable flag store keeps the neutral policy (#10654).
+ */
+export function isProxyHealthBlockedResetsStreakEnabled(): boolean {
+  try {
+    return isFeatureFlagEnabled("PROXY_HEALTH_BLOCKED_RESETS_STREAK");
+  } catch (error) {
+    console.error(
+      "[featureFlags] Failed to resolve PROXY_HEALTH_BLOCKED_RESETS_STREAK, defaulting to disabled:",
+      error instanceof Error ? error.message : error
+    );
+    return false;
+  }
+}
+
 export function isServerOwnedToolLoopEnabled(
   reader: (key: string) => boolean = isFeatureFlagEnabled
 ): boolean {

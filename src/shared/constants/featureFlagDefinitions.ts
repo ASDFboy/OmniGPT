@@ -761,4 +761,16 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     requiresRestart: false,
     warningLevel: "caution",
   },
+  {
+    key: "PROXY_HEALTH_BLOCKED_RESETS_STREAK",
+    label: "Proxy Health: Refusal Resets Failure Streak",
+    description:
+      "In the proxy health sweep, let a probe the target refused (401/403/429: the proxy relayed, the destination refused this egress IP) reset the proxy's consecutive-failure streak, like a served probe. Off by default: a refusal stays neutral and keeps the streak (#10654). A 5xx stays inconclusive either way, and a refusal never removes, disables or re-activates a proxy.",
+    descriptionI18nKey: "featureFlagProxyHealthBlockedResetsStreakDescription",
+    category: "health",
+    defaultValue: "false",
+    type: "boolean",
+    requiresRestart: false,
+    warningLevel: "info",
+  },
 ];
