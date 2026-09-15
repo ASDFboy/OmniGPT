@@ -240,6 +240,18 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     warningLevel: "caution",
   },
   {
+    key: "OPENCODE_TRANSIENT_FAILOVER_BACKOFF",
+    label: "OpenCode Transient Failover Backoff",
+    description:
+      "For the OpenCode multi-account rotation, pause before dispatching to the next account once two consecutive attempts failed with a transient upstream error (5xx or an empty 400 rejection). The pause starts at 1.5s, doubles per further consecutive failure, is capped at 6s per pause and 10s per request, is skipped when the client disconnects, and the failed response body is released before waiting. Off by default: failover stays immediate.",
+    descriptionI18nKey: "featureFlagOpencodeTransientFailoverBackoffDescription",
+    category: "network",
+    defaultValue: "false",
+    type: "boolean",
+    requiresRestart: false,
+    warningLevel: "caution",
+  },
+  {
     key: "MITM_DISABLE_TLS_VERIFY",
     label: "Disable TLS Verify (MITM)",
     description: "Disable TLS certificate verification for MITM proxy",

@@ -35,7 +35,12 @@ import {
   resolveResponsesStallWindowMs,
 } from "./opencodeResponsesStall.ts";
 import { discardResponseBody } from "./opencodeResponseBody.ts";
-import { isRetriableUpstreamFailure } from "./opencodeTransientFailure.ts";
+import {
+  isRetriableUpstreamFailure,
+  releaseResponseBody,
+  sleepAbortable,
+  transientRetryDelayMs,
+} from "./opencodeTransientFailure.ts";
 import {
   hasProxyRefusals,
   isProxyAvoided,
@@ -47,6 +52,7 @@ import {
   isNetworkRotationSharedEgressGuardEnabled,
   isProxySkipRecentlyFailedEnabled,
   isOpencodeUserBlockedRotationEnabled,
+  isOpencodeTransientFailoverBackoffEnabled,
 } from "@/shared/utils/featureFlags";
 
 /**
@@ -311,6 +317,10 @@ export class OpencodeExecutor extends BaseExecutor {
   // pickRotatableAccount(), which needs a plain `{ nextAccountIdx }` shape —
   // TS's private-member nominal check rejects `this` there otherwise.
   nextAccountIdx = 0;
+  // Sleep used by the opt-in transient failover pause (#13615). Not `private`:
+  // tests swap in a recording fake instead of waiting on real timers.
+  transientPauseSleep: (ms: number, signal?: AbortSignal | null) => Promise<boolean> =
+    sleepAbortable;
 
   constructor(provider: string) {
     super(provider, PROVIDERS[provider] || PROVIDERS.openai);
@@ -623,6 +633,10 @@ export class OpencodeExecutor extends BaseExecutor {
       let abandonedResponse: Response | null = null;
       // OPENCODE_USER_BLOCKED_ROTATION: rotations spent on user_blocked refusals (max 1).
       let userBlockedRotations = 0;
+      // Consecutive transient failures (5xx / empty 400) and the pause time spent on
+      // them this request — only acted on when OPENCODE_TRANSIENT_FAILOVER_BACKOFF is on.
+      let transientStreak = 0;
+      let transientPausedMs = 0;
 
       for (let attempt = 0; attempt < this.accounts.length + emptyRejectionBudget; attempt++) {
         const isProxiedCandidate = (a: OpencodeAccountState): boolean => {
@@ -676,6 +690,19 @@ export class OpencodeExecutor extends BaseExecutor {
           continue;
         }
 
+        // Opt-in (#13615): after repeated transient failures, release the failed body
+        // and wait (bounded) before the next account; a client abort stops the loop.
+        const pauseMs = transientRetryDelayMs(transientStreak, transientPausedMs);
+        if (pauseMs > 0 && lastResult !== null && isOpencodeTransientFailoverBackoffEnabled()) {
+          lastResult = { ...lastResult, response: releaseResponseBody(lastResult.response) };
+          transientPausedMs += pauseMs;
+          log?.info?.(
+            "OPENCODE",
+            `${cid}${transientStreak} transient failures, pausing ${pauseMs}ms`
+          );
+          if (!(await this.transientPauseSleep(pauseMs, input.signal))) break;
+        }
+
         // #5217 (Gap 2): promoted debug→info so the per-request account/proxy
         // rotation selection is visible in the Console log view at the default
         // APP_LOG_LEVEL=info (users could not see which account/proxy was used).
@@ -719,6 +746,7 @@ export class OpencodeExecutor extends BaseExecutor {
             if (!rotate) throw err;
             continue;
           }
+          transientStreak = 0;
           // A network exception (timeout, connection refused/reset) is only
           // account-scoped when this account has its OWN egress (a configured
           // proxy) — that's the case a dead/unreachable proxy justifies rotating
@@ -752,6 +780,8 @@ export class OpencodeExecutor extends BaseExecutor {
         discardResponseBody(abandonedResponse);
         abandonedResponse = null;
         lastResult = result;
+        const priorTransientStreak = transientStreak;
+        transientStreak = 0;
 
         const status = result.response.status;
         if (status === 429) {
@@ -774,6 +804,7 @@ export class OpencodeExecutor extends BaseExecutor {
           const key = proxyKeyOf(account.proxy);
           if (key !== null) geoTriedProxyKeys.add(key);
           else directTried = true;
+          transientStreak = priorTransientStreak + 1;
           log?.warn?.(
             "OPENCODE",
             `${cid}transient upstream ${status} on account ${masked} (proxy ${key ?? "direct"}), rotating to next…`
@@ -849,6 +880,7 @@ export class OpencodeExecutor extends BaseExecutor {
           }
           if (bodyText !== null && isRetriableUpstreamFailure(400, bodyText)) {
             const chatcmplId = extractChatcmplId(bodyText);
+            transientStreak = priorTransientStreak + 1;
             log?.warn?.(
               "OPENCODE",
               `${cid}upstream empty rejection on account ${masked} (${chatcmplId}), rotating to next…`

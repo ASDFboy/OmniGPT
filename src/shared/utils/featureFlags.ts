@@ -255,6 +255,23 @@ export function isOpencodeUserBlockedRotationEnabled(): boolean {
   }
 }
 
+/**
+ * OpenCode transient-failure failover pause (#13615). Opt-in: when off, failover to the next
+ * account stays immediate exactly as before.
+ * Fail closed: an unreadable flag store keeps the pre-flag behavior (disabled).
+ */
+export function isOpencodeTransientFailoverBackoffEnabled(): boolean {
+  try {
+    return isFeatureFlagEnabled("OPENCODE_TRANSIENT_FAILOVER_BACKOFF");
+  } catch (error) {
+    console.error(
+      "[featureFlags] Failed to resolve OPENCODE_TRANSIENT_FAILOVER_BACKOFF, defaulting to disabled:",
+      error instanceof Error ? error.message : error
+    );
+    return false;
+  }
+}
+
 export function isServerOwnedToolLoopEnabled(
   reader: (key: string) => boolean = isFeatureFlagEnabled
 ): boolean {
