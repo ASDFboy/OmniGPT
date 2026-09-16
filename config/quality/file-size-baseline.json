@@ -1,4 +1,5 @@
 {
+  "_rebaseline_2026_09_15_13445_combined_growth": "Combined growth of the 2026-09-15 maxmad64bis uplift batch (each PR rebaselined its own growth; the merged sum is larger): open-sse/utils/proxyFetch.ts->1296. Every hunk is flag-gated or a verified fix covered by that PR's tests; see the batch report.",
   "_rebaseline_2026_09_15_13643_combined_growth": "Combined growth of the 2026-09-15 maxmad64bis uplift batch (each PR rebaselined its own growth; the merged sum is larger): open-sse/executors/codex.ts->1528. Every hunk is flag-gated or a verified fix covered by that PR's tests; see the batch report.",
   "_rebaseline_2026_09_15_13609_combined_growth": "Combined growth of the 2026-09-15 maxmad64bis uplift batch (each PR rebaselined its own growth; the merged sum is larger): open-sse/services/accountFallback.ts->2507. Every hunk is flag-gated or a verified fix covered by that PR's tests; see the batch report.",
   "_rebaseline_2026_09_15_13602_combined_growth": "Combined growth of the 2026-09-15 maxmad64bis uplift batch (each PR rebaselined its own growth; the merged sum is larger): src/sse/handlers/chatHelpers.ts->1214. Every hunk is flag-gated or a verified fix covered by that PR's tests; see the batch report.",
@@ -465,7 +466,7 @@
     "open-sse/services/combo/executeTargetAttempt.ts": 1228,
     "open-sse/translator/response/openai-responses.ts": 1466,
     "open-sse/utils/cursorAgentProtobuf.ts": 1547,
-    "open-sse/utils/proxyFetch.ts": 1275,
+    "open-sse/utils/proxyFetch.ts": 1296,
     "open-sse/utils/stream.ts": 3098,
     "open-sse/vendor/codex-chatgpt-web/adapters/chatgpt-web/browser-worker.ts": 4398,
     "open-sse/vendor/codex-chatgpt-web/bridge.ts": 1335,
