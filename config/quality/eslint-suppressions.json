@@ -608,11 +608,6 @@
       "count": 1
     }
   },
-  "open-sse/services/tlsClientBase.ts": {
-    "@typescript-eslint/no-unused-vars": {
-      "count": 1
-    }
-  },
   "open-sse/services/tokenLimitCounter.ts": {
     "@typescript-eslint/no-unused-vars": {
       "count": 1
@@ -929,11 +924,6 @@
   "src/app/(dashboard)/dashboard/providers/[id]/hooks/useModelVisibilityHandlers.ts": {
     "@typescript-eslint/no-unused-vars": {
       "count": 2
-    }
-  },
-  "src/app/(dashboard)/dashboard/providers/[id]/hooks/useProviderConnections.ts": {
-    "@typescript-eslint/no-unused-vars": {
-      "count": 1
     }
   },
   "src/app/(dashboard)/dashboard/providers/page.tsx": {
@@ -2705,7 +2695,7 @@
   },
   "tests/unit/build/check-licenses.test.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 5
+      "count": 4
     }
   },
   "tests/unit/bypass-handler.test.ts": {
@@ -2809,7 +2799,7 @@
   },
   "tests/unit/chatcore-translation-paths.test.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 31
+      "count": 30
     }
   },
   "tests/unit/check-docs-symbols.test.ts": {
@@ -3295,7 +3285,7 @@
   },
   "tests/unit/combo-routing-engine.test.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 268
+      "count": 267
     }
   },
   "tests/unit/combo-same-provider-cascade.test.ts": {
