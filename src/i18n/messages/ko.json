@@ -997,6 +997,7 @@
   "featureFlagProxyPoolEgressObservationDescription": "대시보드의 프록시 풀 아래에 지난 24시간 동안 해당 풀의 구성원에 사용된 것으로 관찰된 송신 IP 수, 이를 사용한 연결 수, 단일 IP에서 관찰된 최대 연결 수를 표시합니다. 읽기 전용이며 프록시 로그에서 계산되고 라우팅에는 절대 사용되지 않습니다. 기본적으로 꺼져 있으며, 풀 편집기는 변경되지 않고 관찰 라우트는 null을 반환합니다.",
   "featureFlagProxyHealthBlockedResetsStreakDescription": "프록시 상태 점검에서 대상이 거부한 프로브(401/403/429: 프록시는 전달했지만 대상이 이 송신 IP를 거부함)가 정상 처리된 프로브처럼 프록시의 연속 실패 횟수를 초기화하도록 합니다. 기본적으로 꺼져 있으며, 거부는 중립으로 유지되어 연속 실패 횟수에 영향을 주지 않습니다. 어느 경우든 5xx는 판단 불가로 유지되며, 거부로 인해 프록시가 제거, 비활성화 또는 재활성화되는 일은 없습니다.",
   "featureFlagXaiOauthLiveModelDiscoveryDescription": "__MISSING__:Fetch the live xAI model catalog for xai-oauth connections from https://api.x.ai/v1/models using the OAuth bearer token, instead of the frozen static seed. Off by default: xai-oauth keeps serving the static seed unchanged. On any resolution error, discovery falls back to the seed.",
+  "featureFlagDbHealthcheckStartupDeferredEnabledDescription": "__MISSING__:Run the startup database integrity/health check after the server starts accepting requests instead of blocking startup until it completes. Off by default: startup blocks on the check exactly like before this change, so a corrupt database is still caught before the first request is served.",
   "sidebar": {
     "home": "홈",
     "dashboard": "대시보드",

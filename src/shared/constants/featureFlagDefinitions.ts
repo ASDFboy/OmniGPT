@@ -845,4 +845,16 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     requiresRestart: false,
     warningLevel: "caution",
   },
+  {
+    key: "DB_HEALTHCHECK_STARTUP_DEFERRED_ENABLED",
+    label: "DB Health Check: Defer Startup Scan",
+    description:
+      "Run the startup DB integrity/health check after the server starts accepting requests (via setImmediate) instead of blocking startup until it completes. Off by default: startup blocks on the check exactly like before #13717, so a corrupt database is still caught before the first request is served. On: startup returns immediately and the check (now bounded/paged and, for a real file-backed DB, isolated in a cancellable child process) runs right after.",
+    descriptionI18nKey: "featureFlagDbHealthcheckStartupDeferredEnabledDescription",
+    category: "health",
+    defaultValue: "false",
+    type: "boolean",
+    requiresRestart: false,
+    warningLevel: "caution",
+  },
 ];

@@ -997,6 +997,7 @@
   "featureFlagProxyPoolEgressObservationDescription": "ダッシュボードのプロキシプールの下に、過去24時間にそのメンバーが使用したことが観測された送信元IPの数、それらを使用した接続数、および1つのIPの背後で観測された最大数を表示します。読み取り専用で、プロキシログから算出され、ルーティングには使用されません。デフォルトではオフです。プールエディターは変更されず、観測ルートはnullを返します。",
   "featureFlagProxyHealthBlockedResetsStreakDescription": "プロキシのヘルススイープで、ターゲットに拒否されたプローブ（401/403/429：プロキシは中継したが、宛先がこの送信元IPを拒否したもの）が、正常に処理されたプローブと同様に、プロキシの連続失敗回数をリセットできるようにします。デフォルトではオフです。拒否は中立のままで、連続失敗回数は維持されます。どちらの場合も5xxは判定不能のままであり、拒否によってプロキシが削除、無効化、または再有効化されることはありません。",
   "featureFlagXaiOauthLiveModelDiscoveryDescription": "__MISSING__:Fetch the live xAI model catalog for xai-oauth connections from https://api.x.ai/v1/models using the OAuth bearer token, instead of the frozen static seed. Off by default: xai-oauth keeps serving the static seed unchanged. On any resolution error, discovery falls back to the seed.",
+  "featureFlagDbHealthcheckStartupDeferredEnabledDescription": "__MISSING__:Run the startup database integrity/health check after the server starts accepting requests instead of blocking startup until it completes. Off by default: startup blocks on the check exactly like before this change, so a corrupt database is still caught before the first request is served.",
   "sidebar": {
     "home": "ホーム",
     "dashboard": "ダッシュボード",

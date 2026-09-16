@@ -17,7 +17,6 @@ import {
   getDefaultThinkingBudget,
 } from "../../../src/lib/modelCapabilities.ts";
 import { getModelSpec } from "../../../src/shared/constants/modelSpecs.ts";
-import { gemini38ThinkingConfig, isGemini38Model } from "../../services/thinkingBudget.ts";
 
 import {
   DEFAULT_SAFETY_SETTINGS,
@@ -242,12 +241,10 @@ function openaiToGeminiBase(
       // the pre-#6943 native-defaults contract (thinkingBudget 0 / includeThoughts
       // false must still be present) and crashed callers that read
       // .thinkingConfig.thinkingBudget unconditionally.
-      result.generationConfig.thinkingConfig = isGemini38Model(model)
-        ? gemini38ThinkingConfig(model, budget, body)
-        : {
-            thinkingBudget: budget,
-            includeThoughts: budget !== 0,
-          };
+      result.generationConfig.thinkingConfig = {
+        thinkingBudget: budget,
+        includeThoughts: budget !== 0,
+      };
     }
     // 2. Claude format: thinking (type: enabled, budget_tokens)
     // Use an explicit numeric check (not truthy) so an explicit `budget_tokens: 0` — the
@@ -267,12 +264,10 @@ function openaiToGeminiBase(
       // but thinkingBudgetCap:24576, meaning it supports thinking via budget).
       // Models not in MODEL_SPECS (thinkingBudgetCap=undefined) default to allowed.
       if (cappedBudget > 0 || getModelSpec(model)?.thinkingBudgetCap !== 0) {
-        result.generationConfig.thinkingConfig = isGemini38Model(model)
-          ? gemini38ThinkingConfig(model, cappedBudget, body)
-          : {
-              thinkingBudget: cappedBudget,
-              includeThoughts: cappedBudget !== 0,
-            };
+        result.generationConfig.thinkingConfig = {
+          thinkingBudget: cappedBudget,
+          includeThoughts: cappedBudget !== 0,
+        };
       }
     }
   }
@@ -299,14 +294,10 @@ function openaiToGeminiBase(
       // Models not in MODEL_SPECS (thinkingBudgetCap=undefined) default to allowed.
       getModelSpec(model)?.thinkingBudgetCap !== 0
     ) {
-      const defaultBudget =
-        getDefaultThinkingBudget(model) || capThinkingBudget(model, 24576);
-      result.generationConfig.thinkingConfig = isGemini38Model(model)
-        ? gemini38ThinkingConfig(model, defaultBudget, body)
-        : {
-            thinkingBudget: defaultBudget,
-            includeThoughts: true,
-          };
+      result.generationConfig.thinkingConfig = {
+        thinkingBudget: getDefaultThinkingBudget(model) || capThinkingBudget(model, 24576),
+        includeThoughts: true,
+      };
     }
   }
 

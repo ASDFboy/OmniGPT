@@ -997,6 +997,7 @@
   "featureFlagProxyPoolEgressObservationDescription": "在仪表板的代理池下显示：过去 24 小时内观察到多少个出口 IP 为其成员提供服务、使用这些 IP 的连接数，以及单个 IP 背后观察到的最大数量。此信息为只读，根据代理日志计算，绝不用于路由。默认关闭：代理池编辑器保持不变，观测路由返回 null。",
   "featureFlagProxyHealthBlockedResetsStreakDescription": "在代理健康检查中，如果探测被目标拒绝（401/403/429：代理已转发，但目标拒绝了此出口 IP），则像探测成功一样重置代理的连续失败计数。默认关闭：拒绝保持中性，并保留当前连续失败计数。无论如何，5xx 均保持结果不确定，而且拒绝绝不会导致代理被移除、禁用或重新激活。",
   "featureFlagXaiOauthLiveModelDiscoveryDescription": "__MISSING__:Fetch the live xAI model catalog for xai-oauth connections from https://api.x.ai/v1/models using the OAuth bearer token, instead of the frozen static seed. Off by default: xai-oauth keeps serving the static seed unchanged. On any resolution error, discovery falls back to the seed.",
+  "featureFlagDbHealthcheckStartupDeferredEnabledDescription": "__MISSING__:Run the startup database integrity/health check after the server starts accepting requests instead of blocking startup until it completes. Off by default: startup blocks on the check exactly like before this change, so a corrupt database is still caught before the first request is served.",
   "sidebar": {
     "home": "首页",
     "dashboard": "仪表板",

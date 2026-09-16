@@ -997,6 +997,7 @@
   "featureFlagProxyPoolEgressObservationDescription": "在儀表板的 Proxy 集區下方，顯示過去 24 小時內觀察到多少個出口 IP 為其成員提供服務、使用這些 IP 的連線數，以及單一 IP 後方觀察到的最高數量。唯讀，根據 Proxy 記錄計算，絕不會用於路由。預設關閉：集區編輯器維持不變，觀察路由會回傳 null。",
   "featureFlagProxyHealthBlockedResetsStreakDescription": "在 Proxy 健康狀態掃描中，讓遭目標拒絕的探測（401/403/429：Proxy 已轉送，但目的地拒絕此出口 IP）能像已提供服務的探測一樣，重設 Proxy 的連續失敗次數。預設關閉：拒絕仍視為中性，並保留目前的連續失敗次數。無論此設定為何，5xx 仍視為無法判定，而且拒絕絕不會移除、停用或重新啟用 Proxy。",
   "featureFlagXaiOauthLiveModelDiscoveryDescription": "__MISSING__:Fetch the live xAI model catalog for xai-oauth connections from https://api.x.ai/v1/models using the OAuth bearer token, instead of the frozen static seed. Off by default: xai-oauth keeps serving the static seed unchanged. On any resolution error, discovery falls back to the seed.",
+  "featureFlagDbHealthcheckStartupDeferredEnabledDescription": "__MISSING__:Run the startup database integrity/health check after the server starts accepting requests instead of blocking startup until it completes. Off by default: startup blocks on the check exactly like before this change, so a corrupt database is still caught before the first request is served.",
   "sidebar": {
     "home": "首頁",
     "dashboard": "儀表板",

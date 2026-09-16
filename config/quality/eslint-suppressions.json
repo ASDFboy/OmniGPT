@@ -3593,7 +3593,7 @@
   },
   "tests/unit/db-health-check.test.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 29
+      "count": 25
     }
   },
   "tests/unit/db-health-route.test.ts": {

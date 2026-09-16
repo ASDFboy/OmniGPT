@@ -997,6 +997,7 @@
   "featureFlagProxyPoolEgressObservationDescription": "በዳሽቦርዱ ውስጥ ከፕሮክሲ ፑል ሥር፣ ባለፉት 24 ሰዓታት ምን ያህል የታዩ የመውጫ IPዎች አባላቱን እንዳገለገሉ፣ ምን ያህል ግንኙነቶች እንደተጠቀሙባቸው እና ከአንድ IP ጀርባ የታየውን ከፍተኛ ቁጥር አሳይ። ለንባብ ብቻ ነው፣ ከፕሮክሲ ሎጉ ይሰላል፣ ለማዞሪያም ፈጽሞ ጥቅም ላይ አይውልም። በነባሪ ጠፍቷል፦ የፑሉ አርታዒ አይለወጥም፣ የምልከታ መስመሩም null ይመልሳል።",
   "featureFlagProxyHealthBlockedResetsStreakDescription": "በፕሮክሲ ጤና ፍተሻ ውስጥ፣ ዒላማው ውድቅ ያደረገው ሙከራ (401/403/429፦ ፕሮክሲው አስተላልፏል፣ መዳረሻው ግን ይህን የመውጫ IP ውድቅ አድርጓል) ልክ እንደተሳካ ሙከራ የፕሮክሲውን ተከታታይ የውድቀት ቆጠራ ዳግም እንዲጀምር ፍቀድ። በነባሪ ጠፍቷል፦ ውድቅ መደረጉ ገለልተኛ ሆኖ ይቆያል እና ቆጠራውን እንዳለ ያቆያል። 5xx በሁለቱም ሁኔታ የማያረጋግጥ ሆኖ ይቆያል፣ እና ውድቅ መደረግ ፕሮክሲን ፈጽሞ አያስወግድም፣ አያሰናክልም ወይም ዳግም አያነቃም።",
   "featureFlagXaiOauthLiveModelDiscoveryDescription": "__MISSING__:Fetch the live xAI model catalog for xai-oauth connections from https://api.x.ai/v1/models using the OAuth bearer token, instead of the frozen static seed. Off by default: xai-oauth keeps serving the static seed unchanged. On any resolution error, discovery falls back to the seed.",
+  "featureFlagDbHealthcheckStartupDeferredEnabledDescription": "__MISSING__:Run the startup database integrity/health check after the server starts accepting requests instead of blocking startup until it completes. Off by default: startup blocks on the check exactly like before this change, so a corrupt database is still caught before the first request is served.",
   "sidebar": {
     "home": "መነሻ",
     "dashboard": "ዳሽቦርድ",
