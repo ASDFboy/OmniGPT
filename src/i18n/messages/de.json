@@ -6482,7 +6482,9 @@
     "savedModelEndpointSettings": "Einstellungen für den gespeicherten Modell-Endpunkt",
     "searchByModelAria": "Nach Modell suchen",
     "selectSupportedEndpoint": "Wählen Sie mindestens einen unterstützten Endpunkt aus",
-    "antigravityClientProfileHarness": "Testsystem / CLI"
+    "antigravityClientProfileHarness": "Testsystem / CLI",
+    "vertexCredentialLabel": "API-Key oder Service-Account-JSON",
+    "vertexCredentialHint": "API-Keys verwenden den kuratierten Projektkatalog. Ein Service-Account-JSON aktiviert die Live-Erkennung im Model Garden."
   },
   "settings": {
     "title": "Einstellungen",
