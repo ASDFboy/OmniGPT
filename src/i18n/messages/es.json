@@ -6199,6 +6199,7 @@
       "inception": "Inception Labs es compatible con OpenAI en https://api.inceptionlabs.ai/v1. mercury-2 es el primer LLM de difusión (dLLM) del catálogo, con una generación entre 5 y 10 veces más rápida que la de modelos autorregresivos comparables, además de llamadas a herramientas, json_mode y salidas estructuradas.",
       "inference-net": "$25 en créditos gratuitos al registrarte, además de subvenciones de investigación disponibles",
       "internlm": "Cuota mensual gratuita de aproximadamente 1M de tokens de entrada / 3M de tokens de salida (aproximadamente 10 RPM)",
+      "agnes-cn": "Connect Agnes AI (China) with an API key issued for api.agnes-ai.cn. Keys from apihub.agnes-ai.com will not work.",
       "jina-ai": "Bearer API key for the Jina AI rerank API.",
       "jina-reader": "Connect Jina Reader with an API key.",
       "kenari": "Kenari ofrece un endpoint de finalización de chat compatible con OpenAI en https://kenari.id/v1/chat/completions, además de un catálogo activo en /v1/models que incluye Claude, GPT, DeepSeek, GLM, Kimi y más. OmniRoute utiliza el protocolo de OpenAI y muestra los modelos mediante passthrough.",

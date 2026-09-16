@@ -6125,6 +6125,7 @@
       "agentrouter": "Ստացեք $200 անվճար վարկային միջոցներ https://agentrouter.org/register հասցեում․ վարկային քարտ չի պահանջվում։",
       "unorouter": "Ստեղծեք API բանալի https://unorouter.ai կայքում, ապա տեղադրեք այն այստեղ որպես Bearer token։",
       "agnes": "Ստանալ API բանալի agnes-ai.com կայքում",
+      "agnes-cn": "__MISSING__:Connect Agnes AI (China) with an API key issued for api.agnes-ai.cn. Keys from apihub.agnes-ai.com will not work.",
       "aimlapi": "Անվճար սակագինը դադարեցված է (2026)․ AI/ML API-ն այժմ գործում է միայն ըստ օգտագործման վճարման սկզբունքով (նվազագույնը՝ $20 համալրում), պարբերաբար տրամադրվող անվճար վարկային միջոցներ չկան։",
       "ai21": "Գրանցվելիս տրամադրվում են $10 փորձնական վարկային միջոցներ (վավեր են 3 ամիս), վարկային քարտ չի պահանջվում",
       "alibaba": "Միացնել Alibaba-ն API բանալիով։",

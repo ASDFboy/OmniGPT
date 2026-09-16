@@ -6125,6 +6125,7 @@
       "agentrouter": "ទទួលក្រេឌីតឥតគិតថ្លៃ $200 នៅ https://agentrouter.org/register — មិនត្រូវការកាតឥណទានទេ។",
       "unorouter": "បង្កើត API key នៅ https://unorouter.ai បន្ទាប់មកបិទភ្ជាប់វានៅទីនេះជាថូខិន Bearer។",
       "agnes": "ទទួល API key នៅ agnes-ai.com",
+      "agnes-cn": "__MISSING__:Connect Agnes AI (China) with an API key issued for api.agnes-ai.cn. Keys from apihub.agnes-ai.com will not work.",
       "aimlapi": "កម្រិតឥតគិតថ្លៃត្រូវបានផ្អាក (2026) — AI/ML API ឥឡូវនេះគិតថ្លៃតាមការប្រើប្រាស់តែប៉ុណ្ណោះ (បញ្ចូលទឹកប្រាក់អប្បបរមា $20) ហើយមិនមានក្រេឌីតឥតគិតថ្លៃជាប្រចាំទេ។",
       "ai21": "ក្រេឌីតសាកល្បង $10 នៅពេលចុះឈ្មោះ (មានសុពលភាព 3 ខែ) មិនត្រូវការកាតឥណទានទេ",
       "alibaba": "តភ្ជាប់ Alibaba ដោយប្រើ API key។",

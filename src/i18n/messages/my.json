@@ -6125,6 +6125,7 @@
       "agentrouter": "https://agentrouter.org/register တွင် အခမဲ့ခရက်ဒစ် $200 ရယူပါ — ခရက်ဒစ်ကတ် မလိုအပ်ပါ။",
       "unorouter": "https://unorouter.ai တွင် API key တစ်ခု ဖန်တီးပြီးနောက် Bearer token အဖြစ် ဤနေရာတွင် ကူးထည့်ပါ။",
       "agnes": "agnes-ai.com တွင် API key ရယူရန်",
+      "agnes-cn": "__MISSING__:Connect Agnes AI (China) with an API key issued for api.agnes-ai.cn. Keys from apihub.agnes-ai.com will not work.",
       "aimlapi": "အခမဲ့အဆင့်ကို ယာယီရပ်နားထားသည် (2026) — AI/ML API သည် ယခု အသုံးပြုသလောက် ပေးချေရသည့်စနစ်သာ ရရှိနိုင်သည် (အနည်းဆုံး $20 ဖြည့်သွင်းရမည်)၊ ပုံမှန်ထပ်မံရရှိသည့် အခမဲ့ခရက်ဒစ်များ မရှိပါ။",
       "ai21": "စာရင်းသွင်းချိန်တွင် စမ်းသပ်သုံးခရက်ဒစ် $10 ရရှိမည် (၃ လ သက်တမ်းရှိသည်)၊ ခရက်ဒစ်ကတ် မလိုအပ်ပါ",
       "alibaba": "Alibaba ကို API key ဖြင့် ချိတ်ဆက်ပါ။",
