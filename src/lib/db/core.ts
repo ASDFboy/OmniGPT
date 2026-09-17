@@ -943,9 +943,9 @@ function startDbHealthCheckScheduler(db: SqliteDatabase) {
 // The scheduler lives in ./walMaintenance (periodic TRUNCATE + busy warn + PASSIVE retry).
 
 const healthShutdown = new AbortController();
-const managedHealth = createDbHealthCoordinator(async (autoRepair) => {
+const managedHealth = createDbHealthCoordinator(async (autoRepair, skipIntegrity) => {
   const db = getDbInstance();
-  const skipIntegrityCheck = process.env.OMNIROUTE_SKIP_DB_HEALTHCHECK === "1";
+  const skipIntegrityCheck = skipIntegrity || process.env.OMNIROUTE_SKIP_DB_HEALTHCHECK === "1";
   const backupDir = DB_BACKUPS_DIR || path.join(DATA_DIR, "db_backups");
   const result =
     db.driver === "sql.js" || db.name === ":memory:" || !db.name
@@ -969,10 +969,10 @@ const managedHealth = createDbHealthCoordinator(async (autoRepair) => {
   if (result.repairedCount > 0) invalidateDbCache();
   return result;
 });
-
-export function runManagedDbHealthCheck(options?: { autoRepair?: boolean }) {
+type ManagedHealthCheckOptions = { autoRepair?: boolean; skipIntegrityCheck?: boolean };
+export function runManagedDbHealthCheck(options?: ManagedHealthCheckOptions) {
   if (getPagerCorruption()) managedHealth.invalidate();
-  return managedHealth.run(options?.autoRepair === true);
+  return managedHealth.run(options?.autoRepair === true, options?.skipIntegrityCheck === true);
 }
 
 export function getDbInstance(): SqliteDatabase {
