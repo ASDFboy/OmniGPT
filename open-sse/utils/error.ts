@@ -172,6 +172,7 @@ const SAFE_PUBLIC_ERROR_IDENTIFIERS = new Set([
   "lease_unsupported_route",
   "lease_unsupported_transport",
   "lmarena_error",
+  "lmarena_stream_error",
   "message_limit",
   "meta_ai_empty_response",
   "meta_ai_mode_switch_failed",
