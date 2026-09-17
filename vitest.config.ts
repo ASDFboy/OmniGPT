@@ -41,7 +41,6 @@ export default defineConfig({
       "tests/unit/ui/request-logger-autorefresh-visibility-3972.test.tsx", // #13204 — falha real; remover esta exclusão quando consertado
       "tests/unit/ui/logs-page-detail-modal-reopen-on-close.test.tsx", // #13204 — falha real; remover esta exclusão quando consertado
       "tests/unit/ui/agent-card.test.tsx", // #13204 — falha real; remover esta exclusão quando consertado
-      "src/app/(dashboard)/dashboard/endpoint/__tests__/ApiEndpointsTab.test.tsx", // #13204 — falha real; remover esta exclusão quando consertado
       "src/app/(dashboard)/dashboard/cache/__tests__/CacheTrends.test.tsx", // #13204 — falha real; remover esta exclusão quando consertado
       "src/app/(dashboard)/dashboard/cache/__tests__/IdempotencyLayer.test.tsx", // #13204 — falha real; remover esta exclusão quando consertado
       "src/app/(dashboard)/dashboard/cache/__tests__/CachePerformance.test.tsx", // #13204 — falha real; remover esta exclusão quando consertado
