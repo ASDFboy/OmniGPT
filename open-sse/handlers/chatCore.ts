@@ -1252,7 +1252,7 @@ export async function handleChatCore({
     stream: !!stream,
     reqLogger,
     effectiveServiceTier,
-    connectionId,
+    pendingScope,
     startTime,
     log,
     persistAttemptLogs,
