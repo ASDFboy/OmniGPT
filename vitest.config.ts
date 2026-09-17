@@ -44,7 +44,6 @@ export default defineConfig({
       "src/app/(dashboard)/dashboard/cache/__tests__/CacheTrends.test.tsx", // #13204 — falha real; remover esta exclusão quando consertado
       "src/app/(dashboard)/dashboard/cache/__tests__/IdempotencyLayer.test.tsx", // #13204 — falha real; remover esta exclusão quando consertado
       "src/app/(dashboard)/dashboard/cache/__tests__/CachePerformance.test.tsx", // #13204 — falha real; remover esta exclusão quando consertado
-      "src/app/(dashboard)/dashboard/discovery/__tests__/DiscoveryPageClient.test.tsx", // #13204 — falha real; remover esta exclusão quando consertado
       "tests/unit/ui/combos-page-smoke.test.tsx", // #13204 — falha real; remover esta exclusão quando consertado
       "tests/unit/ui/evals-tab-smoke.test.tsx", // #13204 — falha real; remover esta exclusão quando consertado
     ],

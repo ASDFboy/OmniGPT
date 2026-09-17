@@ -39,12 +39,6 @@
       "status": "Tests 10 failed | 4 passed (14)"
     },
     {
-      "file": "src/app/(dashboard)/dashboard/discovery/__tests__/DiscoveryPageClient.test.tsx",
-      "issue": "#13204",
-      "measured": "2026-09-10",
-      "status": "Tests 2 failed | 1 passed (3)"
-    },
-    {
       "file": "tests/unit/ui/combos-page-smoke.test.tsx",
       "issue": "#13204",
       "measured": "2026-09-10",
