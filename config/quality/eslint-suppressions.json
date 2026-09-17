@@ -1056,11 +1056,6 @@
       "count": 1
     }
   },
-  "src/app/(dashboard)/dashboard/webhooks/__tests__/webhook-wizard.test.tsx": {
-    "@typescript-eslint/no-unused-vars": {
-      "count": 1
-    }
-  },
   "src/app/api/assess/route.ts": {
     "@typescript-eslint/no-unused-vars": {
       "count": 1
