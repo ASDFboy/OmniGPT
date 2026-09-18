@@ -1070,6 +1070,11 @@ export async function handleChatCore({
   const reasoningCacheScope = reasoningReplaySessionKey
     ? `api-key:${String(apiKeyInfo?.id ?? "local")}\x1f${String(reasoningReplaySessionKey)}`
     : null;
+  // Normalized OpenAI transcript the reasoning replay pass digested for a
+  // Responses-API target (reported by translateRequest). A Responses body has
+  // `input`, not `messages`, so the replay-cache write side would otherwise digest
+  // an empty history and never match the read side for plain assistant turns.
+  let reasoningReplayHistory: unknown[] | null = null;
   // persistAttemptLogs extracted to chatCore/attemptLogging.ts (#3501); bind the per-request context
   // once so the 16 call sites keep passing only the per-attempt args (byte-identical).
   const persistAttemptLogs = (args: PersistAttemptLogsArgs) =>
@@ -2555,6 +2560,9 @@ export async function handleChatCore({
           signatureNamespace: connectionId,
           copilotClient: copilotCompatibleReasoning,
           reasoningCacheScope,
+          onReasoningReplayHistory: (messages) => {
+            reasoningReplayHistory = messages;
+          },
           ...(preCompressionBody ? { preCompressionBody } : {}),
         }
       );
@@ -5042,6 +5050,7 @@ export async function handleChatCore({
         toolNameMap,
         requestToolIdentityMap,
         reasoningCacheScope,
+        reasoningReplayHistory,
         clientHeaders: clientRawRequest?.headers ?? null,
         isClaudeCodeCompatible,
         log,
@@ -5185,6 +5194,9 @@ export async function handleChatCore({
               signatureNamespace: connectionId,
               copilotClient: copilotCompatibleReasoning,
               reasoningCacheScope,
+              onReasoningReplayHistory: (messages) => {
+                reasoningReplayHistory = messages;
+              },
             }
           );
           return runNonStreamingProviderLeg(
@@ -5210,6 +5222,7 @@ export async function handleChatCore({
                 toolNameMap,
                 requestToolIdentityMap,
                 reasoningCacheScope,
+                reasoningReplayHistory,
                 clientHeaders: clientRawRequest?.headers ?? null,
                 isClaudeCodeCompatible,
                 log,
@@ -5858,8 +5871,11 @@ export async function handleChatCore({
         const choices = cacheStreamBody.choices as
           { message?: Record<string, unknown> }[] | undefined;
         const msg = choices?.[0]?.message;
-        const historyMessages = (translatedBody as { messages?: unknown[] } | null | undefined)
-          ?.messages;
+        // Responses-shaped bodies carry `input`, not `messages` — use the pivot
+        // transcript translateRequest reported so plain-turn keys match the read side.
+        const historyMessages =
+          (translatedBody as { messages?: unknown[] } | null | undefined)?.messages ??
+          reasoningReplayHistory;
         if (requiresReasoningReplay({ provider, model })) {
           cacheReasoningFromAssistantMessage(msg, provider, model, {
             scope: reasoningCacheScope,
