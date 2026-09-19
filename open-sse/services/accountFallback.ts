@@ -94,6 +94,7 @@ import {
   buildSubscriptionQuotaFallback,
   buildWeeklyQuotaFallback,
   buildSessionQuotaFallback,
+  buildRolling24hQuotaFallback,
   SUBSCRIPTION_QUOTA_COOLDOWN_MS,
 } from "./quotaTextCooldowns.ts";
 import { parseDayGranularityResetMs, shouldPreserveQuotaSignals } from "./quotaResetParsing.ts";
@@ -2058,7 +2059,8 @@ export function checkFallbackError(
     // runs UNCONDITIONALLY for the same reason: apikey-category providers
     // like ollama-cloud are excluded from the oauth-only shouldUseQuotaSignal
     // gate.
-    const sessionResult = buildSessionQuotaFallback(errorStr);
+    const sessionResult =
+      buildSessionQuotaFallback(errorStr) ?? buildRolling24hQuotaFallback(errorStr);
     if (sessionResult) return sessionResult;
 
     const detectedRetryHint = detectRetryHint();
