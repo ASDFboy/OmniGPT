@@ -375,6 +375,15 @@ async function getModelPermissionCandidates(modelId: string): Promise<string[]> 
   return Array.from(candidates);
 }
 
+export async function isModelBlockedByPatterns(
+  blockedModels: string[] | null | undefined,
+  modelId: string
+): Promise<boolean> {
+  if (!blockedModels?.length) return false;
+  const candidates = await getModelPermissionCandidates(modelId);
+  return blockedModels.some((pattern) => modelPatternMatches(pattern, candidates));
+}
+
 async function getPublishedModelLookupTarget(
   modelId: string
 ): Promise<{ providerId: string; modelId: string } | null> {
