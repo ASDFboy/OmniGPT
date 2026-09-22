@@ -321,6 +321,25 @@ async function validateQuotaRoutingTarget(
   }
 }
 
+/**
+ * Make the combo rejection actionable.
+ *
+ * The 403 below is a KEY-POLICY decision, not a routing fault — but the bare
+ * "Combo X is not allowed for this API key" reads like a routing bug, so callers
+ * (especially the AI agents that drive them) retry the same model or fall through
+ * a whole compaction cascade on every attempt. Name the two real remedies so the
+ * operator can fix it in one step instead of debugging combo routing.
+ */
+function comboCannotBeUsedMessage(modelStr: string, comboName: string | null): string {
+  const name = comboName || modelStr;
+  return (
+    `Combo "${name}" is not allowed for this API key. ` +
+    `This key's allowed combos do not include "${name}" — add "${name}" (or "combo/*") ` +
+    `to this key's allowed combos in Dashboard → API Manager, or route to a combo ` +
+    `this key already permits.`
+  );
+}
+
 async function validateStandardRoutingTarget(
   request: Request,
   apiKey: string,
@@ -335,7 +354,7 @@ async function validateStandardRoutingTarget(
       if (!comboAccess.allowed) {
         return errorResponse(
           HTTP_STATUS.FORBIDDEN,
-          `Combo "${comboAccess.comboName || modelStr}" is not allowed for this API key`
+          comboCannotBeUsedMessage(modelStr, comboAccess.comboName)
         );
       }
     } catch (error) {
@@ -626,7 +645,7 @@ async function validateComboAccess(
       comboName: comboAccess.comboName,
       rejection: errorResponse(
         HTTP_STATUS.FORBIDDEN,
-        `Combo "${comboAccess.comboName || modelStr}" is not allowed for this API key`
+        comboCannotBeUsedMessage(modelStr, comboAccess.comboName)
       ),
     };
   } catch (error) {
