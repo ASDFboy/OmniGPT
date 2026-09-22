@@ -1006,6 +1006,10 @@ omniroute
 ```
 
 > 💡 See `npm warn ERESOLVE` or peer-dep warnings? [They're harmless](docs/guides/TROUBLESHOOTING.md#npm-install-warnings-eresolve--peer--deprecated).
+> **Using Gemini Web or another web-cookie provider?** The npm package includes
+> Playwright but not its Chromium binary. See the
+> [Playwright Chromium setup](docs/guides/TROUBLESHOOTING.md#gemini-web-and-playwright-chromium)
+> note before making the first web-provider request.
 
 Dashboard at `http://localhost:20128` · API at `http://localhost:20128/v1`.
 
