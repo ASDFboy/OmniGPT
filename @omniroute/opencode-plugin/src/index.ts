@@ -481,6 +481,27 @@ function coercePluginOptions(opts?: PluginOptions): OmniRoutePluginOptions {
 export const DEFAULT_ANTHROPIC_PREFIXES = ["cc", "claude", "anthropic", "kiro", "kr"];
 
 /**
+ * First-class OmniRoute catalog suffixes (`GET /v1/models`). The Anthropic
+ * Messages translator looks these up as `claude-<model>` on provider
+ * `claude` and 404s. Keep them on openai-compatible `/v1` so the full
+ * catalog id (`cc/claude-haiku-4-5-20251001-low`) is sent unchanged.
+ */
+export const OPENAI_COMPAT_EFFORT_TIER_SUFFIXES = [
+  "-low",
+  "-medium",
+  "-high",
+  "-xhigh",
+  "-thinking",
+  "-minimal",
+  "-max",
+] as const;
+
+function hasOpenAiCompatEffortTierSuffix(modelId: string): boolean {
+  const lower = modelId.toLowerCase();
+  return OPENAI_COMPAT_EFFORT_TIER_SUFFIXES.some((suffix) => lower.endsWith(suffix));
+}
+
+/**
  * Ensure a baseURL ends with `/v1` so the OpenAI-compat SDK constructs
  * `/v1/chat/completions` correctly. The Anthropic SDK does NOT want `/v1`
  * (it appends `/v1/messages` automatically), so callers should branch on
@@ -511,7 +532,12 @@ export function ensureV1Suffix(url: string): string {
  * Resolve the API block (id + url + npm package) for a given model id.
  *
  * Decision matrix:
- * - If the model id's prefix (the substring before the first `/`) is in
+ * - If the model id ends with a first-class OmniRoute effort-tier suffix
+ *   (`-low` / `-medium` / `-high` / `-xhigh` / `-thinking` / `-minimal` /
+ *   `-max`), return the OpenAI-compat block even when the prefix is
+ *   Anthropic. Those ids exist only in `GET /v1/models`; the Anthropic
+ *   Messages path 404s them as `claude-<name>` on provider `claude`.
+ * - Else if the model id's prefix (the substring before the first `/`) is in
  *   `apiFormat.anthropicPrefixes` (or the default list), return the
  *   Anthropic SDK block: `id: "anthropic"`, `url: baseURL` (no `/v1`),
  *   `npm: "@ai-sdk/anthropic"`.
@@ -530,7 +556,7 @@ export function resolveApiBlock(
   const prefixes = apiFormat?.anthropicPrefixes ?? DEFAULT_ANTHROPIC_PREFIXES;
   const slash = modelId.indexOf("/");
   const prefix = slash === -1 ? modelId : modelId.slice(0, slash);
-  const isAnthropic = prefixes.includes(prefix);
+  const isAnthropic = prefixes.includes(prefix) && !hasOpenAiCompatEffortTierSuffix(modelId);
   return isAnthropic
     ? {
         id: "anthropic",
@@ -5296,6 +5322,7 @@ export function createOmniRouteConfigHook(
     sink.call(logger, message);
   };
   const features = resolved.features ?? {};
+  const wantCombos = features.combos !== false;
   const wantAutoCombos = features.autoCombos !== false;
   const wantEnrichment = features.enrichment !== false;
   const wantCompressionMeta = features.compressionMetadata === true;
@@ -5448,6 +5475,7 @@ export function createOmniRouteConfigHook(
         };
 
         const doCombos = async (): Promise<void> => {
+          if (!wantCombos) return;
           try {
             localRawCombos = await combosFetcher(baseURL, managementReadToken, 10_000);
           } catch (err) {

@@ -461,6 +461,31 @@ test("config: fetchers throw → warn + emit stub entry with models: {}", async 
 // 6. Combos fetcher throws → models-only catalog (no combos in models block)
 // ────────────────────────────────────────────────────────────────────────────
 
+test("config: features.combos=false skips /api/combos fetch", async () => {
+  const readAuthJson = stubReadAuthJson({
+    "opencode-omniroute": { type: "api", key: "sk-test", baseURL: "https://or.example/v1" },
+  });
+  const fetcher = stubModelsFetcher([MODEL_CLAUDE]);
+  const combosFetcher = stubCombosFetcher([COMBO_CLAUDE_TIER]);
+  const logger = captureWarn();
+
+  const hook = createOmniRouteConfigHook(
+    { providerId: "omniroute", features: { combos: false } },
+    { readAuthJson, fetcher, combosFetcher, logger }
+  );
+  const input = makeInput();
+  await hook(input);
+
+  assert.equal(fetcher.callCount(), 1, "models fetch still runs");
+  assert.equal(combosFetcher.callCount(), 0, "combos fetch suppressed by feature flag");
+  const entry = (input as { provider: Record<string, OmniRouteStaticProviderEntry> }).provider[
+    "opencode-omniroute"
+  ];
+  assert.ok(entry);
+  assert.equal(entry.models["claude-tier"], undefined, "no combo entry when combos are off");
+  assert.ok(entry.models["claude-sonnet-4-6"]);
+});
+
 test("config: combos fetcher throws → emit models-only catalog (no combos in models block)", async () => {
   const readAuthJson = stubReadAuthJson({
     "opencode-omniroute": { type: "api", key: "sk-test", baseURL: "https://or.example/v1" },
