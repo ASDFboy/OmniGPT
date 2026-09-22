@@ -1,4 +1,5 @@
 {
+  "_rebaseline_2026_09_20_prettier_frozen": "Prettier-only pass over frozen proxy files (verified green on the base with split(\"\\n\").length counting): open-sse/utils/proxyFetch.ts 1276->1268 (inherited shrink ratchet, re-measured on the reconciled release/v3.8.51 tip @373c31f3 -- not this PR's growth); src/sse/handlers/chat.ts 2547= ; src/app/(dashboard)/dashboard/settings/components/ProxyRegistryManager.tsx 1477= (iso-LOC format).",
   "_rebaseline_2026_09_21_14250_member_egress_lines": "PR #14250 own growth: src/app/(dashboard)/dashboard/settings/components/ProxyRegistryManager.tsx 1477->1479 (+2 = the PoolMemberEgressLines import and its one-line mount under the pool members label, next to PoolEgressObservation). The member-egress observation itself lives outside the frozen file, all under cap: PoolMemberEgressLines.tsx, the dedicated GET /api/settings/proxies/pool/member-egress route, readPoolMemberEgressObservation in src/lib/proxyPoolEgressObservation.ts and getRecentEgressIpForProxy in src/lib/db/proxyLogs.ts. Only the mount point is irreducible. Covered by tests/unit/proxy-pool-member-egress-route.test.ts and tests/unit/ui/PoolMemberEgressLines.test.tsx.",
   "_rebaseline_2026_09_22_opencode_train10c_drift": "Release-tip drift: open-sse/executors/opencode.ts 1247->1251, left by the train-10c merge wave (2026-09-22) — the PR->release fast-gates do not run check:file-size, so the tip went red for every train boarding afterwards. Absorbed once at the tip under the owner-approved train-rebaseline policy (see _rebaseline_2026_09_18_merge_train_8_frozen_growth). Structural shrink tracked in #3501.",
   "_rebaseline_2026_09_21_14290_stack_handover_growth": "Stacked on #13924 (rewritten/squash-merged as 893fef9c on release/v3.8.51). PR #14290's own growth on top of that parent: open-sse/executors/opencode.ts 1233->1247 (+14 irreducible seam: settle429Arm park arm forcing burstStreak to threshold + handover comment; park/replay block owned by #13924, throttle leaf opencodeEgressThrottle.ts 543 lines under cap). Covered by tests/unit/opencode-429-park-resume.test.ts handover case (8/8) + tests/unit/opencode-egress-throttle.test.ts (22/22).",
@@ -489,7 +490,7 @@
     "open-sse/services/combo/executeTargetAttempt.ts": 1273,
     "open-sse/translator/response/openai-responses.ts": 1518,
     "open-sse/utils/cursorAgentProtobuf.ts": 1588,
-    "open-sse/utils/proxyFetch.ts": 1276,
+    "open-sse/utils/proxyFetch.ts": 1268,
     "open-sse/utils/stream.ts": 3239,
     "open-sse/vendor/codex-chatgpt-web/adapters/chatgpt-web/browser-worker.ts": 4398,
     "open-sse/vendor/codex-chatgpt-web/bridge.ts": 1335,
