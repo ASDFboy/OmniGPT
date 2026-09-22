@@ -437,6 +437,9 @@ export function isQuotaExhaustedForRequest(
   }
 
   if (provider === "antigravity" || provider === "agy") {
+    if (Object.keys(entry.quotas || {}).length === 0) {
+      return isStandardQuotaExhausted(entry, now);
+    }
     return isAntigravityQuotaExhausted(connectionId, entry, requestedModel);
   }
 
