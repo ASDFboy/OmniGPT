@@ -17,7 +17,10 @@ import {
   type FailureUsageAggregate,
 } from "./chatCore/failureUsage.ts";
 import { createTranslationFailureResult } from "./chatCore/translationFailure.ts";
-import { estimateFinalInputTokens } from "./chatCore/contextEstimation.ts";
+import {
+  estimateFinalInputTokenBreakdown,
+  estimateFinalInputTokens,
+} from "./chatCore/contextEstimation.ts";
 import {
   extractSystemRoleMessages,
   relocateDirectiveOnlyMessages,
@@ -2197,10 +2200,15 @@ export async function handleChatCore({
           })
         : lastResortResult.body;
       finalEstimatedInputTokens = estimateFinalInputTokens(body as Record<string, unknown>);
+      const finalInputBreakdown = estimateFinalInputTokenBreakdown(
+        body as Record<string, unknown>
+      );
       log?.info?.(
         "CONTEXT",
-        `Last-resort context compaction: ${lastResortResult.stats?.original} → ${lastResortResult.stats?.final} tokens ` +
-          `(re-estimated input ${finalEstimatedInputTokens}, limit ${finalContextLimit})`
+        `Last-resort context compaction: ${lastResortResult.stats?.original} → ${lastResortResult.stats?.final} message tokens ` +
+          `(final input ${finalInputBreakdown.total}: messages=${finalInputBreakdown.messages}, ` +
+          `tools=${finalInputBreakdown.tools}, system=${finalInputBreakdown.system}, ` +
+          `instructions=${finalInputBreakdown.instructions}; limit ${finalContextLimit})`
       );
     }
   }
