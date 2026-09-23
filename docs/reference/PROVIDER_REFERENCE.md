@@ -69,7 +69,7 @@ Use the dashboard at `/dashboard/providers` to enable, configure, and test each 
 | `gitlab-duo` | `gitlab-duo` | GitLab Duo | OAuth | [link](https://docs.gitlab.com/user/duo_agent_platform/code_suggestions/) | GitLab Duo OAuth is not configured. Register an OAuth application at https://gitlab.com/-/profile/applications with redirect URI http://localhost:20128/callback and scopes "ai_features read_user", then set GITLAB_DUO_OAUTH_CLIENT_ID (and optionally GITLAB_DUO_OAUTH_CLIENT_SECRET) and restart. |
 | `grok-cli` | `gc` | Grok Build | OAuth | — | Sign in with your browser, or paste your ~/.grok/auth.json (or the JWT access token) from the Grok Build CLI; refresh_token is rotated automatically either way. |
 | `kilocode` | `kc` | Kilo Code | OAuth | — | — |
-| `kimi-coding` | `kmc` | Kimi Code CLI | OAuth | [link](https://www.kimi.com/code?aff=omniroute) | Sign in with the same Kimi account used by Kimi Code CLI. OmniRoute uses the CLI OAuth flow and Kimi Coding Plan endpoints. |
+| `kimi-coding` | `kmc` | Kimi Code CLI | OAuth | [link](https://www.kimi.ai/code?aff=omniroute) | Sign in with the same Kimi account used by Kimi Code CLI. OmniRoute uses the CLI OAuth flow and Kimi Coding Plan endpoints. |
 | `kiro` | `kr` | Kiro AI | OAuth | — | Free tier: 50 credits/month (~25K–100K tokens). ⚠️ Kiro ToS prohibits third-party proxy/harness use. |
 | `muse-code` | `mc` | Muse Code (Meta) | OAuth | [link](https://ai.developer.meta.com/docs/muse-code/auth) | Sign in with the Muse Code device flow (same as `muse login` / CLIProxyAPI `-meta-login`) to use a Muse subscription, or paste a META_API_KEY. Device login keeps the durable dca token and mints the inference key; a 401 remints that key. Wire format is OpenAI Responses (POST /responses). |
 | `openference` | `of` | Openference | OAuth | [link](https://openference.com) | Sign in with your Openference account to route requests through api.openference.com. Includes free-tier access to Qwen3.8 27b and Llama 3.2 3B — see openference.com/pricing for current plan terms. |
@@ -232,7 +232,7 @@ Use the dashboard at `/dashboard/providers` to enable, configure, and test each 
 | `kie` | `kie` | KIE.AI | API key | [link](https://kie.ai) | — |
 | `kilo-gateway` | `kg` | Kilo Gateway | API key, aggregator | [link](https://kilo.ai) | — |
 | `kimi` | `kimi` | Kimi (Legacy Moonshot API) | API key | [link](https://platform.kimi.ai?aff=omniroute) | — |
-| `kimi-coding-apikey` | `kmca` | Kimi Code API Key | API key | [link](https://www.kimi.com/code?aff=omniroute) | — |
+| `kimi-coding-apikey` | `kmca` | Kimi Code API Key | API key | [link](https://www.kimi.ai/code?aff=omniroute) | — |
 | `lambda-ai` | `lambda` | Lambda AI | API key | [link](https://lambda.ai) | — |
 | `laozhang` | `lz` | LaoZhang AI | API key, aggregator | [link](https://api.laozhang.ai) | — |
 | `leonardo` | `leo` | Leonardo AI | API key, video | [link](https://leonardo.ai) | Get API key at leonardo.ai/developer |
