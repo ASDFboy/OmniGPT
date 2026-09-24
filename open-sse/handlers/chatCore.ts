@@ -285,7 +285,11 @@ import { adaptBodyForCompression } from "../services/compression/bodyAdapter.ts"
 import { ensureEngineBreakdown } from "../services/compression/engineBreakdown.ts";
 import { handleBypassRequest } from "../utils/bypassHandler.ts";
 import { saveRequestUsage, trackPendingRequest, appendRequestLog } from "@/lib/usageDb";
-import { finalizePendingScope, updatePendingScope } from "@/lib/usage/pendingRequestScope";
+import {
+  finalizePendingScope,
+  initialPendingBody,
+  updatePendingScope,
+} from "@/lib/usage/pendingRequestScope";
 import { recordCost, recordChatCallCost, buildCostCtx } from "@/domain/costRules";
 import { calculateCost } from "@/lib/usage/costCalculator";
 import {
@@ -906,17 +910,6 @@ export async function handleChatCore({
     nativeXaiResponsesPassthrough ||
     nativeOpenAICompatibleResponsesPassthrough;
 
-  const initialProviderRequest =
-    body && typeof body === "object" && !Array.isArray(body)
-      ? {
-          ...(body as Record<string, unknown>),
-          model:
-            typeof (body as Record<string, unknown>).model === "string"
-              ? (body as Record<string, unknown>).model
-              : effectiveModel,
-        }
-      : body;
-
   // Track pending requests before slower optional enrichment (settings, logging,
   // compression) so internal usage/runtime counters stay accurate even when
   // upstream never returns response headers.
@@ -927,7 +920,7 @@ export async function handleChatCore({
     trackPendingRequest(model, provider, pendingConnId, true, {
       clientEndpoint: clientRawRequest?.endpoint || "/v1/chat/completions",
       clientRequest: redactPendingBody(clientRawRequest?.body ?? body, videoBridgeObserved),
-      providerRequest: initialProviderRequest,
+      providerRequest: initialPendingBody(body, effectiveModel, videoBridgeObserved),
       stage: "registered",
       correlationId,
       sessionTag: conversationId || null,
@@ -1237,15 +1230,21 @@ export async function handleChatCore({
   const semanticCacheEnabled = settings.semanticCacheEnabled !== false;
 
   const reqLogger = await createRequestLogger(sourceFormat, targetFormat, model, {
-    enabled: detailedLoggingEnabled,
-    captureStreamChunks: capturePipelineStreamChunks,
+    enabled: detailedLoggingEnabled && !videoBridgeObserved,
+    captureStreamChunks: capturePipelineStreamChunks && !videoBridgeObserved,
     maxStreamChunkBytes: getCallLogPipelineMaxSizeBytes(),
     requestId: pendingRequestId,
     model,
     provider: provider || undefined,
     connectionId: connectionId || credentials?.connectionId || undefined,
   });
-  const pendingScope = { id: pendingRequestId, model, provider, connectionId: pendingConnId };
+  const pendingScope = {
+    id: pendingRequestId,
+    model,
+    provider,
+    connectionId: pendingConnId,
+    videoTranscriptSensitive: videoBridgeObserved,
+  };
   const providerRequestCapture = createPreparedRequestLogger(reqLogger, pendingScope);
   // 0. Log client raw request (before format conversion) — redacts video transcript
   // cues in the logged copy only; see videoBridgeSnapshotRedaction.ts.
