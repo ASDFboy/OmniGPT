@@ -5018,6 +5018,8 @@
     "failedSetPassword": "An kasa saita kalmar sirri. Sake gwadawa.",
     "failedAddProvider": "An kasa ƙara mai samar da sabis. Sake gwadawa.",
     "connectionError": "Kuskuren haɗi. Da fatan za a sake gwadawa.",
+    "bootstrapTokenLabel": "Tokun na bootstrap",
+    "bootstrapTokenHelp": "Ba a gane wannan haɗin a matsayin na gida ba (wannan ya zama ruwan dare yayin amfani da Docker port-forwarding). Duba rajistar uwar garken/kwantena don samun tokun na bootstrap na amfani sau ɗaya, sannan liƙa shi a sama don ci gaba.",
     "provider": "Mai samar da sabis",
     "apiKeyHelp": "Maɓallin API kalmar sirri ce ta ayyukan AI. Sami ɗaya daga gidan yanar gizon mai samar da sabis ɗinka (misali, platform.openai.com, console.anthropic.com).",
     "tier": {

@@ -5018,6 +5018,8 @@
     "failedSetPassword": "Ṣíṣètò ọ̀rọ̀ aṣínà kùnà. Tún gbìyànjú.",
     "failedAddProvider": "Fífi olùpèsè kún un kùnà. Tún gbìyànjú.",
     "connectionError": "Àṣìṣe ìsopọ̀. Jọ̀wọ́ tún gbìyànjú.",
+    "bootstrapTokenLabel": "Àmì ìdánimọ̀ ìbẹ̀rẹ̀",
+    "bootstrapTokenHelp": "A kò dá ìsopọ̀ yìí mọ̀ gẹ́gẹ́ bí ìsopọ̀ abẹ́nú (èyí wọ́pọ̀ lẹ́yìn ìdarí-ibùdó Docker). Ṣàyẹ̀wò àkọsílẹ̀ olupin/àpótí fún àmì ìdánimọ̀ ìbẹ̀rẹ̀ ẹ̀ẹ̀kan ṣoṣo, kí o sì lẹ̀ ẹ́ mọ́ òkè láti tẹ̀síwájú.",
     "provider": "Olùpèsè",
     "apiKeyHelp": "Kọ́kọ́rọ́ API jẹ́ ọ̀rọ̀ aṣínà fún àwọn iṣẹ́ AI. Gbà ọ̀kan láti ojúlé wẹ́ẹ̀bù olùpèsè rẹ (fún àpẹẹrẹ, platform.openai.com, console.anthropic.com).",
     "tier": {

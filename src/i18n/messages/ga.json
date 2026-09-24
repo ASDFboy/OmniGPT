@@ -5018,6 +5018,8 @@
     "failedSetPassword": "Níor éirigh leis an bpasfhocal a shocrú. Bain triail as arís.",
     "failedAddProvider": "Níor éirigh leis an soláthraí a chur leis. Bain triail as arís.",
     "connectionError": "Earráid naisc. Bain triail as arís le do thoil.",
+    "bootstrapTokenLabel": "Comhartha bútstrapála",
+    "bootstrapTokenHelp": "Ní aithnítear an ceangal seo mar cheangal áitiúil (rud atá coitianta taobh thiar de chur ar aghaidh poirt Docker). Seiceáil loga an fhreastalaí/an choimeádáin le haghaidh comhartha bútstrapála aonuaire agus greamaigh thuas é chun leanúint ar aghaidh.",
     "provider": "Soláthraí",
     "apiKeyHelp": "Is pasfhocal í eochair API do sheirbhísí AI. Faigh ceann ó shuíomh gréasáin do sholáthraí (m.sh., platform.openai.com, console.anthropic.com).",
     "tier": {

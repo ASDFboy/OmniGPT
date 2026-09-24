@@ -5018,6 +5018,8 @@
     "failedSetPassword": "የይለፍ ቃሉን ማዘጋጀት አልተሳካም። እንደገና ይሞክሩ።",
     "failedAddProvider": "አቅራቢውን ማከል አልተሳካም። እንደገና ይሞክሩ።",
     "connectionError": "የግንኙነት ስህተት። እባክዎ እንደገና ይሞክሩ።",
+    "bootstrapTokenLabel": "የማስነሻ ቶከን",
+    "bootstrapTokenHelp": "ይህ ግንኙነት እንደ አካባቢያዊ ግንኙነት አልታወቀም (ይህ ከDocker የወደብ ማስተላለፍ በስተጀርባ የተለመደ ነው)። ለአንድ ጊዜ የሚያገለግል የማስነሻ ቶከን ለማግኘት የአገልጋዩን/የኮንቴይነሩን ምዝግብ ይመልከቱ፣ ከዚያም ለመቀጠል ከላይ ይለጥፉት።",
     "provider": "አቅራቢ",
     "apiKeyHelp": "የAPI ቁልፍ ለAI አገልግሎቶች የይለፍ ቃል ነው። ከአቅራቢዎ ድረ ገጽ ያግኙት (ለምሳሌ፣ platform.openai.com, console.anthropic.com)።",
     "tier": {

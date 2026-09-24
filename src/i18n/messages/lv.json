@@ -5018,6 +5018,8 @@
     "failedSetPassword": "Neizdevās iestatīt paroli. Mēģiniet vēlreiz.",
     "failedAddProvider": "Neizdevās pievienot pakalpojumu sniedzēju. Mēģiniet vēlreiz.",
     "connectionError": "Savienojuma kļūda. Lūdzu, mēģiniet vēlreiz.",
+    "bootstrapTokenLabel": "Sāknēšanas pilnvara",
+    "bootstrapTokenHelp": "Šis savienojums netiek atpazīts kā lokāls (tas bieži notiek Docker portu pāradresācijas gadījumā). Lai turpinātu, servera/konteinera žurnālā atrodiet vienreizēju sāknēšanas pilnvaru un ielīmējiet to augstāk.",
     "provider": "Pakalpojumu sniedzējs",
     "apiKeyHelp": "API atslēga ir parole AI pakalpojumiem. Iegūstiet to sava nodrošinātāja tīmekļa vietnē (piemēram, platform.openai.com, console.anthropic.com).",
     "tier": {
