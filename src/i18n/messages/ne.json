@@ -11509,7 +11509,13 @@
       "correlationIdValue": "कोरिलेसन ID: {id}",
       "detailedPayloadInfo": "नयाँ अनुरोधहरूका लागि चार-चरणीय क्लाइन्ट/प्रदायक पेलोड दृश्य चाहनुहुन्छ भने पहिले विस्तृत लगिङ सक्षम गर्नुहोस्।",
       "copyAll": "सबै प्रतिलिपि गर्नुहोस्",
-      "copiedAll": "सबै प्रतिलिपि गरियो"
+      "copiedAll": "सबै प्रतिलिपि गरियो",
+      "resilienceStoredError": "भण्डारित त्रुटिबाट सेवा दिइयो",
+      "resilienceParked": "पठाउनुअघि {ms} रोकियो",
+      "resilienceRotations": "{count} खाता रोटेसन",
+      "resilienceRetried": "खाली पालो पुनः प्रयास गरियो",
+      "resilienceContinued": "स्ट्रिमको बीचबाट पुनः सुरु गरियो",
+      "resilienceRecovered": "लचिलोपन कार्यद्वारा पुनर्प्राप्त"
     }
   },
   "proxyLogger": {

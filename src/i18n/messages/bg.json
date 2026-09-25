@@ -11509,7 +11509,13 @@
       "correlationIdValue": "Идентификатор на корелация: {id}",
       "detailedPayloadInfo": "Първо активирайте подробното регистриране, ако искате изгледа на четирите етапа на клиент/доставчик за нови заявки.",
       "copyAll": "Копиране на всичко",
-      "copiedAll": "Всичко е копирано"
+      "copiedAll": "Всичко е копирано",
+      "resilienceStoredError": "Обслужено от запазена грешка",
+      "resilienceParked": "Задържано {ms} преди изпращане",
+      "resilienceRotations": "{count} ротации на акаунти",
+      "resilienceRetried": "Празният ход е повторен",
+      "resilienceContinued": "Възобновено по време на потока",
+      "resilienceRecovered": "Възстановено чрез действие за устойчивост"
     }
   },
   "proxyLogger": {

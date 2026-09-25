@@ -11509,7 +11509,13 @@
       "correlationIdValue": "ID Korelasi: {id}",
       "detailedPayloadInfo": "Aktifkan logging terperinci terlebih dahulu jika Anda ingin tampilan payload klien/penyedia empat tahap untuk permintaan baru.",
       "copyAll": "Salin semua",
-      "copiedAll": "Semua disalin"
+      "copiedAll": "Semua disalin",
+      "resilienceStoredError": "Dilayani dari galat tersimpan",
+      "resilienceParked": "Ditahan {ms} sebelum dikirim",
+      "resilienceRotations": "{count} rotasi akun",
+      "resilienceRetried": "Giliran kosong dicoba ulang",
+      "resilienceContinued": "Dilanjutkan di tengah stream",
+      "resilienceRecovered": "Dipulihkan oleh tindakan ketahanan"
     }
   },
   "proxyLogger": {

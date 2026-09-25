@@ -11509,7 +11509,13 @@
       "correlationIdValue": "Koreliacijos ID: {id}",
       "detailedPayloadInfo": "Jei norite naujoms užklausoms matyti keturių etapų kliento ir teikėjo turinio rodinį, pirmiausia įjunkite išsamų registravimą.",
       "copyAll": "Kopijuoti viską",
-      "copiedAll": "Viskas nukopijuota"
+      "copiedAll": "Viskas nukopijuota",
+      "resilienceStoredError": "Pateikta iš išsaugotos klaidos",
+      "resilienceParked": "Sulaikyta {ms} prieš siuntimą",
+      "resilienceRotations": "{count} paskyrų rotacijos",
+      "resilienceRetried": "Tuščias ėjimas pakartotas",
+      "resilienceContinued": "Tęsta srauto viduryje",
+      "resilienceRecovered": "Atkurta atsparumo veiksmu"
     }
   },
   "proxyLogger": {

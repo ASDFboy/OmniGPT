@@ -11509,7 +11509,13 @@
       "correlationIdValue": "ID korelace: {id}",
       "detailedPayloadInfo": "Nejprve povolte podrobné protokolování, pokud chcete čtyřstupňový pohled na payload klienta/poskytovatele pro nové požadavky.",
       "copyAll": "Kopírovat vše",
-      "copiedAll": "Vše zkopírováno"
+      "copiedAll": "Vše zkopírováno",
+      "resilienceStoredError": "Obslouženo z uložené chyby",
+      "resilienceParked": "Odloženo o {ms} před odesláním",
+      "resilienceRotations": "{count} rotací účtů",
+      "resilienceRetried": "Prázdný tah zopakován",
+      "resilienceContinued": "Obnoveno uprostřed streamu",
+      "resilienceRecovered": "Obnoveno akcí odolnosti"
     }
   },
   "proxyLogger": {

@@ -11509,7 +11509,13 @@
       "correlationIdValue": "ID Ìbámu: {id}",
       "detailedPayloadInfo": "Kọ́kọ́ mú ìforúkọsílẹ̀ alálàyé ṣiṣẹ́ bí o bá fẹ́ àfihàn àkóónú client/provider onípele mẹ́rin fún àwọn ìbéèrè tuntun.",
       "copyAll": "Ṣe àdàkọ gbogbo rẹ̀",
-      "copiedAll": "A ti ṣe àdàkọ gbogbo rẹ̀"
+      "copiedAll": "A ti ṣe àdàkọ gbogbo rẹ̀",
+      "resilienceStoredError": "A pèsè láti inú àṣìṣe tí a fipamọ́",
+      "resilienceParked": "A dá dúró {ms} ṣáájú fífiránṣẹ́",
+      "resilienceRotations": "Ìyípo àkáǹtì {count}",
+      "resilienceRetried": "A tún gbìyànjú àyípo òfo",
+      "resilienceContinued": "A tẹ̀síwájú láàrin ìṣàn",
+      "resilienceRecovered": "A gbà padà nípasẹ̀ ìgbésẹ̀ ìfaradà"
     }
   },
   "proxyLogger": {

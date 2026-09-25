@@ -11509,7 +11509,13 @@
       "correlationIdValue": "Korrelerings-ID: {id}",
       "detailedPayloadInfo": "Aktiver detaljert logging først hvis du vil ha den fire-trinns klient/leverandør nyttelastvisningen for nye forespørseler.",
       "copyAll": "Kopier alt",
-      "copiedAll": "Alt kopiert"
+      "copiedAll": "Alt kopiert",
+      "resilienceStoredError": "Levert fra lagret feil",
+      "resilienceParked": "Parkert {ms} før sending",
+      "resilienceRotations": "{count} kontorotasjoner",
+      "resilienceRetried": "Tom tur forsøkt på nytt",
+      "resilienceContinued": "Gjenopptatt midt i strømmen",
+      "resilienceRecovered": "Gjenopprettet av en robusthetshandling"
     }
   },
   "proxyLogger": {

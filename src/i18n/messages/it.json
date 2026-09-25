@@ -11509,7 +11509,13 @@
       "correlationIdValue": "ID di correlazione: {id}",
       "detailedPayloadInfo": "Abilita prima il logging dettagliato se desideri la visualizzazione del payload client/provider in quattro fasi per le nuove richieste.",
       "copyAll": "Copia tutto",
-      "copiedAll": "Tutto copiato"
+      "copiedAll": "Tutto copiato",
+      "resilienceStoredError": "Servito da errore memorizzato",
+      "resilienceParked": "In attesa {ms} prima dell’invio",
+      "resilienceRotations": "{count} rotazioni account",
+      "resilienceRetried": "Turno vuoto ripetuto",
+      "resilienceContinued": "Ripreso a metà flusso",
+      "resilienceRecovered": "Recuperato da un’azione di resilienza"
     }
   },
   "proxyLogger": {

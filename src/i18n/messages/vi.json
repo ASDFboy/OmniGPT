@@ -11509,7 +11509,13 @@
       "correlationIdValue": "ID tương quan: {id}",
       "detailedPayloadInfo": "Hãy bật ghi nhật ký chi tiết trước nếu bạn muốn xem giao diện payload client/nhà cung cấp gồm 4 giai đoạn cho các yêu cầu mới.",
       "copyAll": "Sao chép tất cả",
-      "copiedAll": "Đã sao chép tất cả"
+      "copiedAll": "Đã sao chép tất cả",
+      "resilienceStoredError": "Phục vụ từ lỗi đã lưu",
+      "resilienceParked": "Đã chờ {ms} trước khi gửi",
+      "resilienceRotations": "{count} lần chuyển tài khoản",
+      "resilienceRetried": "Đã thử lại lượt trống",
+      "resilienceContinued": "Đã tiếp tục giữa luồng",
+      "resilienceRecovered": "Đã khôi phục bằng hành động phục hồi"
     }
   },
   "proxyLogger": {

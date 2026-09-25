@@ -11509,7 +11509,13 @@
       "correlationIdValue": "සහසම්බන්ධතා හැඳුනුම්කාරකය: {id}",
       "detailedPayloadInfo": "නව ඉල්ලීම් සඳහා අදියර හතරක සේවාලාභී/සපයන්නා දත්ත කොටස් දසුන අවශ්ය නම්, පළමුව සවිස්තරාත්මක ලොග් කිරීම සබල කරන්න.",
       "copyAll": "සියල්ල පිටපත් කරන්න",
-      "copiedAll": "සියල්ල පිටපත් කරන ලදී"
+      "copiedAll": "සියල්ල පිටපත් කරන ලදී",
+      "resilienceStoredError": "ගබඩා කළ දෝෂයෙන් සපයන ලදී",
+      "resilienceParked": "යැවීමට පෙර {ms} රඳවා ඇත",
+      "resilienceRotations": "ගිණුම් භ්‍රමණ {count}",
+      "resilienceRetried": "හිස් වාරය නැවත උත්සාහ කළා",
+      "resilienceContinued": "ප්‍රවාහය මැදින් නැවත ආරම්භ කළා",
+      "resilienceRecovered": "ප්‍රත්‍යස්ථතා ක්‍රියාවකින් ප්‍රතිසාධනය කළා"
     }
   },
   "proxyLogger": {

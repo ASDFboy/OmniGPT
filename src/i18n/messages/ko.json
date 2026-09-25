@@ -11509,7 +11509,13 @@
       "correlationIdValue": "상관 ID: {id}",
       "detailedPayloadInfo": "새 요청에 대한 4단계 클라이언트/제공자 페이로드 보기를 원하시면 먼저 자세한 로깅을 활성화하세요.",
       "copyAll": "모두 복사",
-      "copiedAll": "모두 복사됨"
+      "copiedAll": "모두 복사됨",
+      "resilienceStoredError": "저장된 오류에서 응답",
+      "resilienceParked": "전송 전 {ms} 대기",
+      "resilienceRotations": "계정 전환 {count}회",
+      "resilienceRetried": "빈 턴 재시도",
+      "resilienceContinued": "스트림 중간에 재개",
+      "resilienceRecovered": "복원력 조치로 복구"
     }
   },
   "proxyLogger": {

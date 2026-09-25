@@ -11509,7 +11509,13 @@
       "correlationIdValue": "সংযোগ আইডি: {id}",
       "detailedPayloadInfo": "নতুন অনুরোধের জন্য চার-পর্যায়ের ক্লায়েন্ট/প্রদানকারী পে-লোড ভিউ পেতে হলে প্রথমে বিস্তারিত লগিং সক্ষম করুন।",
       "copyAll": "সব কপি করুন",
-      "copiedAll": "সব কপি করা হয়েছে"
+      "copiedAll": "সব কপি করা হয়েছে",
+      "resilienceStoredError": "সংরক্ষিত ত্রুটি থেকে পরিবেশিত",
+      "resilienceParked": "পাঠানোর আগে {ms} অপেক্ষমাণ রাখা হয়েছে",
+      "resilienceRotations": "{count}টি অ্যাকাউন্ট রোটেশন",
+      "resilienceRetried": "খালি টার্ন পুনরায় চেষ্টা করা হয়েছে",
+      "resilienceContinued": "স্ট্রিমের মাঝখান থেকে পুনরায় শুরু হয়েছে",
+      "resilienceRecovered": "রেজিলিয়েন্স পদক্ষেপের মাধ্যমে পুনরুদ্ধার হয়েছে"
     }
   },
   "proxyLogger": {

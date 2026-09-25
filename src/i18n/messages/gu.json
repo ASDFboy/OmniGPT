@@ -11509,7 +11509,13 @@
       "correlationIdValue": "સંબંધિત ID: {id}",
       "detailedPayloadInfo": "નવા વિનંતીઓ માટે ચાર-ચરણ ક્લાયન્ટ/પ્રદાતા પેલોડ દૃશ્ય મેળવવા માટે પ્રથમ વિગતવાર લોગિંગ સક્રિય કરો.",
       "copyAll": "બધું કૉપિ કરો",
-      "copiedAll": "બધું કૉપિ થયું"
+      "copiedAll": "બધું કૉપિ થયું",
+      "resilienceStoredError": "સંગ્રહિત ભૂલમાંથી પીરસવામાં આવ્યું",
+      "resilienceParked": "મોકલતા પહેલાં {ms} રોકી રાખ્યું",
+      "resilienceRotations": "{count} એકાઉન્ટ રોટેશન",
+      "resilienceRetried": "ખાલી ટર્ન ફરી પ્રયાસ કર્યો",
+      "resilienceContinued": "સ્ટ્રીમની વચ્ચેથી ફરી શરૂ કર્યું",
+      "resilienceRecovered": "રેઝિલિયન્સ ક્રિયા દ્વારા પુનઃપ્રાપ્ત"
     }
   },
   "proxyLogger": {

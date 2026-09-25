@@ -11509,7 +11509,13 @@
       "correlationIdValue": "Correlatie-ID: {id}",
       "detailedPayloadInfo": "Schakel eerst gedetailleerde logging in als je de vier-fasen client/provider payloadweergave voor nieuwe verzoeken wilt.",
       "copyAll": "Alles kopiëren",
-      "copiedAll": "Alles gekopieerd"
+      "copiedAll": "Alles gekopieerd",
+      "resilienceStoredError": "Bediend vanuit opgeslagen fout",
+      "resilienceParked": "{ms} geparkeerd vóór verzending",
+      "resilienceRotations": "{count} accountrotaties",
+      "resilienceRetried": "Lege beurt opnieuw geprobeerd",
+      "resilienceContinued": "Midden in stream hervat",
+      "resilienceRecovered": "Hersteld door een veerkrachtactie"
     }
   },
   "proxyLogger": {

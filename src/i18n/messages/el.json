@@ -11509,7 +11509,13 @@
       "correlationIdValue": "Αναγνωριστικό συσχέτισης: {id}",
       "detailedPayloadInfo": "Ενεργοποιήστε πρώτα τη λεπτομερή καταγραφή εάν θέλετε την προβολή ωφέλιμου φορτίου τεσσάρων σταδίων πελάτη/παρόχου για νέα αιτήματα.",
       "copyAll": "Αντιγραφή όλων",
-      "copiedAll": "Αντιγράφηκαν όλα"
+      "copiedAll": "Αντιγράφηκαν όλα",
+      "resilienceStoredError": "Εξυπηρετήθηκε από αποθηκευμένο σφάλμα",
+      "resilienceParked": "Σε αναμονή {ms} πριν την αποστολή",
+      "resilienceRotations": "{count} εναλλαγές λογαριασμών",
+      "resilienceRetried": "Επανάληψη κενού γύρου",
+      "resilienceContinued": "Συνέχιση στη μέση της ροής",
+      "resilienceRecovered": "Ανακτήθηκε με ενέργεια ανθεκτικότητας"
     }
   },
   "proxyLogger": {

@@ -11509,7 +11509,13 @@
       "correlationIdValue": "సంబంధిత ID: {id}",
       "detailedPayloadInfo": "కొత్త అభ్యర్థనల కోసం నాలుగు దశల క్లయింట్/ప్రొవైడర్ పేమెంట్ వీక్షణను కావాలంటే, మొదట వివరణాత్మక లాగింగ్‌ను ప్రారంభించండి.",
       "copyAll": "అన్నింటినీ కాపీ చేయండి",
-      "copiedAll": "అన్నీ కాపీ అయ్యాయి"
+      "copiedAll": "అన్నీ కాపీ అయ్యాయి",
+      "resilienceStoredError": "నిల్వ చేసిన లోపం నుండి అందించబడింది",
+      "resilienceParked": "పంపే ముందు {ms} నిలిపి ఉంచబడింది",
+      "resilienceRotations": "{count} ఖాతా రొటేషన్లు",
+      "resilienceRetried": "ఖాళీ టర్న్ మళ్లీ ప్రయత్నించబడింది",
+      "resilienceContinued": "స్ట్రీమ్ మధ్యలో నుండి కొనసాగించబడింది",
+      "resilienceRecovered": "రెసిలియెన్స్ చర్య ద్వారా పునరుద్ధరించబడింది"
     }
   },
   "proxyLogger": {

@@ -11509,7 +11509,13 @@
       "correlationIdValue": "ID ng Korelasyon: {id}",
       "detailedPayloadInfo": "I-enable ang detalyadong pag-log muna kung nais mo ang apat na yugto ng view ng client/provider payload para sa mga bagong kahilingan.",
       "copyAll": "Kopyahin lahat",
-      "copiedAll": "Nakopya na ang lahat"
+      "copiedAll": "Nakopya na ang lahat",
+      "resilienceStoredError": "Inihain mula sa naka-imbak na error",
+      "resilienceParked": "Na-park nang {ms} bago ipadala",
+      "resilienceRotations": "{count} pag-ikot ng account",
+      "resilienceRetried": "Inulit ang walang lamang turn",
+      "resilienceContinued": "Itinuloy sa gitna ng stream",
+      "resilienceRecovered": "Naibalik ng isang resilience action"
     }
   },
   "proxyLogger": {

@@ -11509,7 +11509,13 @@
       "correlationIdValue": "Korelacijski ID: {id}",
       "detailedPayloadInfo": "Najprej omogočite podrobno beleženje, če želite štiristopenjski pogled vsebine odjemalca/ponudnika za nove zahteve.",
       "copyAll": "Kopiraj vse",
-      "copiedAll": "Vse kopirano"
+      "copiedAll": "Vse kopirano",
+      "resilienceStoredError": "Postreženo iz shranjene napake",
+      "resilienceParked": "Zadržano {ms} pred pošiljanjem",
+      "resilienceRotations": "{count} rotacij računov",
+      "resilienceRetried": "Prazen krog ponovljen",
+      "resilienceContinued": "Nadaljevano sredi toka",
+      "resilienceRecovered": "Obnovljeno z dejanjem odpornosti"
     }
   },
   "proxyLogger": {

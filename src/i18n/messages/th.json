@@ -11509,7 +11509,13 @@
       "correlationIdValue": "รหัสความสัมพันธ์: {id}",
       "detailedPayloadInfo": "โปรดเปิดใช้งานการบันทึกข้อมูลอย่างละเอียดก่อนหากคุณต้องการดูข้อมูลการส่งข้อมูลของไคลเอนต์/ผู้ให้บริการแบบสี่ขั้นตอนสำหรับคำขอใหม่",
       "copyAll": "คัดลอกทั้งหมด",
-      "copiedAll": "คัดลอกทั้งหมดแล้ว"
+      "copiedAll": "คัดลอกทั้งหมดแล้ว",
+      "resilienceStoredError": "ให้บริการจากข้อผิดพลาดที่จัดเก็บไว้",
+      "resilienceParked": "พักไว้ {ms} ก่อนส่ง",
+      "resilienceRotations": "สลับบัญชี {count} ครั้ง",
+      "resilienceRetried": "ลองรอบว่างใหม่อีกครั้ง",
+      "resilienceContinued": "ทำต่อกลางสตรีม",
+      "resilienceRecovered": "กู้คืนด้วยการดำเนินการด้านความยืดหยุ่น"
     }
   },
   "proxyLogger": {

@@ -11509,7 +11509,13 @@
       "correlationIdValue": "លេខសម្គាល់ទំនាក់ទំនង៖ {id}",
       "detailedPayloadInfo": "សូមបើកការកត់ត្រាលម្អិតជាមុនសិន ប្រសិនបើអ្នកចង់មើល payload បួនដំណាក់កាលរបស់កម្មវិធីអតិថិជន/អ្នកផ្តល់សេវា សម្រាប់សំណើថ្មីៗ។",
       "copyAll": "ចម្លងទាំងអស់",
-      "copiedAll": "បានចម្លងទាំងអស់"
+      "copiedAll": "បានចម្លងទាំងអស់",
+      "resilienceStoredError": "បានបម្រើពីកំហុសដែលបានរក្សាទុក",
+      "resilienceParked": "បានផ្អាក {ms} មុនពេលផ្ញើ",
+      "resilienceRotations": "ការបង្វិលគណនី {count} ដង",
+      "resilienceRetried": "បានព្យាយាមវេនទទេម្តងទៀត",
+      "resilienceContinued": "បានបន្តនៅកណ្តាលស្ទ្រីម",
+      "resilienceRecovered": "បានស្ដារឡើងវិញដោយសកម្មភាពធន់"
     }
   },
   "proxyLogger": {

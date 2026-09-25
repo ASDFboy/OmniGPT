@@ -11509,7 +11509,13 @@
       "correlationIdValue": "ID korelácie: {id}",
       "detailedPayloadInfo": "Najprv povolte podrobné protokolovanie, ak chcete zobrazenie štyroch fáz klienta/poskytovateľa pre nové požiadavky.",
       "copyAll": "Kopírovať všetko",
-      "copiedAll": "Všetko skopírované"
+      "copiedAll": "Všetko skopírované",
+      "resilienceStoredError": "Obslúžené z uloženej chyby",
+      "resilienceParked": "Odložené o {ms} pred odoslaním",
+      "resilienceRotations": "{count} rotácií účtov",
+      "resilienceRetried": "Prázdny ťah zopakovaný",
+      "resilienceContinued": "Obnovené uprostred streamu",
+      "resilienceRecovered": "Obnovené akciou odolnosti"
     }
   },
   "proxyLogger": {

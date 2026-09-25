@@ -11509,7 +11509,13 @@
       "correlationIdValue": "კორელაციის ID: {id}",
       "detailedPayloadInfo": "ახალი მოთხოვნებისთვის კლიენტის/პროვაიდერის მონაცემების ოთხეტაპიანი ხედის გამოსაყენებლად, ჯერ დეტალური ჟურნალის წარმოება ჩართეთ.",
       "copyAll": "ყველაფრის კოპირება",
-      "copiedAll": "ყველაფერი დაკოპირებულია"
+      "copiedAll": "ყველაფერი დაკოპირებულია",
+      "resilienceStoredError": "მოწოდებულია შენახული შეცდომიდან",
+      "resilienceParked": "გაჩერებულია {ms} გაგზავნამდე",
+      "resilienceRotations": "ანგარიშის {count} როტაცია",
+      "resilienceRetried": "ცარიელი სვლა ხელახლა ცადა",
+      "resilienceContinued": "განახლდა ნაკადის შუაში",
+      "resilienceRecovered": "აღდგენილია მდგრადობის მოქმედებით"
     }
   },
   "proxyLogger": {

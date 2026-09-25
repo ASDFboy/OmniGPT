@@ -11509,7 +11509,13 @@
       "correlationIdValue": "Korrelatsiooni-ID: {id}",
       "detailedPayloadInfo": "Uute päringute neljaetapilise kliendi ja teenusepakkuja andmekehavaate kasutamiseks lubage esmalt üksikasjalik logimine.",
       "copyAll": "Kopeeri kõik",
-      "copiedAll": "Kõik kopeeritud"
+      "copiedAll": "Kõik kopeeritud",
+      "resilienceStoredError": "Serveeritud salvestatud veast",
+      "resilienceParked": "Ootel {ms} enne saatmist",
+      "resilienceRotations": "{count} konto vahetust",
+      "resilienceRetried": "Tühja käiku korrati",
+      "resilienceContinued": "Jätkati voo keskelt",
+      "resilienceRecovered": "Taastatud vastupidavustoiminguga"
     }
   },
   "proxyLogger": {

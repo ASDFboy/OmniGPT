@@ -11509,7 +11509,13 @@
       "correlationIdValue": "ID korelacije: {id}",
       "detailedPayloadInfo": "Najprije omogućite detaljno zapisivanje ako želite prikaz korisnog tereta klijenta/pružatelja u četiri faze za nove zahtjeve.",
       "copyAll": "Kopiraj sve",
-      "copiedAll": "Sve kopirano"
+      "copiedAll": "Sve kopirano",
+      "resilienceStoredError": "Posluženo iz spremljene pogreške",
+      "resilienceParked": "Zadržano {ms} prije slanja",
+      "resilienceRotations": "{count} rotacija računa",
+      "resilienceRetried": "Prazan potez ponovljen",
+      "resilienceContinued": "Nastavljeno usred streama",
+      "resilienceRecovered": "Oporavljeno radnjom otpornosti"
     }
   },
   "proxyLogger": {

@@ -11509,7 +11509,13 @@
       "correlationIdValue": "Identyfikator korelacji: {id}",
       "detailedPayloadInfo": "Najpierw włącz szczegółowe logowanie, jeśli chcesz uzyskać widok ładunku klienta/dostawcy w czterech etapach dla nowych żądań.",
       "copyAll": "Skopiuj wszystko",
-      "copiedAll": "Skopiowano wszystko"
+      "copiedAll": "Skopiowano wszystko",
+      "resilienceStoredError": "Obsłużono z zapisanego błędu",
+      "resilienceParked": "Oczekiwano {ms} przed wysyłką",
+      "resilienceRotations": "{count} rotacji kont",
+      "resilienceRetried": "Ponawiono pustą turę",
+      "resilienceContinued": "Wznowiono w trakcie strumienia",
+      "resilienceRecovered": "Odzyskano dzięki akcji odporności"
     }
   },
   "proxyLogger": {

@@ -11509,7 +11509,13 @@
       "correlationIdValue": "Korrelations-ID: {id}",
       "detailedPayloadInfo": "Aktivera detaljerad loggning först om du vill ha den fyrastegs klient/leverantörs payload-vyn för nya förfrågningar.",
       "copyAll": "Kopiera allt",
-      "copiedAll": "Allt kopierat"
+      "copiedAll": "Allt kopierat",
+      "resilienceStoredError": "Levererat från sparat fel",
+      "resilienceParked": "Parkerad {ms} före sändning",
+      "resilienceRotations": "{count} kontorotationer",
+      "resilienceRetried": "Tom tur försökt igen",
+      "resilienceContinued": "Återupptaget mitt i strömmen",
+      "resilienceRecovered": "Återställt av en motståndskraftsåtgärd"
     }
   },
   "proxyLogger": {

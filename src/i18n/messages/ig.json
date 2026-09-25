@@ -11509,7 +11509,13 @@
       "correlationIdValue": "NJ Mmekọrịta: {id}",
       "detailedPayloadInfo": "Buru ụzọ gbanye ndekọ zuru ezu ma ọ bụrụ na ịchọrọ ịhụ payload client/provider nke nwere usoro anọ maka arịrịọ ọhụrụ.",
       "copyAll": "Detuo ha niile",
-      "copiedAll": "E detuochaala ha niile"
+      "copiedAll": "E detuochaala ha niile",
+      "resilienceStoredError": "Enyere site na njehie echekwara",
+      "resilienceParked": "Edobere {ms} tupu izipu",
+      "resilienceRotations": "Ntụgharị akaụntụ {count}",
+      "resilienceRetried": "Anwaghachiri ntụgharị efu",
+      "resilienceContinued": "Maliteghachiri n'etiti iyi",
+      "resilienceRecovered": "Eweghachiri site na omume nkwụsi ike"
     }
   },
   "proxyLogger": {

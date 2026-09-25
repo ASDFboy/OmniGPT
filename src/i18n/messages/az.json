@@ -11509,7 +11509,13 @@
       "correlationIdValue": "Korrelyasiya ID: {id}",
       "detailedPayloadInfo": "Əvvəlcə ətraflı qeydiyyatı aktiv edin, əgər yeni tələblər üçün dörd mərhələli müştəri/təchizatçı yük görünüşünü istəyirsinizsə.",
       "copyAll": "Hamısını kopyala",
-      "copiedAll": "Hamısı kopyalandı"
+      "copiedAll": "Hamısı kopyalandı",
+      "resilienceStoredError": "Saxlanmış xətadan xidmət edildi",
+      "resilienceParked": "Göndərmədən əvvəl {ms} gözlədildi",
+      "resilienceRotations": "{count} hesab rotasiyası",
+      "resilienceRetried": "Boş növbə təkrarlandı",
+      "resilienceContinued": "Axının ortasında davam etdirildi",
+      "resilienceRecovered": "Dayanıqlıq tədbiri ilə bərpa edildi"
     }
   },
   "proxyLogger": {

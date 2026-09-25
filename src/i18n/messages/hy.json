@@ -11509,7 +11509,13 @@
       "correlationIdValue": "Կապակցման ID՝ {id}",
       "detailedPayloadInfo": "Նոր հարցումների համար հաճախորդի/մատակարարի օգտակար բեռների քառափուլ տեսքը դիտելու նպատակով նախ միացրեք մանրամասն գրանցումը։",
       "copyAll": "Պատճենել ամբողջը",
-      "copiedAll": "Ամբողջը պատճենված է"
+      "copiedAll": "Ամբողջը պատճենված է",
+      "resilienceStoredError": "Մատուցվել է պահպանված սխալից",
+      "resilienceParked": "Կանգնեցվել է {ms} ուղարկելուց առաջ",
+      "resilienceRotations": "{count} հաշվի ռոտացիա",
+      "resilienceRetried": "Դատարկ հերթը կրկնվել է",
+      "resilienceContinued": "Վերսկսվել է հոսքի կեսից",
+      "resilienceRecovered": "Վերականգնվել է կայունության գործողությամբ"
     }
   },
   "proxyLogger": {

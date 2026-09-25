@@ -11509,7 +11509,13 @@
       "correlationIdValue": "關聯 ID: {id}",
       "detailedPayloadInfo": "如果您想要新請求的四階段客戶端/提供者有效載荷視圖，請先啟用詳細日誌記錄。",
       "copyAll": "全部複製",
-      "copiedAll": "已全部複製"
+      "copiedAll": "已全部複製",
+      "resilienceStoredError": "根據已存錯誤提供服務",
+      "resilienceParked": "傳送前等待{ms}",
+      "resilienceRotations": "輪換帳戶{count}次",
+      "resilienceRetried": "重試空輪次",
+      "resilienceContinued": "在串流中途恢復",
+      "resilienceRecovered": "透過彈性操作恢復"
     }
   },
   "proxyLogger": {

@@ -11509,7 +11509,13 @@
       "correlationIdValue": "Aitheantas Comhghaoil: {id}",
       "detailedPayloadInfo": "Cumasaigh logáil mhionsonraithe ar dtús más mian leat an t-amharc ceithre chéim ar ualaí cliaint/soláthraí le haghaidh iarratais nua.",
       "copyAll": "Cóipeáil go léir",
-      "copiedAll": "Cóipeáilte go léir"
+      "copiedAll": "Cóipeáilte go léir",
+      "resilienceStoredError": "Seirbheáilte ó earráid stóráilte",
+      "resilienceParked": "Páirceáilte {ms} roimh sheoladh",
+      "resilienceRotations": "{count} uainíocht cuntas",
+      "resilienceRetried": "Triaileadh an seal folamh arís",
+      "resilienceContinued": "Atosaíodh i lár an tsrutha",
+      "resilienceRecovered": "Aisghafa ag gníomh athléimneachta"
     }
   },
   "proxyLogger": {

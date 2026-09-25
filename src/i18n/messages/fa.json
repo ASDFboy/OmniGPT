@@ -11509,7 +11509,13 @@
       "correlationIdValue": "شناسه همبستگی: {id}",
       "detailedPayloadInfo": "ابتدا لاگ‌برداری دقیق را فعال کنید اگر می‌خواهید نمای بارگذاری چهار مرحله‌ای مشتری/تأمین‌کننده برای درخواست‌های جدید را مشاهده کنید.",
       "copyAll": "کپی همه",
-      "copiedAll": "همه کپی شدند"
+      "copiedAll": "همه کپی شدند",
+      "resilienceStoredError": "از خطای ذخیره‌شده ارائه شد",
+      "resilienceParked": "{ms} پیش از ارسال متوقف شد",
+      "resilienceRotations": "{count} چرخش حساب",
+      "resilienceRetried": "نوبت خالی دوباره امتحان شد",
+      "resilienceContinued": "از میانه جریان ادامه یافت",
+      "resilienceRecovered": "با یک اقدام تاب‌آوری بازیابی شد"
     }
   },
   "proxyLogger": {

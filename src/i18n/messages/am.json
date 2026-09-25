@@ -11509,7 +11509,13 @@
       "correlationIdValue": "የትስስር መታወቂያ፦ {id}",
       "detailedPayloadInfo": "ለአዳዲስ ጥያቄዎች ባለአራት-ደረጃ የደንበኛ/አቅራቢ ውሂብ እይታን ከፈለጉ፣ መጀመሪያ ዝርዝር ምዝገባን ያንቁ።",
       "copyAll": "ሁሉንም ቅዳ",
-      "copiedAll": "ሁሉም ተቀድቷል"
+      "copiedAll": "ሁሉም ተቀድቷል",
+      "resilienceStoredError": "ከተቀመጠ ስህተት ቀርቧል",
+      "resilienceParked": "ከመላኩ በፊት {ms} ቆሟል",
+      "resilienceRotations": "{count} የመለያ ሽክርክሪቶች",
+      "resilienceRetried": "ባዶ ዙር እንደገና ተሞክሯል",
+      "resilienceContinued": "በዥረቱ መሃል ቀጥሏል",
+      "resilienceRecovered": "በመቋቋም እርምጃ ተመልሷል"
     }
   },
   "proxyLogger": {

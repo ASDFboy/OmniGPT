@@ -11509,7 +11509,13 @@
       "correlationIdValue": "Korelációs azonosító: {id}",
       "detailedPayloadInfo": "Először engedélyezze a részletes naplózást, ha a négyfázisú kliens/szolgáltató payload nézetet szeretné az új kérésekhez.",
       "copyAll": "Összes másolása",
-      "copiedAll": "Minden másolva"
+      "copiedAll": "Minden másolva",
+      "resilienceStoredError": "Tárolt hibából kiszolgálva",
+      "resilienceParked": "{ms} várakoztatva küldés előtt",
+      "resilienceRotations": "{count} fiókrotáció",
+      "resilienceRetried": "Üres kör újrapróbálva",
+      "resilienceContinued": "Folytatva a stream közepén",
+      "resilienceRecovered": "Rugalmassági művelettel helyreállítva"
     }
   },
   "proxyLogger": {

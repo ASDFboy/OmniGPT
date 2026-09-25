@@ -11509,7 +11509,13 @@
       "correlationIdValue": "کوریلیشن ID: {id}",
       "detailedPayloadInfo": "پہلے تفصیلی لاگنگ فعال کریں اگر آپ نئے درخواستوں کے لیے چار مرحلوں کے کلائنٹ/فراہم کنندہ پے لوڈ ویو چاہتے ہیں۔",
       "copyAll": "سب کچھ کاپی کریں",
-      "copiedAll": "سب کچھ کاپی ہو گیا"
+      "copiedAll": "سب کچھ کاپی ہو گیا",
+      "resilienceStoredError": "محفوظ شدہ خرابی سے فراہم کیا گیا",
+      "resilienceParked": "بھیجنے سے پہلے {ms} روکا گیا",
+      "resilienceRotations": "{count} اکاؤنٹ گردشیں",
+      "resilienceRetried": "خالی باری دوبارہ آزمائی گئی",
+      "resilienceContinued": "اسٹریم کے درمیان سے دوبارہ شروع کیا گیا",
+      "resilienceRecovered": "لچک کی کارروائی سے بحال کیا گیا"
     }
   },
   "proxyLogger": {

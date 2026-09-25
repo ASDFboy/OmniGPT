@@ -11509,7 +11509,13 @@
       "correlationIdValue": "关联 ID: {id}",
       "detailedPayloadInfo": "如果您想要新请求的四阶段客户端/提供者负载视图，请先启用详细日志记录。",
       "copyAll": "复制全部",
-      "copiedAll": "已复制全部"
+      "copiedAll": "已复制全部",
+      "resilienceStoredError": "根据已存错误提供服务",
+      "resilienceParked": "发送前等待{ms}",
+      "resilienceRotations": "轮换帐户{count}次",
+      "resilienceRetried": "重试空轮次",
+      "resilienceContinued": "在流中途恢复",
+      "resilienceRecovered": "通过弹性操作恢复"
     }
   },
   "proxyLogger": {

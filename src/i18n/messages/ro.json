@@ -11509,7 +11509,13 @@
       "correlationIdValue": "ID de corelare: {id}",
       "detailedPayloadInfo": "Activați mai întâi jurnalizarea detaliată dacă doriți vizualizarea payload-ului client/provider în patru etape pentru cererile noi.",
       "copyAll": "Copiază tot",
-      "copiedAll": "Totul a fost copiat"
+      "copiedAll": "Totul a fost copiat",
+      "resilienceStoredError": "Servit din eroarea stocată",
+      "resilienceParked": "Parcat {ms} înainte de trimitere",
+      "resilienceRotations": "{count} rotații de cont",
+      "resilienceRetried": "Tură goală reîncercată",
+      "resilienceContinued": "Reluat la mijlocul fluxului",
+      "resilienceRecovered": "Recuperat printr-o acțiune de reziliență"
     }
   },
   "proxyLogger": {

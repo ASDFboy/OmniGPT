@@ -11509,7 +11509,13 @@
       "correlationIdValue": "ಸಹಸಂಬಂಧ ID: {id}",
       "detailedPayloadInfo": "ಹೊಸ ವಿನಂತಿಗಳಿಗಾಗಿ ನಾಲ್ಕು-ಹಂತದ ಕ್ಲೈಂಟ್/ಪೂರೈಕೆದಾರ ಪೇಲೋಡ್ ವೀಕ್ಷಣೆ ಬೇಕಿದ್ದರೆ ಮೊದಲು ವಿವರವಾದ ಲಾಗಿಂಗ್ ಅನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ.",
       "copyAll": "ಎಲ್ಲವನ್ನೂ ನಕಲಿಸಿ",
-      "copiedAll": "ಎಲ್ಲವನ್ನೂ ನಕಲಿಸಲಾಗಿದೆ"
+      "copiedAll": "ಎಲ್ಲವನ್ನೂ ನಕಲಿಸಲಾಗಿದೆ",
+      "resilienceStoredError": "ಸಂಗ್ರಹಿಸಿದ ದೋಷದಿಂದ ಒದಗಿಸಲಾಗಿದೆ",
+      "resilienceParked": "ಕಳುಹಿಸುವ ಮೊದಲು {ms} ತಡೆಹಿಡಿಯಲಾಗಿದೆ",
+      "resilienceRotations": "{count} ಖಾತೆ ಬದಲಾವಣೆಗಳು",
+      "resilienceRetried": "ಖಾಲಿ ಸರದಿಯನ್ನು ಮರುಪ್ರಯತ್ನಿಸಲಾಗಿದೆ",
+      "resilienceContinued": "ಸ್ಟ್ರೀಮ್ ಮಧ್ಯದಿಂದ ಮುಂದುವರಿಸಲಾಗಿದೆ",
+      "resilienceRecovered": "ಸ್ಥಿತಿಸ್ಥಾಪಕತ್ವ ಕ್ರಿಯೆಯಿಂದ ಮರುಪಡೆಯಲಾಗಿದೆ"
     }
   },
   "proxyLogger": {

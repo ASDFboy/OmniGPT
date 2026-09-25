@@ -11509,7 +11509,13 @@
       "correlationIdValue": "معرّف الارتباط: {id}",
       "detailedPayloadInfo": "قم بتمكين تسجيل الدخول التفصيلي أولاً إذا كنت ترغب في عرض الحمولة من أربعة مراحل للعميل/المزود للطلبات الجديدة.",
       "copyAll": "نسخ الكل",
-      "copiedAll": "تم نسخ الكل"
+      "copiedAll": "تم نسخ الكل",
+      "resilienceStoredError": "تم التقديم من خطأ محفوظ",
+      "resilienceParked": "انتظار {ms} قبل الإرسال",
+      "resilienceRotations": "{count} تبديلات للحساب",
+      "resilienceRetried": "إعادة المحاولة لدور فارغ",
+      "resilienceContinued": "استئناف في منتصف التدفق",
+      "resilienceRecovered": "تم الاسترداد عبر إجراء المرونة"
     }
   },
   "proxyLogger": {

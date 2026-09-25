@@ -11509,7 +11509,13 @@
       "correlationIdValue": "കോറിലേഷൻ ID: {id}",
       "detailedPayloadInfo": "പുതിയ അഭ്യർത്ഥനകൾക്കായുള്ള നാല്-ഘട്ട ക്ലയന്റ്/പ്രൊവൈഡർ പേലോഡ് കാഴ്ച വേണമെങ്കിൽ ആദ്യം വിശദമായ ലോഗിംഗ് പ്രവർത്തനക്ഷമമാക്കുക.",
       "copyAll": "എല്ലാം പകർത്തുക",
-      "copiedAll": "എല്ലാം പകർത്തി"
+      "copiedAll": "എല്ലാം പകർത്തി",
+      "resilienceStoredError": "സംഭരിച്ച പിശകിൽ നിന്ന് നൽകി",
+      "resilienceParked": "അയയ്ക്കുന്നതിന് മുമ്പ് {ms} തടഞ്ഞുവച്ചു",
+      "resilienceRotations": "{count} അക്കൗണ്ട് റൊട്ടേഷനുകൾ",
+      "resilienceRetried": "ശൂന്യമായ ടേൺ വീണ്ടും ശ്രമിച്ചു",
+      "resilienceContinued": "സ്ട്രീമിന്റെ മധ്യത്തിൽ നിന്ന് തുടർന്നു",
+      "resilienceRecovered": "റെസിലിയൻസ് നടപടിയിലൂടെ വീണ്ടെടുത്തു"
     }
   },
   "proxyLogger": {

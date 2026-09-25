@@ -11509,7 +11509,13 @@
       "correlationIdValue": "相関ID: {id}",
       "detailedPayloadInfo": "新しいリクエストのために四段階のクライアント/プロバイダー ペイロードビューを表示したい場合は、まず詳細なログ記録を有効にしてください。",
       "copyAll": "すべてコピー",
-      "copiedAll": "すべてコピーしました"
+      "copiedAll": "すべてコピーしました",
+      "resilienceStoredError": "保存済みエラーから応答",
+      "resilienceParked": "送信前に{ms}待機",
+      "resilienceRotations": "アカウント切替{count}回",
+      "resilienceRetried": "空ターンを再試行",
+      "resilienceContinued": "ストリーム途中で再開",
+      "resilienceRecovered": "レジリエンス動作で回復"
     }
   },
   "proxyLogger": {

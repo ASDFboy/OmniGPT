@@ -11509,7 +11509,13 @@
       "correlationIdValue": "संबंधित आयडी: {id}",
       "detailedPayloadInfo": "नवीन विनंत्यांसाठी चार-चरणीय क्लायंट/प्रदाता पेलोड दृश्य पाहण्यासाठी प्रथम तपशीलवार लॉगिंग सक्षम करा.",
       "copyAll": "सर्व कॉपी करा",
-      "copiedAll": "सर्व कॉपी केले"
+      "copiedAll": "सर्व कॉपी केले",
+      "resilienceStoredError": "जतन केलेल्या त्रुटीतून दिले",
+      "resilienceParked": "पाठवण्यापूर्वी {ms} थांबवले",
+      "resilienceRotations": "{count} खाते रोटेशन",
+      "resilienceRetried": "रिकामी फेरी पुन्हा प्रयत्न केली",
+      "resilienceContinued": "स्ट्रीमच्या मध्यातून पुन्हा सुरू केले",
+      "resilienceRecovered": "लवचिकता कृतीद्वारे पुनर्प्राप्त"
     }
   },
   "proxyLogger": {

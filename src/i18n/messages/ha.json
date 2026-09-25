@@ -11509,7 +11509,13 @@
       "correlationIdValue": "ID na Alaƙa: {id}",
       "detailedPayloadInfo": "Da farko, kunna yin cikakken log idan kana son ganin payload na matakai huɗu na abokin ciniki/mai bayarwa don sabbin buƙatu.",
       "copyAll": "Kwafi duka",
-      "copiedAll": "An kwafi duka"
+      "copiedAll": "An kwafi duka",
+      "resilienceStoredError": "An bayar daga kuskuren da aka adana",
+      "resilienceParked": "An ajiye {ms} kafin aikawa",
+      "resilienceRotations": "Juyawar asusu {count}",
+      "resilienceRetried": "An sake gwada zagaye mara komai",
+      "resilienceContinued": "An ci gaba a tsakiyar rafi",
+      "resilienceRecovered": "An dawo da shi ta matakin juriya"
     }
   },
   "proxyLogger": {

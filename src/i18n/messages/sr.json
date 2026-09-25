@@ -11509,7 +11509,13 @@
       "correlationIdValue": "ID корелације: {id}",
       "detailedPayloadInfo": "Ако за нове захтеве желите приказ садржаја клијента и провајдера у четири фазе, прво омогућите детаљно логовање.",
       "copyAll": "Копирај све",
-      "copiedAll": "Све копирано"
+      "copiedAll": "Све копирано",
+      "resilienceStoredError": "Послужено из сачуване грешке",
+      "resilienceParked": "Задржано {ms} пре слања",
+      "resilienceRotations": "{count} ротација налога",
+      "resilienceRetried": "Празан потез поновљен",
+      "resilienceContinued": "Настављено усред стрима",
+      "resilienceRecovered": "Опорављено акцијом отпорности"
     }
   },
   "proxyLogger": {

@@ -11509,7 +11509,13 @@
       "correlationIdValue": "מזהה קורלציה: {id}",
       "detailedPayloadInfo": "אפשר לוגים מפורטים קודם אם אתה רוצה את תצוגת העומס של הלקוח/ספק בארבעה שלבים עבור בקשות חדשות.",
       "copyAll": "העתק הכול",
-      "copiedAll": "הכול הועתק"
+      "copiedAll": "הכול הועתק",
+      "resilienceStoredError": "הוגש משגיאה שמורה",
+      "resilienceParked": "הושהה {ms} לפני השליחה",
+      "resilienceRotations": "{count} החלפות חשבון",
+      "resilienceRetried": "תור ריק נוסה שוב",
+      "resilienceContinued": "חודש באמצע הזרם",
+      "resilienceRecovered": "שוחזר באמצעות פעולת חוסן"
     }
   },
   "proxyLogger": {
