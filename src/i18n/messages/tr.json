@@ -12806,7 +12806,12 @@
     "createDahlTokenFailed": "Dahl token oluşturulamadı",
     "providerProxy": "Vekil sunucu",
     "providerProxyConfigureHint": "Proxy'yi yapılandırın",
-    "providerProxyTitleConfigured": "Proxy yapılandırıldı: {host}"
+    "providerProxyTitleConfigured": "Proxy yapılandırıldı: {host}",
+    "inheritConnectionOption": "Kendi proxysi yok (bağlantıyı devralır)",
+    "inheritedProxy": "Bağlantıyı devralır: {host}",
+    "inheritedPool": "Bağlantı havuzunu devralır ({count})",
+    "poolEmptyBlocked": "Havuz boş — istekler başarısız olur (doğrudan değil)",
+    "directEgress": "Doğrudan (proxy yok)"
   },
   "gamification": {
     "leaderboardScopes": {
