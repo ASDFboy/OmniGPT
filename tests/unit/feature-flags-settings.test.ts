@@ -48,7 +48,9 @@ const {
 // takes it to 78.
 // OPENCODE_POOL_RESELECT (re-select a pool member per attempt after a
 // per-address 429, default off) takes the registry to 79.
-const EXPECTED_FEATURE_FLAG_COUNT = 79;
+// PROXY_POOL_SHARED_EGRESS_ORDER (shared-egress pool ordering, default off)
+// takes it to 80.
+const EXPECTED_FEATURE_FLAG_COUNT = 80;
 
 // ──────────────────────────────────────────────────────
 // Test group 1 — Flag definitions registry
