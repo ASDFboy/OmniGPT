@@ -11414,6 +11414,7 @@
       "compressed": "Saspiešana",
       "tps": "TPS",
       "duration": "Ilgums",
+      "addedWait": "Pievienotā gaidīšana",
       "time": "Laiks",
       "conversation": "Saruna",
       "ttft": "TTFT"
@@ -11488,6 +11489,7 @@
       "startedAt": "Sākts",
       "endedAt": "Pabeigts",
       "duration": "Ilgums",
+      "addedWait": "Pievienotā gaidīšana",
       "model": "Modelis",
       "provider": "Nodrošinātājs",
       "account": "Konts",

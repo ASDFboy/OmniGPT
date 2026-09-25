@@ -11414,6 +11414,7 @@
       "compressed": "Kompresi",
       "tps": "TPS",
       "duration": "Durasi",
+      "addedWait": "Tunggu Tambahan",
       "time": "Waktu",
       "conversation": "Percakapan",
       "ttft": "TTFT"
@@ -11488,6 +11489,7 @@
       "startedAt": "Dimulai Pada",
       "endedAt": "Berakhir Pada",
       "duration": "Durasi",
+      "addedWait": "Tunggu Tambahan",
       "model": "Model",
       "provider": "Penyedia",
       "account": "Akun",

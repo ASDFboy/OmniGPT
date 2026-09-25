@@ -11414,6 +11414,7 @@
       "compressed": "ضغط",
       "tps": "TPS",
       "duration": "المدة",
+      "addedWait": "انتظار مضاف",
       "time": "الوقت",
       "conversation": "المحادثة",
       "ttft": "TTFT"
@@ -11488,6 +11489,7 @@
       "startedAt": "بدأت في",
       "endedAt": "انتهى في",
       "duration": "المدة",
+      "addedWait": "انتظار مضاف",
       "model": "نموذج",
       "provider": "مزود",
       "account": "حساب",

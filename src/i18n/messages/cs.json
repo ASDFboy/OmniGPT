@@ -11414,6 +11414,7 @@
       "compressed": "Komprese",
       "tps": "TPS",
       "duration": "Doba trvání",
+      "addedWait": "Přidané čekání",
       "time": "Čas",
       "conversation": "Konverzace",
       "ttft": "TTFT"
@@ -11488,6 +11489,7 @@
       "startedAt": "Začalo v",
       "endedAt": "Skončilo v",
       "duration": "Doba trvání",
+      "addedWait": "Přidané čekání",
       "model": "Model",
       "provider": "Poskytovatel",
       "account": "Účet",

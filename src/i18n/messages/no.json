@@ -11414,6 +11414,7 @@
       "compressed": "Komprimering",
       "tps": "TPS",
       "duration": "Varighet",
+      "addedWait": "Ekstra ventetid",
       "time": "Tid",
       "conversation": "Samtale",
       "ttft": "TTFT"
@@ -11488,6 +11489,7 @@
       "startedAt": "Startet Klokken",
       "endedAt": "Avsluttet Kl",
       "duration": "Varighet",
+      "addedWait": "Ekstra ventetid",
       "model": "Modell",
       "provider": "Leverandør",
       "account": "Konto",

@@ -11414,6 +11414,7 @@
       "compressed": "Компресија",
       "tps": "TPS",
       "duration": "Трајање",
+      "addedWait": "Dodatno čekanje",
       "time": "Време",
       "conversation": "Разговор",
       "ttft": "TTFT"
@@ -11488,6 +11489,7 @@
       "startedAt": "Почетак",
       "endedAt": "Крај",
       "duration": "Трајање",
+      "addedWait": "Dodatno čekanje",
       "model": "Модел",
       "provider": "Провајдер",
       "account": "Налог",

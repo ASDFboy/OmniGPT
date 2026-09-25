@@ -16,7 +16,9 @@ import {
   runWithDirectFetchContext,
   runWithProxyContext,
   noteRotationAccount,
+  noteAddedWait,
   resolveProxyForRequest,
+  type AddedWaitCause,
 } from "../utils/proxyFetch.ts";
 import {
   createServedAccountTracker,
@@ -676,6 +678,27 @@ export class OpencodeExecutor extends BaseExecutor {
       const requestPacing = egressPacing.initEgressPacingForRequest(); // Off by default.
       // served-account changes (effective-change counting) live in the leaf tracker.
       const noteServedAccount = createServedAccountTracker();
+      // Cumulative wait imposed before dispatch (egress pacing + park),
+      // published as snapshots to the ALS capture sink. A stopwatch, never a
+      // key attribute — no egress-key read here.
+      const addedWait = { ms: 0, causes: new Set<AddedWaitCause>() };
+      const publishAddedWait = (): void => noteAddedWait(addedWait.ms, addedWait.causes);
+      // Single park counter (wrapper alone, no hook in the park
+      // module). parkWithHeartbeat calls driver.sleep per elapsed step in both
+      // stream (closure start()) and non-stream paths, so wrapping this one
+      // sleep counts every parked step exactly once. Monotone += only.
+      const parkSleepCounting = async (
+        ms: number,
+        signal?: AbortSignal | null
+      ): Promise<boolean> => {
+        const elapsed = await this.parkSleep(ms, signal);
+        if (elapsed) {
+          addedWait.ms += ms;
+          addedWait.causes.add("park");
+          publishAddedWait();
+        }
+        return elapsed;
+      };
       const appliedEgress = egressPacing.createAppliedEgressTracker(
         this.buildUrl(String(input.model ?? ""), Boolean(input.stream)),
         resolveProxyForRequest
@@ -787,6 +810,10 @@ export class OpencodeExecutor extends BaseExecutor {
         // Pin egress to this account's proxy for the whole BaseExecutor dispatch
         // (incl. its intra-URL 429 retries). skipUpstreamRetry lets THIS loop own
         // the cross-account 429 fallback instead of BaseExecutor's same-key retry.
+        // Wall-clock around the paced acquire (sync repick included —
+        // µs against waits in seconds). Time endured in queue counts on every
+        // outcome: slot granted, fail-open null, or repick.
+        const throttleStart = Date.now();
         const paced = await egressPacing.startPacedDispatch(
           requestPacing,
           account,
@@ -797,6 +824,12 @@ export class OpencodeExecutor extends BaseExecutor {
         );
         const egressRelease = paced.release;
         account = paced.account;
+        const throttleDelta = Math.max(0, Date.now() - throttleStart);
+        if (throttleDelta > 0) {
+          addedWait.ms += throttleDelta;
+          addedWait.causes.add("throttle");
+          publishAddedWait();
+        }
         appliedEgress.rememberServed(account); // Served (post repick), never acquire-time.
         let result: HttpExecuteResult;
         try {
@@ -946,7 +979,7 @@ export class OpencodeExecutor extends BaseExecutor {
                     execute: (i: ExecuteInput) =>
                       super.execute(i) as Promise<ExecutorExecuteResult & { response: Response }>,
                     markSuccess: (a: ScopedAccount) => markSuccess(a),
-                    sleep: this.parkSleep,
+                    sleep: parkSleepCounting,
                     accounts,
                     replayKeyOfMember: keyOfMember,
                   },

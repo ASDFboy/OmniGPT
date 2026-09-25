@@ -11414,6 +11414,7 @@
       "compressed": "Kompressjoni",
       "tps": "TPS",
       "duration": "Tul taż-żmien",
+      "addedWait": "Stennija Miżjuda",
       "time": "Ħin",
       "conversation": "Konversazzjoni",
       "ttft": "TTFT"
@@ -11488,6 +11489,7 @@
       "startedAt": "Ħin tal-bidu",
       "endedAt": "Ħin tat-tmiem",
       "duration": "Tul ta’ żmien",
+      "addedWait": "Stennija Miżjuda",
       "model": "Mudell",
       "provider": "Fornitur",
       "account": "Kont",

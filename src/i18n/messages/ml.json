@@ -11414,6 +11414,7 @@
       "compressed": "കംപ്രഷൻ",
       "tps": "TPS",
       "duration": "ദൈർഘ്യം",
+      "addedWait": "കൂട്ടിച്ചേർത്ത കാത്തിരിപ്പ്",
       "time": "സമയം",
       "conversation": "സംഭാഷണം",
       "ttft": "TTFT"
@@ -11488,6 +11489,7 @@
       "startedAt": "ആരംഭിച്ച സമയം",
       "endedAt": "അവസാനിച്ച സമയം",
       "duration": "ദൈർഘ്യം",
+      "addedWait": "കൂട്ടിച്ചേർത്ത കാത്തിരിപ്പ്",
       "model": "മോഡൽ",
       "provider": "ദാതാവ്",
       "account": "അക്കൗണ്ട്",

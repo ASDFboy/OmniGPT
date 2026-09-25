@@ -11414,6 +11414,7 @@
       "compressed": "Tömörítés",
       "tps": "TPS",
       "duration": "Időtartam",
+      "addedWait": "Hozzáadott várakozás",
       "time": "Időpont",
       "conversation": "Beszélgetés",
       "ttft": "TTFT"
@@ -11488,6 +11489,7 @@
       "startedAt": "Kezdődött Itt",
       "endedAt": "Befejezve Itt",
       "duration": "Időtartam",
+      "addedWait": "Hozzáadott várakozás",
       "model": "Modell",
       "provider": "Szolgáltató",
       "account": "Fiók",
