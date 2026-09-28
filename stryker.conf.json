@@ -525,7 +525,8 @@
       "tests/unit/sudo-password-never-reaches-command-stdin.test.ts",
       "tests/unit/middleware-hook-realm-isolation.test.ts",
       "tests/unit/bootstrap-env-private-modes.test.ts",
-      "tests/unit/electron-server-env-private-modes.test.ts"
+      "tests/unit/electron-server-env-private-modes.test.ts",
+      "tests/unit/provider-test-local-runtime-probe.test.ts"
     ],
     "nodeArgs": [
       "--import",
