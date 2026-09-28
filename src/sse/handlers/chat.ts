@@ -82,6 +82,7 @@ import {
 import { dispatchChatWithAffinityEviction } from "./chatDispatch";
 import { getCachedSettings, getCombosCacheVersion } from "@/lib/db/readCache";
 import { comboCheckProvider, ghComboGate } from "./chat/githubLiveCatalogFilter.ts";
+import { markEmergencyFallback } from "./emergencyFallbackHeader.ts";
 import { comboTargetPassesKeyModelPolicy } from "./chat/comboTargetKeyPolicy.ts";
 import { recordGateRejection, recordQuotaParkedSkip } from "./quotaParkedSkipUsage";
 import { getCombos } from "@/lib/db/combos";
@@ -2372,9 +2373,8 @@ async function handleSingleModelChat(
               Boolean(comboName) // isCombo if comboName exists
             );
 
-            if (fallbackResponse.ok) {
-              return fallbackResponse;
-            }
+            if (fallbackResponse.ok)
+              return markEmergencyFallback(fallbackResponse, currentModelStr, fallbackModelStr);
 
             log.warn(
               "EMERGENCY_FALLBACK",
