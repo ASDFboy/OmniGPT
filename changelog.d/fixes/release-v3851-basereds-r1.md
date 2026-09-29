@@ -1,0 +1,2 @@
+- **fix(combo):** OmniRoute's own local model-cooldown 429 no longer counts as provider quota exhaustion, so a plain transient 429 on one target keeps the remaining same-provider combo targets eligible again; #14190's CLIProxyAPI `model_cooldown` classification had started matching our own identical cooldown body (#1731)
+- **fix(db):** importing the proxy-log DB module no longer hydrates proxy logs from SQLite at import time, so modules that only reach `db/proxies` (e.g. the compression pipeline) stop opening the database as a side effect
