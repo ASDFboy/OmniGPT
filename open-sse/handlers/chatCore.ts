@@ -156,6 +156,7 @@ import {
   COLORS,
 } from "../utils/stream.ts";
 import { ensureStreamReadiness } from "../utils/streamReadiness.ts";
+import { requestTtftMs } from "../utils/streamTiming.ts";
 import { resolveSuppressThinkClose, THINKING_MARKER_HEADER } from "../utils/thinkCloseMarker.ts";
 import { resolveStreamReadinessTimeout } from "../utils/streamReadinessPolicy.ts";
 import { resolveAgentGoalPolicy } from "../utils/agentGoalPolicy.ts";
@@ -5972,6 +5973,7 @@ async function handleChatCoreInner({
   let streamFailureCompletionRecorded = false;
 
   // Callback to save call log when stream completes (include responseBody when provided by stream)
+  let streamTimingOriginOffsetMs: number | null = null; // startTime → StreamTiming start
   const onStreamComplete = ({
     status: streamStatus,
     usage: streamUsage,
@@ -5981,10 +5983,11 @@ async function handleChatCoreInner({
     reasoningMeta: streamReasoningMeta,
     error: streamError,
     errorCode: streamErrorCode,
-    ttft,
+    firstOutputMs,
     itlMs: streamItlMs,
     interrupted: _streamInterrupted,
   }) => {
+    const ttft = requestTtftMs(streamTimingOriginOffsetMs, firstOutputMs);
     const normalizedStreamStatus = streamStatus || 200;
     if (streamCompletionRecorded) return;
     streamCompletionRecorded = true;
@@ -6261,6 +6264,7 @@ async function handleChatCoreInner({
   // DSML tool-call markers as plain text → incomplete `stop` finish).
   const requestedThinking = hasActiveClaudeThinking((body ?? {}) as Record<string, unknown>);
 
+  streamTimingOriginOffsetMs = Date.now() - startTime;
   if (needsResponsesTranslation) {
     // Provider returns openai-responses, translate to openai (Chat Completions) that clients expect
     log?.debug?.("STREAM", `Responses translation mode: openai-responses → openai`);
