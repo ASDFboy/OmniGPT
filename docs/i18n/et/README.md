@@ -1692,7 +1692,7 @@ MIT litsents - vaata täpsemalt [LICENSE](LICENSE).
 
 **[⬆ Tagasi üles](#-omniroute)** · Loodud ❤️-ga avatud lähtekoodiga AI kogukonna jaoks.
 
-<sub>OmniRoute v3.8.51 · Node ≥22.22.2 · MIT License · <a href="https://omniroute.online">omniroute.online</a></sub>
+<sub>OmniRoute v3.8.52 · Node ≥22.22.2 · MIT License · <a href="https://omniroute.online">omniroute.online</a></sub>
 
 </div>
 <!-- GitHub Discussions enabled for community Q&A -->
