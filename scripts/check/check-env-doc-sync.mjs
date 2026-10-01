@@ -103,6 +103,9 @@ const IGNORE_FROM_CODE = new Set([
   // CI providers (set by the runner).
   "GITHUB_BASE_REF",
   "GITHUB_BASE_SHA",
+  // Actions-owned output file used by scripts/ci/release-green-result.mjs.
+  // A runner protocol path, not user-configurable OmniRoute environment.
+  "GITHUB_OUTPUT",
   // check-ai-attribution.mjs reads the PR of the Actions event payload when run without args (#14436)
   "GITHUB_EVENT_PATH",
   // Set by the Actions runner; the ts7 ratchet appends its job summary there
