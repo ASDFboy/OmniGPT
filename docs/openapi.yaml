@@ -3563,6 +3563,17 @@ paths:
         "200":
           description: Paginated call logs
 
+  /api/usage/call-logs/filters:
+    get:
+      tags: [Usage]
+      summary: Get call log filter options
+      description: >-
+        Distinct providers, models, accounts and API keys seen in call logs, plus every
+        configured API key (id and name only). Feeds the Logs tab filter dropdowns.
+      responses:
+        "200":
+          description: Filter options (providers, models, accounts, apiKeys, configuredKeys)
+
   /api/usage/call-logs/{id}:
     get:
       tags: [Usage]
