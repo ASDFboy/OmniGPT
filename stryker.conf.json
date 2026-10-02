@@ -343,6 +343,7 @@
       "tests/unit/model-lockout-max-cooldown.test.ts",
       "tests/unit/native-codex-turn-pin-10379.test.ts",
       "tests/unit/native-codex-turn-pin-model-scoped-fallback.test.ts",
+      "tests/unit/native-codex-turn-pin-short-lockout.test.ts",
       "tests/unit/no-memory-header.test.ts",
       "tests/unit/noauth-autocombo-lockout-7623.test.ts",
       "tests/unit/noauth-model-lockout.test.ts",
