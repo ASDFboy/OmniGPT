@@ -712,7 +712,7 @@ export class OpencodeExecutor extends BaseExecutor {
         this.buildUrl(String(input.model ?? ""), Boolean(input.stream)),
         resolveProxyForRequest
       );
-      const { readAppliedKey, keyOfMember } = appliedEgress;
+      const { readAppliedKey, keyOfMember, noteRefused } = appliedEgress;
 
       for (let attempt = 0; attempt < accounts.length + emptyRejectionBudget; attempt++) {
         appliedEgress.resetAttempt();
@@ -1077,10 +1077,8 @@ export class OpencodeExecutor extends BaseExecutor {
               const key = proxyKeyOf(account.proxy);
               if (key !== null) geoTriedProxyKeys.add(key);
               else directTried = true;
-              log?.warn?.(
-                "OPENCODE",
-                `${cid}geo-blocked on account ${masked}, rotating… ${egress}`
-              );
+              const setAsideMs = noteRefused(account, skipRecentlyFailed, "geo_blocked");
+              egressPacing.logRefusedOutcome(log, cid, masked, setAsideMs, "geo-blocked", egress);
               // Single account with a proxy: 0 retries (same egress = dead latency).
               // (The fast path above already covers single-without-proxy; here length===1 WITH proxy.)
               if (accounts.length === 1) {
