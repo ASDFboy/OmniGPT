@@ -61,6 +61,14 @@
       "sourceRemoved": ["src/lib/oauth/services/raycastLocal.ts"],
       "reason": "v3.8.50 provenance remediation: the retired Raycast integration no longer ships local credential extraction. The replacement checks exact source closure and the negative runtime contract."
     },
+    "@omniroute/opencode-plugin-v2/tests/auto-combos.test.ts": {
+      "replacement": "@omniroute/opencode-plugin-v2/tests/refresh-routes.test.ts",
+      "reason": "v3.8.52 #15392: the retired virtual-entries route and its fetcher (src/shared/auto-combos.ts) no longer ship; the replacement covers the gateway /v1/models publish path."
+    },
+    "@omniroute/opencode-plugin-v2/tests/shared-auto-combos.test.ts": {
+      "replacement": "@omniroute/opencode-plugin-v2/tests/catalog-provider.test.ts",
+      "reason": "v3.8.52 #15392: same retirement; the replacement covers the served catalog entries."
+    },
     "tests/unit/web-cookie-hailuo-web-11000.test.ts": {
       "replacement": "tests/unit/gpl-derived-provider-removals.test.ts",
       "sourceRemoved": [
@@ -174,9 +182,7 @@
       "reason": "v3.8.50 #9126 (commit 8fac6bcd48): pluginWorker.ts, sandbox.ts e signing.ts foram removidos por completo (\"zero importers confirmed\") — o subsistema de sandbox de plugins com worker-thread nunca foi ligado a nenhum consumidor. O teste era source-scan sobre pluginWorker.ts (ver docstring do arquivo deletado); sem o arquivo-fonte não há mais o que testar. OMNIROUTE_PLUGINS_ALLOW_EXEC também foi removido de .env.example e da doc na mesma release. Sem substituto porque a feature foi extinta, não migrada."
     },
     "tests/unit/plugins-sandbox.test.ts": {
-      "sourceRemoved": [
-        "src/lib/plugins/sandbox.ts"
-      ],
+      "sourceRemoved": ["src/lib/plugins/sandbox.ts"],
       "reason": "v3.8.50 #9126 (commit 8fac6bcd48): sandbox.ts foi removido por completo junto com pluginWorker.ts e signing.ts (\"zero importers confirmed\", subsistema de sandbox de plugins nunca ligado a nenhum consumidor). O teste cobria SandboxLevel/getSandboxLabel exportados por sandbox.ts; sem o arquivo-fonte não há mais símbolo a testar. Mesma causa-raiz de tests/unit/plugin-sandbox-permissions.test.ts nesta entrada."
     },
     "tests/unit/gemini-3-5-flash-thinking.test.ts": {
