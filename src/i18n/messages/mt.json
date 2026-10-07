@@ -10896,7 +10896,10 @@
     "gitlabDuoSetupTitle": "Konfigurazzjoni OAuth ta' GitLab Duo",
     "gitlabDuoSetupMessage": "GitLab Duo OAuth mhuwiex ikkonfigurat. Irreġistra applikazzjoni OAuth f’{applicationsUrl} bl-URI ta' direzzjoni mill-ġdid {redirectUri} u bl-ambiti \"{scopes}\", imbagħad issettja {clientIdEnv} (u, jekk trid, {clientSecretEnv}) u erġa' ibda.",
     "gitlabDuoSetupDescription": "Wara li l-applikazzjoni tiġi rreġistrata u l-varjabbli ambjentali jiġu ssettjati fuq din l-istanza ta' OmniRoute, ikklikkja Kompli biex tibda l-login OAuth.",
-    "continue": "Kompli"
+    "continue": "Kompli",
+    "tabPasteSetupToken": "Token tas-setup",
+    "claudeSetupTokenDescription": "Ħaddem `claude setup-token` f'terminal u waħħal it-token li jistampa. Huwa validu għal sena u m'għandux token ta' aġġornament. OmniRoute jibgħat talba waħda ta' test lil Anthropic qabel ma jsalvah.",
+    "claudeSetupTokenPlaceholder": "sk-ant-oat01-..."
   },
   "cursorAuthModal": {
     "title": "Qabbad Cursor",

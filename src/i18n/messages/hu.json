@@ -10896,7 +10896,10 @@
     "gitlabDuoSetupTitle": "GitLab Duo OAuth beállítása",
     "gitlabDuoSetupMessage": "A GitLab Duo OAuth nincs konfigurálva. Regisztráljon egy OAuth alkalmazást a {applicationsUrl} címen a {redirectUri} átirányítási URI-val és a \"{scopes}\" jogosultságokkal, majd állítsa be a {clientIdEnv} (és opcionálisan a {clientSecretEnv}) értékét, és indítsa újra.",
     "gitlabDuoSetupDescription": "Miután az alkalmazás regisztrálva lett és az env változók beállítva lettek ezen az OmniRoute példányon, kattintson a Tovább gombra az OAuth bejelentkezés megkezdéséhez.",
-    "continue": "Folytatás"
+    "continue": "Folytatás",
+    "tabPasteSetupToken": "Beállítási token",
+    "claudeSetupTokenDescription": "Futtassa a `claude setup-token` parancsot egy terminálban, és illessze be a kiírt tokent. Egy évig érvényes, és nincs frissítési tokenje. Mentés előtt az OmniRoute egy tesztkérést küld az Anthropicnak.",
+    "claudeSetupTokenPlaceholder": "sk-ant-oat01-..."
   },
   "cursorAuthModal": {
     "title": "Csatlakoztassa a kurzor IDE-t",

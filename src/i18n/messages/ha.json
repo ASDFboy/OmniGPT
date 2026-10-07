@@ -10896,7 +10896,10 @@
     "gitlabDuoSetupTitle": "Saitin GitLab Duo OAuth",
     "gitlabDuoSetupMessage": "Ba a saita GitLab Duo OAuth ba. Yi rajistar manhajar OAuth a {applicationsUrl} tare da URI na turawa {redirectUri} da scopes \"{scopes}\", sannan saita {clientIdEnv} (da kuma {clientSecretEnv} idan ana so) kuma sake kunnawa.",
     "gitlabDuoSetupDescription": "Bayan an yi rajistar manhajar kuma an saita environment variables a wannan shigarwar OmniRoute, danna Ci gaba don fara shiga ta OAuth.",
-    "continue": "Ci gaba"
+    "continue": "Ci gaba",
+    "tabPasteSetupToken": "Alamar saitin",
+    "claudeSetupTokenDescription": "Gudanar da `claude setup-token` a cikin tasha kuma liƙa alamar da ya buga. Tana aiki na shekara ɗaya kuma ba ta da alamar sabuntawa. OmniRoute yana aika buƙatar gwaji ɗaya zuwa Anthropic kafin ya adana ta.",
+    "claudeSetupTokenPlaceholder": "sk-ant-oat01-..."
   },
   "cursorAuthModal": {
     "title": "Haɗa Cursor",

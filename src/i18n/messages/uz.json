@@ -10896,7 +10896,10 @@
     "gitlabDuoSetupTitle": "GitLab Duo OAuth sozlamasi",
     "gitlabDuoSetupMessage": "GitLab Duo OAuth sozlanmagan. {applicationsUrl} manzilida qayta yoʻnaltirish URI manzili sifatida {redirectUri} va ruxsat doiralari sifatida \"{scopes}\" bilan OAuth ilovasini roʻyxatdan oʻtkazing, soʻng {clientIdEnv} (va ixtiyoriy ravishda {clientSecretEnv}) ni sozlab, qayta ishga tushiring.",
     "gitlabDuoSetupDescription": "Ilova roʻyxatdan oʻtkazilib, ushbu OmniRoute instansiyasida muhit oʻzgaruvchilari sozlangach, OAuth orqali kirishni boshlash uchun Davom etish tugmasini bosing.",
-    "continue": "Davom etish"
+    "continue": "Davom etish",
+    "tabPasteSetupToken": "Sozlash tokeni",
+    "claudeSetupTokenDescription": "Terminalda `claude setup-token` buyrug'ini ishga tushiring va u chiqargan tokenni joylashtiring. U bir yil amal qiladi va yangilash tokeniga ega emas. OmniRoute saqlashdan oldin Anthropic'ga bitta sinov so'rovini yuboradi.",
+    "claudeSetupTokenPlaceholder": "sk-ant-oat01-..."
   },
   "cursorAuthModal": {
     "title": "Cursor’ni ulash",

@@ -10896,7 +10896,10 @@
     "gitlabDuoSetupTitle": "Mipangilio ya GitLab Duo OAuth",
     "gitlabDuoSetupMessage": "GitLab Duo OAuth haijasanidiwa. Jisajili programu ya OAuth kwenye {applicationsUrl} na URI ya kurejea {redirectUri} na mipango \"{scopes}\", kisha weka {clientIdEnv} (na hiari {clientSecretEnv}) na uanzishe upya.",
     "gitlabDuoSetupDescription": "Baada ya programu kuandikishwa na vigezo vya mazingira kuwekwa kwenye mfano huu wa OmniRoute, bonyeza Endelea kuanza kuingia kwa OAuth.",
-    "continue": "Endelea"
+    "continue": "Endelea",
+    "tabPasteSetupToken": "Tokeni ya usanidi",
+    "claudeSetupTokenDescription": "Endesha `claude setup-token` kwenye terminal na ubandike tokeni inayochapisha. Ni halali kwa mwaka mmoja na haina tokeni ya kuonyesha upya. OmniRoute hutuma ombi moja la majaribio kwa Anthropic kabla ya kuihifadhi.",
+    "claudeSetupTokenPlaceholder": "sk-ant-oat01-..."
   },
   "cursorAuthModal": {
     "title": "Connect Cursor IDE",

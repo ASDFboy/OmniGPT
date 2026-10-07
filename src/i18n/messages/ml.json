@@ -10896,7 +10896,10 @@
     "gitlabDuoSetupTitle": "GitLab Duo OAuth സജ്ജീകരണം",
     "gitlabDuoSetupMessage": "GitLab Duo OAuth കോൺഫിഗർ ചെയ്തിട്ടില്ല. റീഡയറക്ട് URI {redirectUri}, \"{scopes}\" സ്കോപ്പുകൾ എന്നിവ ഉപയോഗിച്ച് {applicationsUrl}-ൽ ഒരു OAuth ആപ്ലിക്കേഷൻ രജിസ്റ്റർ ചെയ്യുക, തുടർന്ന് {clientIdEnv} (ആവശ്യമെങ്കിൽ {clientSecretEnv}-ഉം) സജ്ജീകരിച്ച് പുനരാരംഭിക്കുക.",
     "gitlabDuoSetupDescription": "ആപ്ലിക്കേഷൻ രജിസ്റ്റർ ചെയ്ത് ഈ OmniRoute ഇൻസ്റ്റൻസിൽ പരിസ്ഥിതി വേരിയബിളുകൾ സജ്ജീകരിച്ച ശേഷം, OAuth ലോഗിൻ ആരംഭിക്കാൻ തുടരുക എന്നതിൽ ക്ലിക്ക് ചെയ്യുക.",
-    "continue": "തുടരുക"
+    "continue": "തുടരുക",
+    "tabPasteSetupToken": "സജ്ജീകരണ ടോക്കൺ",
+    "claudeSetupTokenDescription": "ടെർമിനലിൽ `claude setup-token` പ്രവർത്തിപ്പിച്ച് അത് പ്രിന്റ് ചെയ്യുന്ന ടോക്കൺ ഒട്ടിക്കുക. ഇത് ഒരു വർഷത്തേക്ക് സാധുവാണ്, ഇതിന് റിഫ്രഷ് ടോക്കൺ ഇല്ല. സംരക്ഷിക്കുന്നതിന് മുമ്പ് OmniRoute Anthropic-ലേക്ക് ഒരു ടെസ്റ്റ് അഭ്യർത്ഥന അയയ്ക്കുന്നു.",
+    "claudeSetupTokenPlaceholder": "sk-ant-oat01-..."
   },
   "cursorAuthModal": {
     "title": "Cursor കണക്റ്റ് ചെയ്യുക",

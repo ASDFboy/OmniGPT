@@ -10896,7 +10896,10 @@
     "gitlabDuoSetupTitle": "GitLab Duo OAuth 設定",
     "gitlabDuoSetupMessage": "GitLab Duo OAuth 尚未配置。在 {applicationsUrl} 註冊一個 OAuth 應用程式，使用重定向 URI {redirectUri} 和範圍 \"{scopes}\"，然後設置 {clientIdEnv}（可選地設置 {clientSecretEnv}）並重新啟動。",
     "gitlabDuoSetupDescription": "在應用程式註冊並在此 OmniRoute 實例上設置環境變數後，點擊繼續以開始 OAuth 登錄。",
-    "continue": "繼續"
+    "continue": "繼續",
+    "tabPasteSetupToken": "設定權杖",
+    "claudeSetupTokenDescription": "在終端機中執行 `claude setup-token`，然後貼上它輸出的權杖。此權杖有效期為一年，沒有重新整理權杖。OmniRoute 會在儲存前向 Anthropic 發送一次測試請求。",
+    "claudeSetupTokenPlaceholder": "sk-ant-oat01-..."
   },
   "cursorAuthModal": {
     "title": "連線 Cursor IDE",

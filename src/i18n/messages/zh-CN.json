@@ -10896,7 +10896,10 @@
     "gitlabDuoSetupTitle": "GitLab Duo OAuth 设置",
     "gitlabDuoSetupMessage": "GitLab Duo OAuth 尚未配置。在 {applicationsUrl} 注册一个 OAuth 应用，使用重定向 URI {redirectUri} 和范围 \"{scopes}\"，然后设置 {clientIdEnv}（可选地设置 {clientSecretEnv}）并重启。",
     "gitlabDuoSetupDescription": "在应用程序注册并在此 OmniRoute 实例上设置环境变量后，单击继续以开始 OAuth 登录。",
-    "continue": "继续"
+    "continue": "继续",
+    "tabPasteSetupToken": "设置令牌",
+    "claudeSetupTokenDescription": "在终端中运行 `claude setup-token`，然后粘贴它输出的令牌。该令牌有效期为一年，没有刷新令牌。OmniRoute 会在保存前向 Anthropic 发送一次测试请求。",
+    "claudeSetupTokenPlaceholder": "sk-ant-oat01-..."
   },
   "cursorAuthModal": {
     "title": "连接 Cursor IDE",

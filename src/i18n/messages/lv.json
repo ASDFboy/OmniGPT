@@ -10896,7 +10896,10 @@
     "gitlabDuoSetupTitle": "GitLab Duo OAuth iestatīšana",
     "gitlabDuoSetupMessage": "GitLab Duo OAuth nav konfigurēts. Reģistrējiet OAuth lietotni {applicationsUrl} ar atsaukuma URI {redirectUri} un tvērumiem \"{scopes}\", tad iestatiet {clientIdEnv} (un pēc izvēles {clientSecretEnv}) un pārstartējiet.",
     "gitlabDuoSetupDescription": "Kad lietotne ir reģistrēta un vides mainīgie ir iestatīti šajā OmniRoute instancē, noklikšķiniet uz Turpināt, lai sāktu OAuth pieteikšanos.",
-    "continue": "Turpināt"
+    "continue": "Turpināt",
+    "tabPasteSetupToken": "Iestatīšanas marķieris",
+    "claudeSetupTokenDescription": "Terminālī palaidiet `claude setup-token` un ielīmējiet izdrukāto marķieri. Tas ir derīgs vienu gadu, un tam nav atsvaidzināšanas marķiera. Pirms saglabāšanas OmniRoute nosūta vienu testa pieprasījumu uz Anthropic.",
+    "claudeSetupTokenPlaceholder": "sk-ant-oat01-..."
   },
   "cursorAuthModal": {
     "title": "Savienot Cursor",
