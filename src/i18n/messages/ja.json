@@ -10896,7 +10896,10 @@
     "gitlabDuoSetupTitle": "GitLab Duo OAuth セットアップ",
     "gitlabDuoSetupMessage": "GitLab Duo OAuthが構成されていません。{applicationsUrl}でOAuthアプリケーションを登録し、リダイレクトURI {redirectUri}とスコープ\"{scopes}\"を設定してください。その後、{clientIdEnv}（オプションで{clientSecretEnv}も）を設定し、再起動してください。",
     "gitlabDuoSetupDescription": "アプリケーションが登録され、環境変数がこのOmniRouteインスタンスに設定された後、続行をクリックしてOAuthログインを開始します。",
-    "continue": "続ける"
+    "continue": "続ける",
+    "tabPasteSetupToken": "セットアップトークン",
+    "claudeSetupTokenDescription": "ターミナルで `claude setup-token` を実行し、表示されたトークンを貼り付けてください。有効期間は1年で、リフレッシュトークンはありません。OmniRoute は保存前に Anthropic へテストリクエストを1件送信します。",
+    "claudeSetupTokenPlaceholder": "sk-ant-oat01-..."
   },
   "cursorAuthModal": {
     "title": "カーソルIDEの接続",

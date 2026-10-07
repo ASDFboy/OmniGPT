@@ -10896,7 +10896,10 @@
     "gitlabDuoSetupTitle": "GitLab Duo OAuth kurulumu",
     "gitlabDuoSetupMessage": "GitLab Duo OAuth yapılandırılmamış. {applicationsUrl} adresinde bir OAuth uygulaması kaydedin, yönlendirme URI'sı {redirectUri} ve kapsamlar \"{scopes}\" ile birlikte, ardından {clientIdEnv} (ve isteğe bağlı olarak {clientSecretEnv}) ayarlayın ve yeniden başlatın.",
     "gitlabDuoSetupDescription": "Uygulama kaydedildikten ve bu OmniRoute örneğinde ortam değişkenleri ayarlandıktan sonra, OAuth oturum açma işlemini başlatmak için Devam'a tıklayın.",
-    "continue": "Devam Et"
+    "continue": "Devam Et",
+    "tabPasteSetupToken": "Kurulum belirteci",
+    "claudeSetupTokenDescription": "Bir terminalde `claude setup-token` komutunu çalıştırın ve yazdırdığı belirteci yapıştırın. Belirteç bir yıl geçerlidir ve yenileme belirteci yoktur. OmniRoute, kaydetmeden önce Anthropic'e bir test isteği gönderir.",
+    "claudeSetupTokenPlaceholder": "sk-ant-oat01-..."
   },
   "cursorAuthModal": {
     "title": "İmleç IDE'sini bağlayın",

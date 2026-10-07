@@ -10896,7 +10896,10 @@
     "gitlabDuoSetupTitle": "GitLab Duo OAuth 설정",
     "gitlabDuoSetupMessage": "GitLab Duo OAuth가 구성되지 않았습니다. {applicationsUrl}에서 리디렉션 URI {redirectUri} 및 범위 \"{scopes}\"로 OAuth 애플리케이션을 등록한 다음 {clientIdEnv} (선택적으로 {clientSecretEnv})를 설정하고 재시작하세요.",
     "gitlabDuoSetupDescription": "애플리케이션이 등록되고 이 OmniRoute 인스턴스에 환경 변수가 설정된 후, 계속 진행을 클릭하여 OAuth 로그인을 시작하세요.",
-    "continue": "계속하다"
+    "continue": "계속하다",
+    "tabPasteSetupToken": "설정 토큰",
+    "claudeSetupTokenDescription": "터미널에서 `claude setup-token`을 실행하고 출력된 토큰을 붙여넣으세요. 이 토큰은 1년간 유효하며 새로 고침 토큰이 없습니다. OmniRoute는 저장하기 전에 Anthropic에 테스트 요청을 한 번 보냅니다.",
+    "claudeSetupTokenPlaceholder": "sk-ant-oat01-..."
   },
   "cursorAuthModal": {
     "title": "Cursor IDE 연결",

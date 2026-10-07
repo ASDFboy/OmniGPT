@@ -10896,7 +10896,10 @@
     "gitlabDuoSetupTitle": "Ìṣètò OAuth GitLab Duo",
     "gitlabDuoSetupMessage": "A kò tíì ṣètò GitLab Duo OAuth. Forúkọsílẹ̀ ohun èlò OAuth ní {applicationsUrl} pẹ̀lú URI ìpadà {redirectUri} àti àwọn scopes \"{scopes}\", lẹ́yìn náà ṣètò {clientIdEnv} (àti {clientSecretEnv} bí o bá fẹ́) kí o sì tún un bẹ̀rẹ̀.",
     "gitlabDuoSetupDescription": "Lẹ́yìn tí a bá ti forúkọsílẹ̀ ohun èlò náà tí a sì ti ṣètò àwọn env vars lórí instance OmniRoute yìí, tẹ Tẹ̀síwájú láti bẹ̀rẹ̀ ìwọlé OAuth.",
-    "continue": "Tẹ̀síwájú"
+    "continue": "Tẹ̀síwájú",
+    "tabPasteSetupToken": "Àmì ìṣètò",
+    "claudeSetupTokenDescription": "Ṣiṣẹ́ `claude setup-token` nínú tẹ́mínà kí o sì lẹ àmì tí ó tẹ̀ jáde. Ó wúlò fún ọdún kan kò sì ní àmì ìsọdọ̀tun. OmniRoute ń fi ìbéèrè ìdánwò kan ránṣẹ́ sí Anthropic kí ó tó fi pamọ́.",
+    "claudeSetupTokenPlaceholder": "sk-ant-oat01-..."
   },
   "cursorAuthModal": {
     "title": "So Cursor pọ̀",

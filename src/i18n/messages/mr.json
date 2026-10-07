@@ -10896,7 +10896,10 @@
     "gitlabDuoSetupTitle": "GitLab Duo OAuth सेटअप",
     "gitlabDuoSetupMessage": "GitLab Duo OAuth कॉन्फिगर केलेले नाही. {applicationsUrl} येथे एक OAuth अनुप्रयोग नोंदणी करा ज्यामध्ये पुनर्निर्देश URI {redirectUri} आणि स्कोप्स \"{scopes}\" आहेत, नंतर {clientIdEnv} (आणि पर्यायी {clientSecretEnv}) सेट करा आणि पुन्हा सुरू करा.",
     "gitlabDuoSetupDescription": "अर्ज नोंदणीकृत झाल्यानंतर आणि या OmniRoute उदाहरणावर env vars सेट केल्यानंतर, OAuth लॉगिन सुरू करण्यासाठी Continue वर क्लिक करा.",
-    "continue": "सुरू ठेवा"
+    "continue": "सुरू ठेवा",
+    "tabPasteSetupToken": "सेटअप टोकन",
+    "claudeSetupTokenDescription": "टर्मिनलमध्ये `claude setup-token` चालवा आणि ते छापत असलेले टोकन पेस्ट करा. ते एका वर्षासाठी वैध आहे आणि त्याला रिफ्रेश टोकन नाही. जतन करण्यापूर्वी OmniRoute Anthropic ला एक चाचणी विनंती पाठवते.",
+    "claudeSetupTokenPlaceholder": "sk-ant-oat01-..."
   },
   "cursorAuthModal": {
     "title": "Connect Cursor IDE",

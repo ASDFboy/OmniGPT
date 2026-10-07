@@ -10896,7 +10896,10 @@
     "gitlabDuoSetupTitle": "GitLab Duo OAuth -asetuksen määrittäminen",
     "gitlabDuoSetupMessage": "GitLab Duo OAuthia ei ole määritetty. Rekisteröi OAuth-sovellus osoitteessa {applicationsUrl} uudelleenohjaus-URI:lla {redirectUri} ja käyttöoikeusalueilla \"{scopes}\", sitten aseta {clientIdEnv} (ja valinnaisesti {clientSecretEnv}) ja käynnistä uudelleen.",
     "gitlabDuoSetupDescription": "Kun sovellus on rekisteröity ja ympäristömuuttujat on asetettu tälle OmniRoute-instanssille, napsauta Jatka aloittaaksesi OAuth-kirjautumisen.",
-    "continue": "Jatka"
+    "continue": "Jatka",
+    "tabPasteSetupToken": "Asetustunnus",
+    "claudeSetupTokenDescription": "Suorita `claude setup-token` päätteessä ja liitä sen tulostama tunnus. Se on voimassa vuoden, eikä sillä ole päivitystunnusta. OmniRoute lähettää Anthropicille yhden testipyynnön ennen tallentamista.",
+    "claudeSetupTokenPlaceholder": "sk-ant-oat01-..."
   },
   "cursorAuthModal": {
     "title": "Yhdistä kohdistin IDE",

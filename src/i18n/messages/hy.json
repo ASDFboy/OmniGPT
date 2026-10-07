@@ -10896,7 +10896,10 @@
     "gitlabDuoSetupTitle": "GitLab Duo OAuth-ի կարգավորում",
     "gitlabDuoSetupMessage": "GitLab Duo OAuth-ը կարգավորված չէ։ Գրանցեք OAuth հավելված {applicationsUrl} հասցեում՝ նշելով {redirectUri} վերահղման URI-ն և «{scopes}» տիրույթները, ապա սահմանեք {clientIdEnv}-ը (և ըստ ցանկության՝ {clientSecretEnv}-ը) ու վերագործարկեք։",
     "gitlabDuoSetupDescription": "Հավելվածը գրանցելուց և այս OmniRoute օրինակում միջավայրի փոփոխականները սահմանելուց հետո սեղմեք «Շարունակել»՝ OAuth մուտքը սկսելու համար։",
-    "continue": "Շարունակել"
+    "continue": "Շարունակել",
+    "tabPasteSetupToken": "Կարգավորման թոքեն",
+    "claudeSetupTokenDescription": "Գործարկեք `claude setup-token`-ը տերմինալում և տեղադրեք այն թոքենը, որը տպում է։ Այն վավեր է մեկ տարի և չունի թարմացման թոքեն։ Պահպանելուց առաջ OmniRoute-ը մեկ փորձնական հարցում է ուղարկում Anthropic-ին։",
+    "claudeSetupTokenPlaceholder": "sk-ant-oat01-..."
   },
   "cursorAuthModal": {
     "title": "Միացնել Cursor-ը",

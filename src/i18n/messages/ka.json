@@ -10896,7 +10896,10 @@
     "gitlabDuoSetupTitle": "GitLab Duo OAuth-ის დაყენება",
     "gitlabDuoSetupMessage": "GitLab Duo OAuth კონფიგურირებული არ არის. დაარეგისტრირეთ OAuth აპლიკაცია მისამართზე {applicationsUrl}, უკუგადამისამართების URI-ით {redirectUri} და წვდომის სფეროებით „{scopes}“, შემდეგ დააყენეთ {clientIdEnv} (და სურვილისამებრ {clientSecretEnv}) და გადატვირთეთ.",
     "gitlabDuoSetupDescription": "აპლიკაციის რეგისტრაციისა და ამ OmniRoute ინსტანციაში გარემოს ცვლადების დაყენების შემდეგ OAuth-ით შესვლის დასაწყებად დააწკაპუნეთ „გაგრძელება“-ზე.",
-    "continue": "გაგრძელება"
+    "continue": "გაგრძელება",
+    "tabPasteSetupToken": "დაყენების ტოკენი",
+    "claudeSetupTokenDescription": "გაუშვით `claude setup-token` ტერმინალში და ჩასვით ტოკენი, რომელსაც ის ბეჭდავს. ის მოქმედებს ერთი წლის განმავლობაში და არ აქვს განახლების ტოკენი. შენახვამდე OmniRoute Anthropic-ს ერთ სატესტო მოთხოვნას უგზავნის.",
+    "claudeSetupTokenPlaceholder": "sk-ant-oat01-..."
   },
   "cursorAuthModal": {
     "title": "Cursor-ის დაკავშირება",

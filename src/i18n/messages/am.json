@@ -10896,7 +10896,10 @@
     "gitlabDuoSetupTitle": "የGitLab Duo OAuth ማዋቀር",
     "gitlabDuoSetupMessage": "GitLab Duo OAuth አልተዋቀረም። በ{applicationsUrl} ላይ OAuth መተግበሪያን፣ የመመለሻ URI {redirectUri} እና \"{scopes}\" ወሰኖችን በመጠቀም ይመዝግቡ፤ ከዚያ {clientIdEnv}ን (እና ከፈለጉ {clientSecretEnv}ን) ያዘጋጁና እንደገና ያስጀምሩ።",
     "gitlabDuoSetupDescription": "መተግበሪያው ከተመዘገበ እና የአካባቢ ተለዋዋጮቹ በዚህ የOmniRoute ኢንስታንስ ላይ ከተዋቀሩ በኋላ፣ የOAuth መግቢያውን ለመጀመር «ቀጥል»ን ጠቅ ያድርጉ።",
-    "continue": "ቀጥል"
+    "continue": "ቀጥል",
+    "tabPasteSetupToken": "የማዋቀሪያ ቶከን",
+    "claudeSetupTokenDescription": "በተርሚናል ውስጥ `claude setup-token` ያሂዱ እና የሚያሳየውን ቶከን ይለጥፉ። ለአንድ ዓመት ያገለግላል እና የማደሻ ቶከን የለውም። OmniRoute ከማስቀመጡ በፊት አንድ የሙከራ ጥያቄ ወደ Anthropic ይልካል።",
+    "claudeSetupTokenPlaceholder": "sk-ant-oat01-..."
   },
   "cursorAuthModal": {
     "title": "Cursorን አገናኝ",

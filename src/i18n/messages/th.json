@@ -10896,7 +10896,10 @@
     "gitlabDuoSetupTitle": "การตั้งค่า Duo OAuth สำหรับ GitLab",
     "gitlabDuoSetupMessage": "GitLab Duo OAuth ยังไม่ได้รับการกำหนดค่า ลงทะเบียนแอปพลิเคชัน OAuth ที่ {applicationsUrl} โดยใช้ URI การเปลี่ยนเส้นทาง {redirectUri} และขอบเขต \"{scopes}\" จากนั้นตั้งค่า {clientIdEnv} (และอาจจะ {clientSecretEnv}) และเริ่มต้นใหม่อีกครั้ง.",
     "gitlabDuoSetupDescription": "หลังจากที่แอปพลิเคชันลงทะเบียนและตั้งค่า env vars บนอินสแตนซ์ OmniRoute นี้แล้ว ให้คลิก Continue เพื่อเริ่มการเข้าสู่ระบบ OAuth.",
-    "continue": "ดำเนินการต่อ"
+    "continue": "ดำเนินการต่อ",
+    "tabPasteSetupToken": "โทเค็นการตั้งค่า",
+    "claudeSetupTokenDescription": "เรียกใช้ `claude setup-token` ในเทอร์มินัลแล้ววางโทเค็นที่แสดงออกมา โทเค็นนี้ใช้ได้หนึ่งปีและไม่มีโทเค็นรีเฟรช OmniRoute จะส่งคำขอทดสอบหนึ่งรายการไปยัง Anthropic ก่อนบันทึก",
+    "claudeSetupTokenPlaceholder": "sk-ant-oat01-..."
   },
   "cursorAuthModal": {
     "title": "เชื่อมต่อเคอร์เซอร์ IDE",

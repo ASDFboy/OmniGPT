@@ -10896,7 +10896,10 @@
     "gitlabDuoSetupTitle": "Socrú OAuth GitLab Duo",
     "gitlabDuoSetupMessage": "Níl OAuth GitLab Duo cumraithe. Cláraigh feidhmchlár OAuth ag {applicationsUrl} leis an URI atreoraithe {redirectUri} agus na scóip \"{scopes}\", ansin socraigh {clientIdEnv} (agus {clientSecretEnv} go roghnach) agus atosaigh.",
     "gitlabDuoSetupDescription": "Tar éis an feidhmchlár a chlárú agus na hathróga timpeallachta a shocrú ar an ásc seo de OmniRoute, cliceáil Lean ar aghaidh chun logáil isteach OAuth a thosú.",
-    "continue": "Lean ar aghaidh"
+    "continue": "Lean ar aghaidh",
+    "tabPasteSetupToken": "Comhartha socraithe",
+    "claudeSetupTokenDescription": "Rith `claude setup-token` i dteirminéal agus greamaigh an comhartha a phriontálann sé. Tá sé bailí ar feadh bliana agus níl comhartha athnuachana aige. Seolann OmniRoute iarratas tástála amháin chuig Anthropic sula sábhálann sé é.",
+    "claudeSetupTokenPlaceholder": "sk-ant-oat01-..."
   },
   "cursorAuthModal": {
     "title": "Ceangail Cursor",

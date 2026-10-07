@@ -10896,7 +10896,10 @@
     "gitlabDuoSetupTitle": "Configurarea OAuth Duo pentru GitLab",
     "gitlabDuoSetupMessage": "GitLab Duo OAuth nu este configurat. Înregistrează o aplicație OAuth la {applicationsUrl} cu URI de redirecționare {redirectUri} și scope-uri \"{scopes}\", apoi setează {clientIdEnv} (și opțional {clientSecretEnv}) și repornește.",
     "gitlabDuoSetupDescription": "După ce aplicația este înregistrată și variabilele de mediu sunt setate pe această instanță OmniRoute, faceți clic pe Continuare pentru a începe autentificarea OAuth.",
-    "continue": "Continuă"
+    "continue": "Continuă",
+    "tabPasteSetupToken": "Token de configurare",
+    "claudeSetupTokenDescription": "Rulați `claude setup-token` într-un terminal și lipiți tokenul afișat. Este valabil un an și nu are token de reîmprospătare. OmniRoute trimite o cerere de test către Anthropic înainte de a-l salva.",
+    "claudeSetupTokenPlaceholder": "sk-ant-oat01-..."
   },
   "cursorAuthModal": {
     "title": "Conectați Cursor IDE",
