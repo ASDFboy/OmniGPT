@@ -1,0 +1,44 @@
+# OmniGPT: run the checks and build the installer on Windows for every change under omnigpt/.
+# The built OmniGPT-Setup.exe (and its SHA-256) is attached to each run as an artifact, so a release can be made
+# without building on a PC: open the run under Actions and download "OmniGPT-Setup".
+name: OmniGPT
+
+on:
+  push:
+    paths: ["omnigpt/**", ".github/workflows/omnigpt.yml"]
+  pull_request:
+    paths: ["omnigpt/**", ".github/workflows/omnigpt.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omnigpt-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Checks (syntax, file reader, safety rules, settings, undo)
+        run: node omnigpt/windows/tests/preflight.mjs
+      - name: Build the installer (also tests the code sandbox)
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File omnigpt/windows/build-installer.ps1 -Python "$env:pythonLocation"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OmniGPT-Setup
+          path: |
+            omnigpt/windows/release/OmniGPT-Setup.exe
+            omnigpt/windows/release/OmniGPT-Setup.exe.sha256
+          if-no-files-found: error
+          retention-days: 30
