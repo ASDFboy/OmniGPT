@@ -46,6 +46,7 @@ export const USAGE_FETCHER_PROVIDERS = [
   "bailian-coding-plan",
   "qwen-cloud-token-plan",
   "nanogpt",
+  "apmix",
   "deepseek",
   "moonshot",
   "kimi",
