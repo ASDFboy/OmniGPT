@@ -40,6 +40,9 @@ catch (e) { check("find duplicates by content", false, String(e.stdout).split("\
 // 1b6. the brain graph keeps drawing whatever it is fed
 try { execFileSync(process.execPath, [path.join(here, "brain-test.mjs")], { stdio: "pipe" }); check("brain graph draws every node", true); }
 catch (e) { check("brain graph draws every node", false, (String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ") || String(e.stderr).split("\n").slice(0, 3).join(" ")).slice(0, 400)); }
+// 1b7. view_images shows real pictures; install_tool only takes plain package names
+try { execFileSync(process.execPath, [path.join(here, "view-test.mjs")], { stdio: "pipe" }); check("view images and install tool", true); }
+catch (e) { check("view images and install tool", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 400)); }
 // 1c. inspect_file follows the same folder rules as every other tool
 { let ok = true; try { await tools.precheck("inspect_file", { path: "C:/Windows/win.ini" }); ok = false; } catch {} try { await tools.precheck("inspect_file", { path: path.join(os.homedir(), ".ssh", "id_rsa") }); ok = false; } catch {} check("inspect_file stays inside the allowed folders", ok); }
 
