@@ -234,3 +234,9 @@ dialog.set[open]{display:flex}
 body.convo #brainpane{display:block}
 body.nograph #brainpane{display:none!important}
 #brain{position:absolute;left:0;top:0;width:100%;height:100%}
+.askq{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:4px 0 16px;background:var(--card)}
+.askq .q{font-weight:600;margin-bottom:10px;white-space:pre-wrap}
+.askq .opts{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.askq .opts .btn.on{background:var(--fg);color:var(--bg)}
+.askq .free{display:flex;gap:8px}.askq .free input{flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--fg);font:inherit}
+.askq.answered .opts,.askq.answered .free{display:none}.askq .a{color:var(--mut);font-size:13px}.askq .a::before{content:"Answer: "}
