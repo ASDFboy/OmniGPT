@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "Il-modalità ta’ kompatibbiltà CLIProxyAPI hija attivata",
     "customUserAgentHint": "Ħjiel dwar User Agent personalizzat",
     "customUserAgentLabel": "Tikketta tal-Aġent tal-Utent Personalizzat",
+    "huggingfaceBillToHint": "Mhux obbligatorju. L-identifikatur tal-kont tal-kontijiet Hugging Face tiegħek, mibgħut bħala l-intestatura X-HF-Bill-To għall-attribuzzjoni tal-ispejjeż.",
+    "huggingfaceBillToLabel": "Kont Bill-To ta’ Hugging Face",
     "databricksBaseUrlHint": "Ħjiel għall-URL Bażi ta’ Databricks",
     "defaultThinkingStrengthHint": "Jintuża meta talba ma tispeċifikax il-livell ta’ sforz ta’ raġunament.",
     "defaultThinkingStrengthLabel": "Intensità predefinita tal-ħsieb",

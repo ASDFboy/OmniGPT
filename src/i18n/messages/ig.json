@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "Agbanyere ọnọdụ ndakọrịta CLIProxyAPI",
     "customUserAgentHint": "Ndụmọdụ maka User Agent Ahaziri",
     "customUserAgentLabel": "Akara User Agent Ahaziri",
+    "huggingfaceBillToHint": "Nhọrọ. Ihe njirimara akaụntụ ịgba ụgwọ Hugging Face gị, nke a na-eziga dị ka nkụnyeisi X-HF-Bill-To maka ikenye ụgwọ.",
+    "huggingfaceBillToLabel": "Akaụntụ Hugging Face Bill-To",
     "databricksBaseUrlHint": "Ndụmọdụ maka Databricks Base Url",
     "defaultThinkingStrengthHint": "A na-eji ya mgbe arịrịọ akọwapụtaghị mgbalị ntụgharị uche.",
     "defaultThinkingStrengthLabel": "Ike iche echiche ndabara",

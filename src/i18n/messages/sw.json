@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "Cpa Mode Enabled Title",
     "customUserAgentHint": "Kidokezo cha User Agent maalum",
     "customUserAgentLabel": "Lebo ya User Agent maalum",
+    "huggingfaceBillToHint": "Si lazima. Kitambulisho cha akaunti yako ya bili ya Hugging Face, kinachotumwa kama kichwa cha X-HF-Bill-To kwa ajili ya kuhusisha gharama.",
+    "huggingfaceBillToLabel": "Akaunti ya Hugging Face Bill-To",
     "databricksBaseUrlHint": "Kidokezo cha URL ya msingi ya Databricks",
     "defaultThinkingStrengthHint": "Hutumika wakati ombi halibainishi kiwango cha juhudi za kufikiri.",
     "defaultThinkingStrengthLabel": "Kiwango chaguomsingi cha uwezo wa kufikiri",

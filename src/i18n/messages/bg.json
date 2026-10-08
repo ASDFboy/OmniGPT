@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "Cpa Mode Enabled Title",
     "customUserAgentHint": "Подсказка за персонализирания потребителски агент",
     "customUserAgentLabel": "Персонализиран потребителски агент",
+    "huggingfaceBillToHint": "Незадължително. Идентификаторът на вашия акаунт за таксуване в Hugging Face, изпращан като заглавката X-HF-Bill-To за отнасяне на разходите.",
+    "huggingfaceBillToLabel": "Акаунт за Bill-To в Hugging Face",
     "databricksBaseUrlHint": "Подсказка за основния URL адрес на Databricks",
     "defaultThinkingStrengthHint": "Използва се, когато в заявката не е посочено ниво на задълбоченост на разсъжденията.",
     "defaultThinkingStrengthLabel": "Ниво на задълбоченост на разсъжденията по подразбиране",

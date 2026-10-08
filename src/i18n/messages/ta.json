@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "Cpa Mode Enabled Title",
     "customUserAgentHint": "தனிப்பயன் பயனர் முகவர் குறிப்பு",
     "customUserAgentLabel": "தனிப்பயன் பயனர் முகவர் லேபல்",
+    "huggingfaceBillToHint": "விருப்பத்தேர்வு. செலவு ஒதுக்கீட்டிற்காக X-HF-Bill-To தலைப்பாக அனுப்பப்படும் உங்கள் Hugging Face பில்லிங் கணக்கு அடையாளங்காட்டி.",
+    "huggingfaceBillToLabel": "Hugging Face Bill-To கணக்கு",
     "databricksBaseUrlHint": "Databricks அடிப்படை URL குறிப்பு",
     "defaultThinkingStrengthHint": "ஒரு கோரிக்கையில் பகுத்தறிவு முயற்சி குறிப்பிடப்படாதபோது பயன்படுத்தப்படும்.",
     "defaultThinkingStrengthLabel": "இயல்புநிலை சிந்தனை வலிமை",

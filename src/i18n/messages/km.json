@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "របៀបឆបគ្នាជាមួយ CLIProxyAPI ត្រូវបានបើក",
     "customUserAgentHint": "ព័ត៌មានណែនាំអំពី User Agent ផ្ទាល់ខ្លួន",
     "customUserAgentLabel": "ស្លាក User Agent ផ្ទាល់ខ្លួន",
+    "huggingfaceBillToHint": "ជាជម្រើស។ ឧបករណ៍កំណត់អត្តសញ្ញាណគណនីចេញវិក្កយបត្រ Hugging Face របស់អ្នក ដែលត្រូវបានផ្ញើជាបឋមកថា X-HF-Bill-To សម្រាប់ការកំណត់ថ្លៃចំណាយ។",
+    "huggingfaceBillToLabel": "គណនី Hugging Face Bill-To",
     "databricksBaseUrlHint": "ព័ត៌មានណែនាំអំពី URL មូលដ្ឋានរបស់ Databricks",
     "defaultThinkingStrengthHint": "ប្រើនៅពេលសំណើមិនបានបញ្ជាក់កម្រិតនៃកិច្ចខិតខំប្រឹងប្រែងក្នុងការវែកញែក។",
     "defaultThinkingStrengthLabel": "កម្រិតនៃការគិតលំនាំដើម",

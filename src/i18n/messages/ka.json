@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "CLIProxyAPI-თან თავსებადობის რეჟიმი ჩართულია",
     "customUserAgentHint": "მორგებული User Agent-ის მინიშნება",
     "customUserAgentLabel": "მორგებული User Agent-ის იარლიყი",
+    "huggingfaceBillToHint": "არასავალდებულო. თქვენი Hugging Face ბილინგის ანგარიშის იდენტიფიკატორი, რომელიც ხარჯების მისაკუთვნებლად X-HF-Bill-To სათაურის სახით იგზავნება.",
+    "huggingfaceBillToLabel": "Hugging Face Bill-To ანგარიში",
     "databricksBaseUrlHint": "Databricks-ის საბაზისო URL-ის მინიშნება",
     "defaultThinkingStrengthHint": "გამოიყენება, როდესაც მოთხოვნაში მსჯელობის ძალისხმევა მითითებული არ არის.",
     "defaultThinkingStrengthLabel": "აზროვნების ნაგულისხმევი ინტენსივობა",

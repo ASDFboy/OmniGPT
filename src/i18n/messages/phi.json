@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "Cpa Mode Enabled Title",
     "customUserAgentHint": "Pahiwatig sa Custom User Agent",
     "customUserAgentLabel": "Label ng Custom User Agent",
+    "huggingfaceBillToHint": "Opsyonal. Ang identifier ng iyong Hugging Face billing account, na ipinapadala bilang X-HF-Bill-To header para sa paglalaan ng gastos.",
+    "huggingfaceBillToLabel": "Hugging Face Bill-To Account",
     "databricksBaseUrlHint": "Pahiwatig sa Base URL ng Databricks",
     "defaultThinkingStrengthHint": "Ginagamit kapag walang tinukoy na antas ng pagsisikap sa pangangatwiran ang isang request.",
     "defaultThinkingStrengthLabel": "Default na antas ng pag-iisip",

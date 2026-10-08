@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "Cpa Mode Enabled Title",
     "customUserAgentHint": "Mukautetun User-Agentin vihje",
     "customUserAgentLabel": "Mukautettu User-Agent",
+    "huggingfaceBillToHint": "Valinnainen. Hugging Face -laskutustilisi tunniste, joka lähetetään X-HF-Bill-To-otsakkeena kustannusten kohdistamista varten.",
+    "huggingfaceBillToLabel": "Hugging Face Bill-To-tili",
     "databricksBaseUrlHint": "Databricks-perus-URL:n ohje",
     "defaultThinkingStrengthHint": "Käytetään, kun pyynnössä ei määritetä päättelyn vaativuustasoa.",
     "defaultThinkingStrengthLabel": "Päättelyn oletusvaativuustaso",

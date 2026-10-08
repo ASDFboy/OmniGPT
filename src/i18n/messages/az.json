@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "CLIProxyAPI uyğunluq rejimi aktivdir",
     "customUserAgentHint": "Fərdi User Agent üçün ipucu",
     "customUserAgentLabel": "Fərdi User Agent etiketi",
+    "huggingfaceBillToHint": "İstəyə bağlıdır. Xərclərin aid edilməsi üçün X-HF-Bill-To başlığı kimi göndərilən Hugging Face fakturalandırma hesabı identifikatorunuz.",
+    "huggingfaceBillToLabel": "Hugging Face Bill-To hesabı",
     "databricksBaseUrlHint": "Databricks əsas URL-i üçün ipucu",
     "defaultThinkingStrengthHint": "Sorğuda düşünmə səyi göstərilmədikdə istifadə olunur.",
     "defaultThinkingStrengthLabel": "Standart düşünmə gücü",

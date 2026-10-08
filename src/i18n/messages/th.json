@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "Cpa Mode Enabled Title",
     "customUserAgentHint": "คำแนะนำ User Agent แบบกำหนดเอง",
     "customUserAgentLabel": "ป้ายกำกับ User Agent แบบกำหนดเอง",
+    "huggingfaceBillToHint": "ไม่บังคับ ตัวระบุบัญชีสำหรับการเรียกเก็บเงิน Hugging Face ของคุณ ซึ่งส่งเป็นส่วนหัว X-HF-Bill-To เพื่อระบุต้นทุน",
+    "huggingfaceBillToLabel": "บัญชี Bill-To ของ Hugging Face",
     "databricksBaseUrlHint": "คำแนะนำ Base URL ของ Databricks",
     "defaultThinkingStrengthHint": "ใช้เมื่อคำขอไม่ได้ระบุระดับความพยายามในการให้เหตุผล",
     "defaultThinkingStrengthLabel": "ระดับความเข้มข้นในการคิดเริ่มต้น",

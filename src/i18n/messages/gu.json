@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "Cpa Mode Enabled Title",
     "customUserAgentHint": "કસ્ટમ વપરાશકર્તા એજન્ટ સંકેત",
     "customUserAgentLabel": "કસ્ટમ વપરાશકર્તા એજન્ટ લેબલ",
+    "huggingfaceBillToHint": "વૈકલ્પિક. ખર્ચની ફાળવણી માટે X-HF-Bill-To હેડર તરીકે મોકલવામાં આવતું તમારું Hugging Face બિલિંગ એકાઉન્ટ ઓળખકર્તા.",
+    "huggingfaceBillToLabel": "Hugging Face Bill-To એકાઉન્ટ",
     "databricksBaseUrlHint": "Databricks બેઝ URL સંકેત",
     "defaultThinkingStrengthHint": "જ્યારે વિનંતીમાં તર્કના પ્રયત્નનું સ્તર નિર્દિષ્ટ ન હોય ત્યારે તેનો ઉપયોગ થાય છે.",
     "defaultThinkingStrengthLabel": "ડિફૉલ્ટ વિચાર સ્તર",

@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "CLIProxyAPI համատեղելիության ռեժիմը միացված է",
     "customUserAgentHint": "Օգտատիրոջ հատուկ գործակալի հուշում",
     "customUserAgentLabel": "Օգտատիրոջ հատուկ գործակալի պիտակ",
+    "huggingfaceBillToHint": "Ընտրովի։ Ձեր Hugging Face վճարային հաշվի նույնացուցիչը, որն ուղարկվում է որպես X-HF-Bill-To վերնագիր՝ ծախսերի վերագրման համար։",
+    "huggingfaceBillToLabel": "Hugging Face Bill-To հաշիվ",
     "databricksBaseUrlHint": "Databricks-ի բազային URL-ի հուշում",
     "defaultThinkingStrengthHint": "Օգտագործվում է, երբ հարցումը չի նշում տրամաբանման ջանքի մակարդակը։",
     "defaultThinkingStrengthLabel": "Մտածողության կանխադրված խորություն",

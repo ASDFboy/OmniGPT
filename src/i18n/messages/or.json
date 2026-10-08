@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "CLIProxyAPI ସୁସଙ୍ଗତତା ମୋଡ୍ ସକ୍ଷମ ଅଛି",
     "customUserAgentHint": "କଷ୍ଟମ୍ ୟୁଜର୍ ଏଜେଣ୍ଟ ସଙ୍କେତ",
     "customUserAgentLabel": "କଷ୍ଟମ୍ ୟୁଜର୍ ଏଜେଣ୍ଟ ଲେବଲ୍",
+    "huggingfaceBillToHint": "ଇଚ୍ଛାଧୀନ। ଖର୍ଚ୍ଚ ଆବଣ୍ଟନ ପାଇଁ X-HF-Bill-To ହେଡର ଭାବରେ ପଠାଯାଉଥିବା ଆପଣଙ୍କ Hugging Face ବିଲିଂ ଆକାଉଣ୍ଟ ପରିଚୟକ।",
+    "huggingfaceBillToLabel": "Hugging Face Bill-To ଆକାଉଣ୍ଟ",
     "databricksBaseUrlHint": "Databricks ବେସ୍ URL ସଙ୍କେତ",
     "defaultThinkingStrengthHint": "କୌଣସି ଅନୁରୋଧ ରିଜନିଂ ପ୍ରୟାସ ନିର୍ଦ୍ଦିଷ୍ଟ ନ କଲେ ଏହା ବ୍ୟବହୃତ ହୁଏ।",
     "defaultThinkingStrengthLabel": "ଡିଫଲ୍ଟ ଚିନ୍ତନ ଶକ୍ତି",

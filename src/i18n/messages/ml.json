@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "CLIProxyAPI പൊരുത്ത മോഡ് പ്രവർത്തനക്ഷമമാണ്",
     "customUserAgentHint": "ഇഷ്ടാനുസൃത User Agent സൂചന",
     "customUserAgentLabel": "ഇഷ്ടാനുസൃത User Agent ലേബൽ",
+    "huggingfaceBillToHint": "ഐച്ഛികം. ചെലവ് നിർണ്ണയിക്കുന്നതിനായി X-HF-Bill-To ഹെഡറായി അയയ്ക്കുന്ന നിങ്ങളുടെ Hugging Face ബില്ലിംഗ് അക്കൗണ്ട് ഐഡന്റിഫയർ.",
+    "huggingfaceBillToLabel": "Hugging Face Bill-To അക്കൗണ്ട്",
     "databricksBaseUrlHint": "Databricks അടിസ്ഥാന URL സൂചന",
     "defaultThinkingStrengthHint": "ഒരു അഭ്യർത്ഥനയിൽ റീസണിംഗ് എഫർട്ട് വ്യക്തമാക്കിയിട്ടില്ലെങ്കിൽ ഇത് ഉപയോഗിക്കും.",
     "defaultThinkingStrengthLabel": "ഡിഫോൾട്ട് ചിന്താശക്തി",

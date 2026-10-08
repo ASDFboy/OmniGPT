@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "CLIProxyAPI moslik rejimi yoqilgan",
     "customUserAgentHint": "Maxsus User Agent uchun izoh",
     "customUserAgentLabel": "Maxsus User Agent yorligʻi",
+    "huggingfaceBillToHint": "Ixtiyoriy. Xarajatlarni tegishli hisobga biriktirish uchun X-HF-Bill-To sarlavhasi sifatida yuboriladigan Hugging Face billing hisobingiz identifikatori.",
+    "huggingfaceBillToLabel": "Hugging Face Bill-To hisobi",
     "databricksBaseUrlHint": "Databricks asosiy URL manzili uchun izoh",
     "defaultThinkingStrengthHint": "Soʻrovda fikrlash darajasi koʻrsatilmaganda ishlatiladi.",
     "defaultThinkingStrengthLabel": "Standart fikrlash kuchi",

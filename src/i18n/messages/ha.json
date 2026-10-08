@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "An kunna yanayin dacewa da CLIProxyAPI",
     "customUserAgentHint": "Alamar Bayani ta User Agent na Musamman",
     "customUserAgentLabel": "Lakabin User Agent na Musamman",
+    "huggingfaceBillToHint": "Na zaɓi ne. Mai gano asusun cajin ku na Hugging Face, wanda ake aikawa a matsayin taken X-HF-Bill-To don danganta kuɗin da aka kashe.",
+    "huggingfaceBillToLabel": "Asusun Hugging Face Bill-To",
     "databricksBaseUrlHint": "Alamar Bayani ta Databricks Base Url",
     "defaultThinkingStrengthHint": "Ana amfani da wannan idan buƙata ba ta fayyace matakin ƙoƙarin tunani ba.",
     "defaultThinkingStrengthLabel": "Ƙarfin tunani na asali",

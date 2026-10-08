@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "Cpa Mode Enabled Title",
     "customUserAgentHint": "Indiciu pentru User-Agent personalizat",
     "customUserAgentLabel": "Etichetă pentru User-Agent personalizat",
+    "huggingfaceBillToHint": "Opțional. Identificatorul contului tău de facturare Hugging Face, trimis ca antet X-HF-Bill-To pentru atribuirea costurilor.",
+    "huggingfaceBillToLabel": "Cont Bill-To Hugging Face",
     "databricksBaseUrlHint": "Sugestie pentru URL-ul de bază Databricks",
     "defaultThinkingStrengthHint": "Utilizat atunci când o solicitare nu specifică efortul de raționament.",
     "defaultThinkingStrengthLabel": "Nivelul implicit de raționament",

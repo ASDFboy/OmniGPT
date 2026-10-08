@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "CLIProxyAPI अनुकूलता मोड सक्षम छ",
     "customUserAgentHint": "अनुकूलित प्रयोगकर्ता एजेन्ट सङ्केत",
     "customUserAgentLabel": "अनुकूलित प्रयोगकर्ता एजेन्ट लेबल",
+    "huggingfaceBillToHint": "ऐच्छिक। लागत छुट्याउन X-HF-Bill-To हेडरका रूपमा पठाइने तपाईंको Hugging Face बिलिङ खाता पहिचानकर्ता।",
+    "huggingfaceBillToLabel": "Hugging Face Bill-To खाता",
     "databricksBaseUrlHint": "Databricks आधार URL सङ्केत",
     "defaultThinkingStrengthHint": "अनुरोधले तर्कको प्रयास निर्दिष्ट नगर्दा प्रयोग गरिन्छ।",
     "defaultThinkingStrengthLabel": "पूर्वनिर्धारित सोचाइको तीव्रता",

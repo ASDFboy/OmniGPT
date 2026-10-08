@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "Cpa Mode Enabled Title",
     "customUserAgentHint": "Подсказка для пользовательского User-Agent",
     "customUserAgentLabel": "Метка пользовательского User-Agent",
+    "huggingfaceBillToHint": "Необязательно. Идентификатор вашего платежного аккаунта Hugging Face, передаваемый в заголовке X-HF-Bill-To для отнесения затрат.",
+    "huggingfaceBillToLabel": "Аккаунт Bill-To в Hugging Face",
     "databricksBaseUrlHint": "Подсказка для базового URL Databricks",
     "defaultThinkingStrengthHint": "Используется, если в запросе не указана глубина рассуждений.",
     "defaultThinkingStrengthLabel": "Глубина рассуждений по умолчанию",

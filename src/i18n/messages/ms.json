@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "Cpa Mode Enabled Title",
     "customUserAgentHint": "Petunjuk Ejen Pengguna Tersuai",
     "customUserAgentLabel": "Label Ejen Pengguna Tersuai",
+    "huggingfaceBillToHint": "Pilihan. Pengecam akaun pengebilan Hugging Face anda, yang dihantar sebagai pengepala X-HF-Bill-To untuk pengagihan kos.",
+    "huggingfaceBillToLabel": "Akaun Bill-To Hugging Face",
     "databricksBaseUrlHint": "Petunjuk URL Asas Databricks",
     "defaultThinkingStrengthHint": "Digunakan apabila permintaan tidak menentukan tahap usaha penaakulan.",
     "defaultThinkingStrengthLabel": "Kekuatan pemikiran lalai",

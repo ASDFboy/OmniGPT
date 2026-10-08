@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "CLIProxyAPI ಹೊಂದಾಣಿಕೆ ಮೋಡ್ ಸಕ್ರಿಯವಾಗಿದೆ",
     "customUserAgentHint": "ಕಸ್ಟಮ್ ಯೂಸರ್ ಏಜೆಂಟ್ ಸುಳಿವು",
     "customUserAgentLabel": "ಕಸ್ಟಮ್ ಯೂಸರ್ ಏಜೆಂಟ್ ಲೇಬಲ್",
+    "huggingfaceBillToHint": "ಐಚ್ಛಿಕ. ವೆಚ್ಚ ಹಂಚಿಕೆಗಾಗಿ X-HF-Bill-To ಹೆಡರ್ ಆಗಿ ಕಳುಹಿಸಲಾಗುವ ನಿಮ್ಮ Hugging Face ಬಿಲ್ಲಿಂಗ್ ಖಾತೆಯ ಗುರುತಿಸುವಿಕೆ.",
+    "huggingfaceBillToLabel": "Hugging Face Bill-To ಖಾತೆ",
     "databricksBaseUrlHint": "Databricks ಬೇಸ್ URL ಸುಳಿವು",
     "defaultThinkingStrengthHint": "ವಿನಂತಿಯು ತಾರ್ಕಿಕ ಪ್ರಯತ್ನದ ಮಟ್ಟವನ್ನು ನಿರ್ದಿಷ್ಟಪಡಿಸದಿದ್ದಾಗ ಬಳಸಲಾಗುತ್ತದೆ.",
     "defaultThinkingStrengthLabel": "ಡೀಫಾಲ್ಟ್ ಚಿಂತನಾ ಸಾಮರ್ಥ್ಯ",

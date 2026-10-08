@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "CLIProxyAPI suderinamumo režimas įjungtas",
     "customUserAgentHint": "Pasirinktinio User Agent paaiškinimas",
     "customUserAgentLabel": "Pasirinktinė User Agent žyma",
+    "huggingfaceBillToHint": "Neprivaloma. Jūsų Hugging Face atsiskaitymo paskyros identifikatorius, siunčiamas kaip X-HF-Bill-To antraštė išlaidoms priskirti.",
+    "huggingfaceBillToLabel": "Hugging Face Bill-To paskyra",
     "databricksBaseUrlHint": "Databricks bazinio URL paaiškinimas",
     "defaultThinkingStrengthHint": "Naudojama, kai užklausoje nenurodytas samprotavimo pastangų lygis.",
     "defaultThinkingStrengthLabel": "Numatytasis mąstymo intensyvumas",

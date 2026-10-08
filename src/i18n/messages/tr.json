@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "Cpa Mode Enabled Title",
     "customUserAgentHint": "Özel User Agent İpucu",
     "customUserAgentLabel": "Özel User Agent Etiketi",
+    "huggingfaceBillToHint": "İsteğe bağlıdır. Maliyet ilişkilendirmesi için X-HF-Bill-To üst bilgisi olarak gönderilen Hugging Face faturalandırma hesabı tanımlayıcınız.",
+    "huggingfaceBillToLabel": "Hugging Face Bill-To Hesabı",
     "databricksBaseUrlHint": "Databricks Temel URL İpucu",
     "defaultThinkingStrengthHint": "Bir istekte akıl yürütme çabası belirtilmediğinde kullanılır.",
     "defaultThinkingStrengthLabel": "Varsayılan düşünme gücü",
