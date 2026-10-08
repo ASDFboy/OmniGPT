@@ -14,6 +14,7 @@ import { pipeline } from "node:stream/promises";
 import { webOpen, webSearch } from "./web.mjs";
 import { inspect } from "./files.mjs";
 import { zipBuild, zipRead } from "./zip.mjs";
+import { browserAction } from "./browser.mjs";
 import { parseMarkdown, toHtml, toDocx, toXlsx, toPptx, sheetsFromText, slidesFromText } from "./docs.mjs";
 
 const HOME = os.homedir();
@@ -274,6 +275,13 @@ export async function precheck(name, input, cfg = loadConfig(), scope) {
       if (a === "zip") { const L = (Array.isArray(i.source) ? i.source : [i.source]).map((p) => checkPath(p, cfg)); if (!L.length) throw new Error("source is required"); const d = W(i.destination || L[0] + ".zip"); return { class: "write", summary: `Pack ${L.length > 1 ? L.length + " items" : L[0]}\n  into ${d}` }; }
       throw new Error('action must be "zip", "unzip" or "list"');
     }
+    case "browser": {
+      const a = String(i.action || "");
+      if (!BROWSER_ACTIONS.has(a)) throw new Error("action must be one of: " + [...BROWSER_ACTIONS].join(", "));
+      if (a === "open") { const u = new URL(String(i.url || "")); if (!/^https?:$/.test(u.protocol)) throw new Error("only http(s) addresses can be opened"); await browserUrlOk(u.href); }
+      const what = a === "open" ? `open ${i.url}` : a === "type" ? `type into ${i.ref ? "[" + i.ref + "]" : i.selector || i.text}: ${String(i.value ?? "").slice(0, 120)}${i.submit ? " and submit" : ""}` : a === "click" ? `click ${i.ref ? "[" + i.ref + "]" : i.selector || JSON.stringify(i.text)}` : a === "press" ? `press ${i.key}` : a === "select" ? `choose "${i.value}" in [${i.ref}]` : a;
+      return { class: /^(click|type|select|press)$/.test(a) ? "browser" : "read", summary: "Browser: " + what };
+    }
     case "make_document": {
       const p = W(i.path), ext = path.extname(p).toLowerCase();
       if (!DOC_EXT.has(ext)) throw new Error("path must end in .docx, .xlsx, .pptx, .pdf, .html, .md, .txt or .csv");
@@ -456,6 +464,10 @@ async function archiveTool(i, cfg, jr) {
   }
   return `Extracted ${wrote} files to ${d}.` + (skipped.length ? `\nSkipped ${skipped.length}: ${skipped.slice(0, 30).join("; ")}` : "");
 }
+
+// ---------- browser: public web pages only (tests may allow local pages with OMNIGPT_TEST_ALLOW_LOCAL=1)
+const BROWSER_ACTIONS = new Set(["open", "read", "screenshot", "click", "type", "select", "press", "scroll", "back", "forward", "wait", "tabs", "close"]);
+const browserUrlOk = async (u) => { if (process.env.OMNIGPT_TEST_ALLOW_LOCAL === "1" && /^http:\/\/127\.0\.0\.1:/.test(u)) return; await checkUrl(u); };
 
 // ---------- documents, images, media
 const DOC_EXT = new Set([".docx", ".xlsx", ".pptx", ".pdf", ".html", ".htm", ".md", ".txt", ".csv"]);
@@ -897,7 +909,7 @@ export function run(name, input, cfg = loadConfig(), scope, meta) {
     catch (e) { logActivity({ t: Date.now(), chat: meta?.chat || null, turn: meta?.turn || null, tool: name, summary: String(pre.summary || "").slice(0, 600), ok: false, error: String(e.message || e).slice(0, 300) }); throw e; }
     finally { journal(meta, jr); } // a bulk action that partly failed still records what it did
   };
-  if (["run_command", "run_code", "read_file", "read_files", "list_dir", "download_file", "web_search", "web_open", "inspect_file", "find_duplicates", "view_images", "install_tool", "find_files", "search_files", "system_info", "notify", "open_path", "clipboard", "convert_media", "generate_image", "transcribe_audio", "speak"].includes(name)) return go();
+  if (["run_command", "run_code", "read_file", "read_files", "list_dir", "download_file", "web_search", "web_open", "inspect_file", "find_duplicates", "view_images", "install_tool", "find_files", "search_files", "system_info", "notify", "open_path", "clipboard", "convert_media", "generate_image", "transcribe_audio", "speak", "browser"].includes(name)) return go();
   const p = chain.then(go, go); chain = p.catch(() => {}); return p;
 }
 async function runInner(name, input, cfg, jr = []) {
@@ -988,6 +1000,7 @@ async function runInner(name, input, cfg, jr = []) {
       const r = await ps("Set-Clipboard -Value $env:ORC_T", { ORC_T: String(i.text ?? "") }, cfg.cwd, 15000); if (r.code !== 0) throw new Error(r.out.trim().slice(0, 200)); return "Copied to the clipboard.";
     }
     case "archive": return archiveTool(i, cfg, jr);
+    case "browser": return browserAction(i, { exe: findBrowser(), profile: path.join(CFG_DIR, "browser"), downloads: path.join(cfg.cwd, "Browser downloads"), headless: !!i.headless || process.env.OMNIGPT_BROWSER_HEADLESS === "1", checkUrl: browserUrlOk });
     case "make_document": return makeDocument(i, cfg, jr);
     case "edit_image": return editImage(i, cfg, jr);
     case "convert_media": return convertMedia(i, cfg, jr);
