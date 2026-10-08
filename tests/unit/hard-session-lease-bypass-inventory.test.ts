@@ -205,6 +205,10 @@ const EXPECTED: Record<InventoryKind, Record<string, number>> = {
     // #15485: the priority-0 move-to-top edit re-reads the row by id after reorderConnections (3 -> 4).
     "src/lib/db/providers.ts": 4,
     "src/lib/db/readCache.ts": 2,
+    // Local embedding providers: reads the active rows only to build the allowlist of
+    // connections whose default model does not conflict with the requested one; the
+    // connection itself is still selected by getProviderCredentials (class C).
+    "src/lib/embeddings/service.ts": 1,
     "src/lib/freeProviderRankings.ts": 1,
     "src/lib/guardrails/visionBridgeCredentials.ts": 2,
     "src/lib/kimi/tokenRefresh.ts": 1,
