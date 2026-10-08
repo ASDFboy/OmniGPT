@@ -34,6 +34,9 @@ catch (e) { check("settings survive a backend restart", false, String(e.stdout).
 // 1b4. undo reverses what an agent changed (on Windows including the Recycle Bin)
 try { execFileSync(process.execPath, [path.join(here, "undo-test.mjs")], { stdio: "pipe" }); check("undo reverses agent changes", true); }
 catch (e) { check("undo reverses agent changes", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 400)); }
+// 1b5. find_duplicates compares content, not names
+try { execFileSync(process.execPath, [path.join(here, "dupes-test.mjs")], { stdio: "pipe" }); check("find duplicates by content", true); }
+catch (e) { check("find duplicates by content", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 400)); }
 // 1c. inspect_file follows the same folder rules as every other tool
 { let ok = true; try { await tools.precheck("inspect_file", { path: "C:/Windows/win.ini" }); ok = false; } catch {} try { await tools.precheck("inspect_file", { path: path.join(os.homedir(), ".ssh", "id_rsa") }); ok = false; } catch {} check("inspect_file stays inside the allowed folders", ok); }
 
