@@ -210,7 +210,8 @@ test("shared set size includes live REGISTRY and retired Designer + Felo + Qwen 
   // notrack-web (#12534): registry entry registers its id "notrack-web" + alias "ntw"
   // (two new members, 418 -> 420). Do not fold this into a generic catalog bump — the
   // dedicated notrack-web prefix test below is the regression lock for this provider.
-  assert.equal(RESERVED_PREFIX_COUNT, 420);
+  // WorkBuddy (#14212) registers id "workbuddy" + alias "wb" — two more (420 -> 422).
+  assert.equal(RESERVED_PREFIX_COUNT, 422);
 });
 
 test("notrack-web registry id and alias stay reserved", () => {
