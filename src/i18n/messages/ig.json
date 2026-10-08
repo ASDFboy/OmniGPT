@@ -6389,6 +6389,7 @@
       "gitlawb": "Nweta igodo API gị site na dashboard Gitlawb Opengateway.",
       "glm": "Jikọọ GLM Coding site na igodo API.",
       "glm-cn": "Jikọọ GLM Coding (China) site na igodo API.",
+      "bigmodel": "Create an API key at https://bigmodel.cn/usercenter/proj-mgmt/apikeys. OmniRoute uses the official BigModel.cn OpenAI-compatible chat endpoint.",
       "glmt": "Profaịlụ GLM ahaziri tupu oge eruo nke nwere oke token dị elu, agbanyere ikike iche echiche, na ogologo oge nchere.",
       "getgoapi": "Jikọọ GoAPI site na igodo API.",
       "groq": "Atụmatụ efu: oke dị iche maka model ọ bụla (token 200K kwa ụbọchị maka model nkata ọ bụla; lee console.groq.com/docs/rate-limits maka RPM/RPD) — enweghị usoro ịkwụ ụgwọ echekwara.",

@@ -6389,6 +6389,7 @@
       "gitlawb": "ទទួលបានសោ API របស់អ្នកពី dashboard របស់ Gitlawb Opengateway។",
       "glm": "ភ្ជាប់ GLM Coding ដោយប្រើសោ API។",
       "glm-cn": "ភ្ជាប់ GLM Coding (China) ដោយប្រើសោ API។",
+      "bigmodel": "Create an API key at https://bigmodel.cn/usercenter/proj-mgmt/apikeys. OmniRoute uses the official BigModel.cn OpenAI-compatible chat endpoint.",
       "glmt": "ប្រូហ្វាល់ GLM ដែលបានកំណត់ជាមុន ជាមួយថវិកាថូខឹនខ្ពស់ជាងមុន ការគិតត្រូវបានបើក និងរយៈពេល timeout វែងជាងមុន។",
       "getgoapi": "ភ្ជាប់ GoAPI ដោយប្រើ API key។",
       "groq": "គម្រោងឥតគិតថ្លៃ៖ ដែនកំណត់តាមម៉ូដែល (200K tokens/ថ្ងៃ សម្រាប់ម៉ូដែលជជែកនីមួយៗ; សូមមើល console.groq.com/docs/rate-limits សម្រាប់ RPM/RPD) — មិនមានវិធីបង់ប្រាក់ណាមួយត្រូវបានរក្សាទុកទេ។",

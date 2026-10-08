@@ -6389,6 +6389,7 @@
       "gitlawb": "Faigh d'eochair API ó dheais Gitlawb Opengateway.",
       "glm": "Ceangail GLM Coding le heochair API.",
       "glm-cn": "Ceangail GLM Coding (an tSín) le heochair API.",
+      "bigmodel": "Create an API key at https://bigmodel.cn/usercenter/proj-mgmt/apikeys. OmniRoute uses the official BigModel.cn OpenAI-compatible chat endpoint.",
       "glmt": "Próifíl GLM réamhshocraithe le buiséad comharthaí níos airde, smaointeoireacht cumasaithe, agus teorainn ama níos faide.",
       "getgoapi": "Ceangail GoAPI le heochair API.",
       "groq": "Plean saor in aisce: teorainneacha de réir samhla (200K comhartha in aghaidh an lae do gach samhail chomhrá; féach console.groq.com/docs/rate-limits le haghaidh RPM/RPD) — níl aon mhodh íocaíochta ar comhad.",

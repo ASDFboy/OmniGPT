@@ -6389,6 +6389,7 @@
       "gitlawb": "Gba kọ́kọ́rọ́ API rẹ láti dashboard Gitlawb Opengateway.",
       "glm": "So GLM Coding pọ̀ pẹ̀lú kọ́kọ́rọ́ API kan.",
       "glm-cn": "So GLM Coding (China) pọ̀ pẹ̀lú kọ́kọ́rọ́ API kan.",
+      "bigmodel": "Create an API key at https://bigmodel.cn/usercenter/proj-mgmt/apikeys. OmniRoute uses the official BigModel.cn OpenAI-compatible chat endpoint.",
       "glmt": "Àgbékalẹ̀ profaili GLM tí a ti ṣètò tẹ́lẹ̀ pẹ̀lú ìwọ̀n token tó ga, tí ìrònú ti ṣiṣẹ́, àti àkókò ìdádúró tó gùn sí i.",
       "getgoapi": "So GoAPI pọ̀ pẹ̀lú kọ́kọ́rọ́ API kan.",
       "groq": "Ètò ọ̀fẹ́: àwọn òpin fún model kọ̀ọ̀kan (200K token/lọ́jọ́ fún model ìfọ̀rọ̀wérọ̀ kọ̀ọ̀kan; wo console.groq.com/docs/rate-limits fún RPM/RPD) — kò sí ọ̀nà ìsanwó lórí fáìlì.",

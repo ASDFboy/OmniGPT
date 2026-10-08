@@ -6389,6 +6389,7 @@
       "gitlawb": "Sami maɓallin API ɗinka daga dashboard na Gitlawb Opengateway.",
       "glm": "Haɗa GLM Coding da maɓallin API.",
       "glm-cn": "Haɗa GLM Coding (China) da maɓallin API.",
+      "bigmodel": "Create an API key at https://bigmodel.cn/usercenter/proj-mgmt/apikeys. OmniRoute uses the official BigModel.cn OpenAI-compatible chat endpoint.",
       "glmt": "Tsararren bayanin martaba na GLM mai ƙarin kasafin token, an kunna tunani, kuma yana da lokacin jira kafin yankewa mafi tsawo.",
       "getgoapi": "Haɗa GoAPI da maɓallin API.",
       "groq": "Tsarin kyauta: iyakoki bisa kowane samfuri (token 200K/rana ga kowane samfurin hira; duba console.groq.com/docs/rate-limits don RPM/RPD) — ba a adana wata hanyar biyan kuɗi ba.",

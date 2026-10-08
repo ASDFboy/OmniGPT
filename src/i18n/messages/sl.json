@@ -6389,6 +6389,7 @@
       "gitlawb": "Pridobite svoj ključ API na nadzorni plošči Gitlawb Opengateway.",
       "glm": "Povežite GLM Coding s ključem API.",
       "glm-cn": "Povežite GLM Coding (China) s ključem API.",
+      "bigmodel": "Create an API key at https://bigmodel.cn/usercenter/proj-mgmt/apikeys. OmniRoute uses the official BigModel.cn OpenAI-compatible chat endpoint.",
       "glmt": "Vnaprej nastavljen profil GLM z večjim proračunom žetonov, omogočenim razmišljanjem in daljšo časovno omejitvijo.",
       "getgoapi": "Povežite GoAPI s ključem API.",
       "groq": "Brezplačni paket: omejitve glede na model (200K žetonov na dan na model klepeta; za RPM/RPD glejte console.groq.com/docs/rate-limits) – brez shranjenega plačilnega sredstva.",

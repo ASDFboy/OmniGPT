@@ -6389,6 +6389,7 @@
       "gitlawb": "Gitlawb Opengateway ଡ୍ୟାସ୍ବୋର୍ଡରୁ ଆପଣଙ୍କ API କୀ ପାଆନ୍ତୁ।",
       "glm": "ଏକ API କୀ ସହିତ GLM Coding କୁ ସଂଯୋଗ କରନ୍ତୁ।",
       "glm-cn": "ଏକ API କୀ ସହିତ GLM Coding (China) କୁ ସଂଯୋଗ କରନ୍ତୁ।",
+      "bigmodel": "Create an API key at https://bigmodel.cn/usercenter/proj-mgmt/apikeys. OmniRoute uses the official BigModel.cn OpenAI-compatible chat endpoint.",
       "glmt": "ଅଧିକ ଟୋକନ୍ ବଜେଟ୍, ଥିଙ୍କିଂ ସକ୍ଷମ ଏବଂ ଅଧିକ ଦୀର୍ଘ ଟାଇମ୍ଆଉଟ୍ ସହିତ ପୂର୍ବନିର୍ଦ୍ଧାରିତ GLM ପ୍ରୋଫାଇଲ୍।",
       "getgoapi": "ଏକ API କୀ ସହିତ GoAPIକୁ ସଂଯୋଗ କରନ୍ତୁ।",
       "groq": "ମାଗଣା ପ୍ଲାନ୍: ପ୍ରତି ମଡେଲ୍ ପାଇଁ ସୀମା (ପ୍ରତି ଚାଟ୍ ମଡେଲ୍କୁ ଦିନକୁ 200K ଟୋକେନ୍; RPM/RPD ପାଇଁ console.groq.com/docs/rate-limits ଦେଖନ୍ତୁ) — କୌଣସି ପେମେଣ୍ଟ ପଦ୍ଧତି ସଂରକ୍ଷିତ ନାହିଁ।",
