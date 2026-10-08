@@ -5572,6 +5572,8 @@
     "modelsActive": "aktif",
     "showModel": "Tunjukkan model",
     "hideModel": "Sembunyikan model",
+    "blacklistModel": "Sekat",
+    "blacklistModelTooltip": "Sekat model ini dan sembunyikannya daripada katalog",
     "removeModel": "Alih keluar model",
     "rateLimitProtected": "Dilindungi",
     "rateLimitUnprotected": "Tidak dilindungi",

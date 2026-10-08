@@ -5572,6 +5572,8 @@
     "modelsActive": "ใช้งานอยู่",
     "showModel": "แสดงโมเดล",
     "hideModel": "ซ่อนโมเดล",
+    "blacklistModel": "บล็อก",
+    "blacklistModelTooltip": "บล็อกโมเดลนี้และซ่อนจากแคตตาล็อก",
     "removeModel": "ลบโมเดล",
     "rateLimitProtected": "ได้รับการคุ้มครอง",
     "rateLimitUnprotected": "ไม่มีการป้องกัน",

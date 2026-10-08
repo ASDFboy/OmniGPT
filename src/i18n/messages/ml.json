@@ -5572,6 +5572,8 @@
     "modelsActive": "സജീവം",
     "showModel": "മോഡൽ കാണിക്കുക",
     "hideModel": "മോഡൽ മറയ്ക്കുക",
+    "blacklistModel": "തടയുക",
+    "blacklistModelTooltip": "ഈ മോഡൽ തടഞ്ഞ് കാറ്റലോഗിൽ നിന്ന് മറയ്ക്കുക",
     "removeModel": "മോഡൽ നീക്കം ചെയ്യുക",
     "rateLimitProtected": "പരിരക്ഷിതം",
     "rateLimitUnprotected": "പരിരക്ഷിക്കാത്തത്",

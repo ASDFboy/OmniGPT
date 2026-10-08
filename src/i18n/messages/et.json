@@ -5572,6 +5572,8 @@
     "modelsActive": "Aktiivne",
     "showModel": "Kuva mudel",
     "hideModel": "Peida mudel",
+    "blacklistModel": "Blokeeri",
+    "blacklistModelTooltip": "Blokeeri see mudel ja peida see kataloogist",
     "removeModel": "Eemalda mudel",
     "rateLimitProtected": "Kaitstud",
     "rateLimitUnprotected": "Kaitsmata",

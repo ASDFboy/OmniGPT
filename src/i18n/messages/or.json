@@ -5572,6 +5572,8 @@
     "modelsActive": "ସକ୍ରିୟ",
     "showModel": "ମଡେଲ୍ ଦେଖାନ୍ତୁ",
     "hideModel": "ମଡେଲ୍ ଲୁଚାନ୍ତୁ",
+    "blacklistModel": "ବ୍ଲକ୍",
+    "blacklistModelTooltip": "ଏହି ମଡେଲକୁ ବ୍ଲକ୍ କରି କାଟାଲଗରୁ ଲୁଚାନ୍ତୁ",
     "removeModel": "ମଡେଲ୍ ହଟାନ୍ତୁ",
     "rateLimitProtected": "ସୁରକ୍ଷିତ",
     "rateLimitUnprotected": "ଅସୁରକ୍ଷିତ",

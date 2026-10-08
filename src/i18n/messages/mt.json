@@ -5572,6 +5572,8 @@
     "modelsActive": "Attiv",
     "showModel": "Uri l-mudell",
     "hideModel": "Aħbi l-mudell",
+    "blacklistModel": "Imblokka",
+    "blacklistModelTooltip": "Imblokka dan il-mudell u aħbih mill-katalgu",
     "removeModel": "Neħħi l-mudell",
     "rateLimitProtected": "Protett",
     "rateLimitUnprotected": "Mhux protett",

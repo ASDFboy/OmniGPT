@@ -5572,6 +5572,8 @@
     "modelsActive": "Ενεργό",
     "showModel": "Εμφάνιση μοντέλου",
     "hideModel": "Απόκρυψη μοντέλου",
+    "blacklistModel": "Αποκλεισμός",
+    "blacklistModelTooltip": "Απόκλεισε αυτό το μοντέλο και απόκρυψέ το από τον κατάλογο",
     "removeModel": "Αφαίρεση μοντέλου",
     "rateLimitProtected": "Προστατευμένο",
     "rateLimitUnprotected": "Μη προστατευμένο",

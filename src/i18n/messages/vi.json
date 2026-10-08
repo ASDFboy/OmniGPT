@@ -5572,6 +5572,8 @@
     "modelsActive": "Đang hoạt động",
     "showModel": "Hiển thị mô hình",
     "hideModel": "Ẩn mô hình",
+    "blacklistModel": "Chặn",
+    "blacklistModelTooltip": "Chặn mô hình này và ẩn nó khỏi danh mục",
     "removeModel": "Xóa mô hình",
     "rateLimitProtected": "Được bảo vệ",
     "rateLimitUnprotected": "Không được bảo vệ",

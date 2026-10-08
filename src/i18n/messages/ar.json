@@ -5572,6 +5572,8 @@
     "modelsActive": "نشطة",
     "showModel": "إظهار النموذج",
     "hideModel": "إخفاء النموذج",
+    "blacklistModel": "حظر",
+    "blacklistModelTooltip": "حظر هذا النموذج وإخفاؤه من الكتالوج",
     "removeModel": "إزالة النموذج",
     "rateLimitProtected": "محمي",
     "rateLimitUnprotected": "غير محمي",

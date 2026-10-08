@@ -5572,6 +5572,8 @@
     "modelsActive": "aktiv",
     "showModel": "Modell anzeigen",
     "hideModel": "Modell ausblenden",
+    "blacklistModel": "Sperren",
+    "blacklistModelTooltip": "Dieses Modell sperren und aus dem Katalog ausblenden",
     "removeModel": "Modell entfernen",
     "rateLimitProtected": "Geschützt",
     "rateLimitUnprotected": "Ungeschützt",

@@ -5572,6 +5572,8 @@
     "modelsActive": "Na-arụ ọrụ",
     "showModel": "Gosi ụdị",
     "hideModel": "Zoo ụdị",
+    "blacklistModel": "Gbochie",
+    "blacklistModelTooltip": "Gbochie ihe nlereanya a ma zoo ya na katalọgụ",
     "removeModel": "Wepụ ụdị",
     "rateLimitProtected": "Echekwara",
     "rateLimitUnprotected": "Echekwaghị",

@@ -5572,6 +5572,8 @@
     "modelsActive": "actief",
     "showModel": "Model tonen",
     "hideModel": "Model verbergen",
+    "blacklistModel": "Blokkeren",
+    "blacklistModelTooltip": "Blokkeer dit model en verberg het uit de catalogus",
     "removeModel": "Model verwijderen",
     "rateLimitProtected": "Beschermd",
     "rateLimitUnprotected": "Onbeschermd",

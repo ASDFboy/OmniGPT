@@ -5572,6 +5572,8 @@
     "modelsActive": "Ń ṣiṣẹ́",
     "showModel": "Fi àwòṣe hàn",
     "hideModel": "Fi àwòṣe pamọ́",
+    "blacklistModel": "Dínà",
+    "blacklistModelTooltip": "Dínà àwòṣe yìí kí o sì fi pamọ́ kúrò nínú àkójọ",
     "removeModel": "Yọ àwòṣe kúrò",
     "rateLimitProtected": "A dáàbò bo",
     "rateLimitUnprotected": "A kò dáàbò bo",

@@ -5572,6 +5572,8 @@
     "modelsActive": "Aktiv",
     "showModel": "Modeli göstər",
     "hideModel": "Modeli gizlət",
+    "blacklistModel": "Blokla",
+    "blacklistModelTooltip": "Bu modeli blokla və kataloqdan gizlət",
     "removeModel": "Modeli sil",
     "rateLimitProtected": "Qorunur",
     "rateLimitUnprotected": "Qorunmur",

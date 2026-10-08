@@ -5572,6 +5572,8 @@
     "modelsActive": "aktivní",
     "showModel": "Zobrazit model",
     "hideModel": "Skrýt model",
+    "blacklistModel": "Blokovat",
+    "blacklistModelTooltip": "Blokovat tento model a skrýt ho z katalogu",
     "removeModel": "Odebrat model",
     "rateLimitProtected": "Chráněn",
     "rateLimitUnprotected": "Nechráněn",

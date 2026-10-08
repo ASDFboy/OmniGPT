@@ -5572,6 +5572,8 @@
     "modelsActive": "فعال",
     "showModel": "نمایش مدل",
     "hideModel": "پنهان کردن مدل",
+    "blacklistModel": "مسدود کردن",
+    "blacklistModelTooltip": "این مدل را مسدود و از کاتالوگ پنهان کنید",
     "removeModel": "حذف مدل",
     "rateLimitProtected": "محافظتشده",
     "rateLimitUnprotected": "بدون محافظت",

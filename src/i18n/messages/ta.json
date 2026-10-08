@@ -5572,6 +5572,8 @@
     "modelsActive": "செயலில் உள்ளது",
     "showModel": "மாடலைக் காட்டு",
     "hideModel": "மாடலை மறை",
+    "blacklistModel": "தடு",
+    "blacklistModelTooltip": "இந்த மாதிரியைத் தடுத்து பட்டியலிலிருந்து மறை",
     "removeModel": "மாடலை அகற்று",
     "rateLimitProtected": "பாதுகாக்கப்பட்டது",
     "rateLimitUnprotected": "பாதுகாக்கப்படவில்லை",

@@ -5572,6 +5572,8 @@
     "modelsActive": "aktív",
     "showModel": "Modell megjelenítése",
     "hideModel": "Modell elrejtése",
+    "blacklistModel": "Tiltás",
+    "blacklistModelTooltip": "Tiltsd ezt a modellt, és rejtsd el a katalógusból",
     "removeModel": "Modell eltávolítása",
     "rateLimitProtected": "Védett",
     "rateLimitUnprotected": "Nem védett",

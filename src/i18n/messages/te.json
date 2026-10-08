@@ -5572,6 +5572,8 @@
     "modelsActive": "సక్రియం",
     "showModel": "మోడల్ను చూపండి",
     "hideModel": "మోడల్ను దాచండి",
+    "blacklistModel": "బ్లాక్",
+    "blacklistModelTooltip": "ఈ మోడల్‌ను బ్లాక్ చేసి కేటలాగ్ నుండి దాచు",
     "removeModel": "మోడల్ను తొలగించండి",
     "rateLimitProtected": "రక్షితమైనది",
     "rateLimitUnprotected": "రక్షణ లేనిది",

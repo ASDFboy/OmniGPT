@@ -5572,6 +5572,8 @@
     "modelsActive": "aktibo",
     "showModel": "Ipakita ang modelo",
     "hideModel": "Itago ang modelo",
+    "blacklistModel": "I-block",
+    "blacklistModelTooltip": "I-block ang model na ito at itago sa catalog",
     "removeModel": "Alisin ang modelo",
     "rateLimitProtected": "Pinoprotektahan",
     "rateLimitUnprotected": "Hindi protektado",

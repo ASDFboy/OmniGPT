@@ -5572,6 +5572,8 @@
     "modelsActive": "Masu aiki",
     "showModel": "Nuna samfurin",
     "hideModel": "Ɓoye samfurin",
+    "blacklistModel": "Toshe",
+    "blacklistModelTooltip": "Toshe wannan samfurin kuma ka ɓoye shi daga katalog",
     "removeModel": "Cire samfurin",
     "rateLimitProtected": "An kare",
     "rateLimitUnprotected": "Ba a kare ba",

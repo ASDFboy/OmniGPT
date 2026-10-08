@@ -5572,6 +5572,8 @@
     "modelsActive": "有効",
     "showModel": "モデルを表示",
     "hideModel": "モデルを非表示",
+    "blacklistModel": "ブラックリスト",
+    "blacklistModelTooltip": "このモデルをブラックリストに入れ、カタログから隠す",
     "removeModel": "モデルの削除",
     "rateLimitProtected": "保護されています",
     "rateLimitUnprotected": "保護されていない",

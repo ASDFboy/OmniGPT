@@ -5572,6 +5572,8 @@
     "modelsActive": "აქტიური",
     "showModel": "მოდელის ჩვენება",
     "hideModel": "მოდელის დამალვა",
+    "blacklistModel": "დაბლოკვა",
+    "blacklistModelTooltip": "დაბლოკე ეს მოდელი და დამალე კატალოგიდან",
     "removeModel": "მოდელის წაშლა",
     "rateLimitProtected": "დაცული",
     "rateLimitUnprotected": "დაუცველი",

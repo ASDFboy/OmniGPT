@@ -5572,6 +5572,8 @@
     "modelsActive": "Ակտիվ",
     "showModel": "Ցուցադրել մոդելը",
     "hideModel": "Թաքցնել մոդելը",
+    "blacklistModel": "Արգելափակել",
+    "blacklistModelTooltip": "Արգելափակել այս մոդելը և թաքցնել այն կատալոգից",
     "removeModel": "Հեռացնել մոդելը",
     "rateLimitProtected": "Պաշտպանված",
     "rateLimitUnprotected": "Չպաշտպանված",

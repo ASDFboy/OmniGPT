@@ -5572,6 +5572,8 @@
     "modelsActive": "активні",
     "showModel": "Показати модель",
     "hideModel": "Приховати модель",
+    "blacklistModel": "До чорного списку",
+    "blacklistModelTooltip": "Сховати цю модель із каталогу",
     "removeModel": "Зняти модель",
     "rateLimitProtected": "Захищений",
     "rateLimitUnprotected": "Незахищений",
