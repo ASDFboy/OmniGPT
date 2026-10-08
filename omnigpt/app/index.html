@@ -312,7 +312,7 @@ const renewToken=()=>tokenP||(tokenP=fetch("/",{cache:"no-store"}).then(r=>r.ok?
 const F=async(u,o={})=>{const r=await F0(u,o);if(r.status!==403||!(await renewToken()))return r;return F0(typeof u==="string"?u.replace(/([?&]t=)[0-9a-f]+/,"$1"+TOKEN):u,o)};
 // BRAIN-START
 // A small layered diagram of the agents taking part in this conversation. Only agents that are used or planned are shown.
-// Rows: you, memories and skills, models, parallel workers, checks and tools, answer. Signals travel along the links that were actually used.
+// Rows: you, memories and skills, models, parallel workers, checks and tools, answer, files the answer embeds. Signals travel along the links that were actually used.
 // Nodes fly in from the node that called them and their link draws itself; nodes that will very likely not be needed
 // again (memories and skills the current request does not use, idle workers, tools and models unused for a few turns)
 // drift off and fade away.
@@ -322,13 +322,13 @@ const Brain=(()=>{
   const LABEL={user:"you",output:"answer",guard:"safety check",tools:"pc tools",sandbox:"code sandbox",browser:"web browser"};
   const ROWOF={user:0,guard:4,tools:4,sandbox:4,browser:4,output:5}, ORDER={guard:0,tools:1,sandbox:2,browser:3};
   const hubs={}, LB={}; let seq=0, dirty=true, turnNo=0; // LB: labels of memory and skill nodes (their keys are ids)
-  const ctxKey=k=>/^(mem|skill):/.test(k), toolKey=k=>/^t:/.test(k);
+  const ctxKey=k=>/^(mem|skill):/.test(k), toolKey=k=>/^t:/.test(k), fileKey=k=>/^file:/.test(k);
   function hub(key,label){
     if(hubs[key]){if(label&&hubs[key].label!==label){hubs[key].label=LB[key]=label}return hubs[key]}
     if(label)LB[key]=label;
     const wk=/^W(\d)$/.exec(key);
-    const name=LB[key]||LABEL[key]||(toolKey(key)?key.slice(2).replace(/_/g," "):ctxKey(key)?key.replace(/^\w+:/,""):wk?"worker "+wk[1]:String(key).split("/").pop().replace(/-\d{4}.*$/,"").replace(/^gemini-/,"gemini ").replace(/-/g," "));
-    return hubs[key]={key,label:name,row:ROWOF[key]!==undefined?ROWOF[key]:ctxKey(key)?1:toolKey(key)?4:wk?3:2,ord:ORDER[key]!==undefined?ORDER[key]:wk?+wk[1]:100+seq++,vis:key==="user",fade:key==="user"?1:0,sc:1,x:0,y:0,tx:0,ty:0,placed:false,busy:0,act:0,mark:null,glow:0,gc:0,leaving:false,vx:0,vy:0,from:null,lastTurn:turnNo};
+    const name=LB[key]||LABEL[key]||(toolKey(key)?key.slice(2).replace(/_/g," "):fileKey(key)?key.split(/[\\/]/).pop():ctxKey(key)?key.replace(/^\w+:/,""):wk?"worker "+wk[1]:String(key).split("/").pop().replace(/-\d{4}.*$/,"").replace(/^gemini-/,"gemini ").replace(/-/g," "));
+    return hubs[key]={key,label:name,row:ROWOF[key]!==undefined?ROWOF[key]:ctxKey(key)?1:toolKey(key)?4:fileKey(key)?6:wk?3:2,ord:ORDER[key]!==undefined?ORDER[key]:wk?+wk[1]:100+seq++,vis:key==="user",fade:key==="user"?1:0,sc:1,x:0,y:0,tx:0,ty:0,placed:false,busy:0,act:0,mark:null,glow:0,gc:0,leaving:false,vx:0,vy:0,from:null,lastTurn:turnNo};
   }
   hub("user");
   const touch=(k,label,from)=>{const h=hub(k,label);h.lastTurn=turnNo;
@@ -359,7 +359,7 @@ const Brain=(()=>{
     const vis=Object.values(hubs).filter(h=>h.vis&&!h.leaving);
     const rows=[];
     const per=Math.max(1,Math.min(3,Math.floor((W-20)/96))); // labels need about 96 px each, so a narrow pane gets fewer per row
-    for(let r=0;r<=5;r++){const L=vis.filter(h=>h.row===r).sort((a,b)=>a.ord-b.ord);for(let i=0;i<L.length;i+=per)rows.push(L.slice(i,i+per))}
+    for(let r=0;r<=6;r++){const L=vis.filter(h=>h.row===r).sort((a,b)=>a.ord-b.ord);for(let i=0;i<L.length;i+=per)rows.push(L.slice(i,i+per))}
     const gap=Math.max(70,Math.min(84,(H-90)/Math.max(1,rows.length-1))), total=(rows.length-1)*gap, top=Math.max(34,(H-total)/2-18);
     rows.forEach((L,ri)=>{const step=Math.min(100,(W-20)/Math.max(1,L.length)),w=(L.length-1)*step;L.forEach((h,i)=>{h.tx=W/2-w/2+i*step;h.ty=top+ri*gap;if(!h.placed){const f=h.from&&hubs[h.from];if(f&&f.placed&&f.vis){h.x=f.x;h.y=f.y}else{h.x=h.tx+(Math.random()-.5)*60;h.y=h.ty-40}h.placed=true}})});
   }
@@ -433,6 +433,8 @@ const Brain=(()=>{
     // a memory or skill that was given to the agents: it lights up and feeds the next model that starts
     ctx(key,label){try{touch(key,label);if(!fed.has(key)){fed.add(key);pending.add(key);msg("user",key,0)}}catch(e){}},
     ready(){ctxReady=true},
+    // files embedded in the answer: they come out of the answer node
+    files(paths){try{(paths||[]).slice(0,8).forEach(p=>{const k="file:"+String(p).toLowerCase();touch(k,String(p).split(/[\\/]/).pop(),"output");msg("output",k,0);mark(k,1)})}catch(e){}},
     feed(model){try{
       if(!ctxPruned&&ctxReady){ctxPruned=true;for(const k in hubs)if(ctxKey(k)&&hubs[k].vis&&!fed.has(k))drop(k)} // memories and skills this request does not use
       for(const k of pending)msg(k,model,0);pending.clear()}catch(e){}},
@@ -1173,7 +1175,7 @@ async function send(){
       const ui=turn("Answer","final"); ui.text(String(final).replace(/\n\n\[Actions this turn:[^\]]*\]$/,"")); ui.end();
     }
     try{await finishFiles(final,q)}catch(e){}
-    history=[...ctx,{role:"assistant",content:final||"(no answer)"}];done=true;Brain.msg(Brain.last,"output");Brain.ok("output");learn(q,String(final||""),TURN.ok>0&&TURN.fail===0).catch(()=>{});memFeedback(MEM_USED,true);LAST_MEM=[...MEM_USED];
+    history=[...ctx,{role:"assistant",content:final||"(no answer)"}];done=true;Brain.msg(Brain.last,"output");Brain.ok("output");Brain.files(TURN.files);learn(q,String(final||""),TURN.ok>0&&TURN.fail===0).catch(()=>{});memFeedback(MEM_USED,true);LAST_MEM=[...MEM_USED];
   }catch(e){if(e&&e.name!=="AbortError"){memFeedback(MEM_USED,false);Brain.fail(Brain.last);const n=turn("Error","final");n.end();n.error(e.message||String(e))}}
   if(!done)history=[...ctx,{role:"assistant",content:"(stopped before finishing)"}];
   busy=false;ctrl=null;sendBtn.innerHTML=ico("send");sendBtn.classList.remove("stop");syncSend();if(trace){trace.finish();trace=null}scroll();saveChat(typed);
@@ -1279,7 +1281,7 @@ async function finishFiles(final,q){
   }
   paths.forEach(knowFile);
   const info=paths.length?(await api("/api/fileinfo",{paths:paths.slice(0,8)})).filter(f=>f.exists&&!f.isDir&&f.mtime>=TURN.t0-1000&&!((TURN.att||[]).includes(f.path.toLowerCase())&&f.mtime<=TURN.t0)):[]; // only files created or changed by this request
-  info.forEach(f=>knowFile(f.path)); linkPaths(body);
+  info.forEach(f=>knowFile(f.path)); linkPaths(body); TURN.files=info.map(f=>f.path);
   if(!info.length)return;
   const box=document.createElement("div");box.className="fcards";
   box.innerHTML=info.map(f=>{const name=f.path.split(/[\\/]/).pop(),dir=f.path.slice(0,-name.length-1);
