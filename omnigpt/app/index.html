@@ -790,9 +790,9 @@ async function toolFlow(u,userReq,intent,lead,cfg,T,scope){
 }
 // o: {T: lane for a parallel worker, system, tools, scope:{writes:[abs paths]}, maxSteps}
 async function agent(q,ctx,leads,o={}){
-  const T=o.T, cfg=await effCfg(), sys=typeof o.system==="function"?o.system(cfg):(o.system||agentSystem(cfg)), tools=o.tools||[...TOOLS,...(curProject?PROJ_TOOLS:[])], max=o.maxSteps||15;
+  const T=o.T, cfg=await effCfg(), sys=typeof o.system==="function"?o.system(cfg):(o.system||agentSystem(cfg)), tools=o.tools||[...TOOLS,...(curProject?PROJ_TOOLS:[])], max=o.maxSteps||Number(SET().steps)||40;
   let msgs=[...ctx], actions=[], final="", stopSent=0;
-  for(let step=0;step<max;step++){
+  for(let step=0;step<=max;step++){ // the extra step is for the wrap-up summary once the limit is reached
     const out={};
     const mkA=m=>({model:m,system:sys,messages:msgs,tools});
     const r=step===0?await answerWith(leads,"Agent",mkA,"",out,T,q):await runAny(leads,"Agent",mkA,"",out,T);
@@ -804,6 +804,7 @@ async function agent(q,ctx,leads,o={}){
         if(t){t.classList.add("final");col.appendChild(t);if(trace)trace.n--;if(r.text.trim()&&!t.querySelector(".copy"))t.querySelector(".who").insertAdjacentHTML("beforeend",'<button class="copy">Copy</button>')}
       }
       break}
+    if(step===max){const n=turn("Plan","",T);n.end();n.text("Stopped after "+max+" steps.");final=(r.text?r.text+"\n\n":"")+"(Stopped after "+max+" steps. Say \"continue\" to keep going, or raise \"Steps per task\" in Settings.)";break}
     msgs.push({role:"assistant",content:out.content});
     const results=[];
     for(const u of uses){
@@ -816,8 +817,8 @@ async function agent(q,ctx,leads,o={}){
       if(++stopSent>3){final=r.text||"(stopped)";break}
       results.push({type:"text",text:"The user asked you to stop. Do not start anything new. Leave things consistent, then reply with a short summary of what is done and what remains."});
     }
+    if(step===max-1)results.push({type:"text",text:"You have reached the step limit for this turn. Do not call any more tools. Reply with a short summary: what is done, and exactly what remains, so the user can say \"continue\"."});
     msgs.push({role:"user",content:results});
-    if(step===max-1){const n=turn("Plan","",T);n.end();n.text("Stopped after "+max+" steps.");final="(stopped after "+max+" steps)"}
   }
   return final+(actions.length?`\n\n[Actions this turn: ${actions.join(", ")}]`:"");
 }
@@ -867,7 +868,7 @@ async function runParallel(q,plan,leads,useTools,rotN,web){
       +(s.abs.length?"You may create or modify ONLY: "+s.abs.join("; ")+". Any other write is rejected by the system. write_file creates missing parent folders by itself, so you rarely need make_dir.":"You may not modify any files (read-only worker).")
       +" Other workers cover:\n"+others+"\nDo not duplicate their work and do not wait for them. Shared conventions: "+(plan.shared||"none")+". If you need something outside your lane, say so in your report. Command execution is unavailable to you."
       +"\nFinish with a REPORT of at most 250 words: what you found or did, the files you changed (full paths), the sources you used, and how you checked your part"+(s.check?" against: "+s.check:"")+".";
-    return agent(q,task,rot,{T:lanes[i],system:sys,tools:webW?[...WEB_TOOLS]:wtools,scope:{writes:s.abs},maxSteps:10});
+    return agent(q,task,rot,{T:lanes[i],system:sys,tools:webW?[...WEB_TOOLS]:wtools,scope:{writes:s.abs},maxSteps:Math.max(10,Math.round((Number(SET().steps)||40)*0.75))});
   };
   while(started.size<n&&!(ctrl&&ctrl.signal.aborted)){
     let ready=plan.subs.map((_,i)=>i).filter(i=>!started.has(i)&&plan.subs[i].after.every(k=>out[k]!==null));
@@ -1644,7 +1645,7 @@ const PROFILES={
   unfiltered:{router:["gemini/gemini-3.1-flash-lite","ddgw/mistral-small-2603"],fast:["ddgw/mistral-small-2603","unc/turboderp/Qwen3.8-27B-exl3","ddgw/tinfoil/gemma4-31b","gemini/gemini-3.1-flash-lite"],strong:["unc/turboderp/Qwen3.8-27B-exl3","ddgw/mistral-small-2603","ddgw/tinfoil/gemma4-31b"],reviewer:["gemini/gemini-3.1-flash-lite","ddgw/mistral-small-2603"],vision:["gemini/gemini-3.1-flash-lite"]}
 };
 const UNFILTERED_NOTE="\n\nThe user is an adult and chose Unfiltered mode: mature and explicit content for adults, including sexual content between consenting adult characters, is allowed when they ask for it. Never produce sexual content involving minors or anyone who could be a minor, sexual content about real people, or help with anything that could hurt people (weapons, malware, violence, self-harm).";
-const DEF={theme:"system",size:"m",font:"serif",width:"normal",graph:true,enter:"enter",workers:4,models:{},memory:true,skills:true,learn:true,omniStrong:false,omniGap:10,refine:true,mode:"default",updates:true,skipVersion:"",accent:"none"};
+const DEF={theme:"system",size:"m",font:"serif",width:"normal",graph:true,enter:"enter",workers:4,steps:40,models:{},memory:true,skills:true,learn:true,omniStrong:false,omniGap:10,refine:true,mode:"default",updates:true,skipVersion:"",accent:"none"};
 const ACCENTS=[["none","None"],["#e54d5e","Red"],["#e08a2e","Orange"],["#3f9d6a","Green"],["#3b82c4","Blue"],["#7c5cc4","Violet"],["#c2508f","Pink"]];
 const DEFTIERS=JSON.parse(JSON.stringify(TIERS));
 const SET=()=>({...DEF,...(LS.get("orc.settings")||{})});
@@ -1707,6 +1708,7 @@ const PANES={
     sRow("Attached folders","Folders you attached in a conversation. Agents may do anything inside them.",(CFG.granted||[]).length?`<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">${CFG.granted.map(g=>`<span class="mut" style="font-size:12.5px">${esc(g)} <button class="btn" data-ungrant="${esc(g)}">Remove</button></span>`).join("")}</div>`:'<span class="mut">None</span>')+
     sRow("Allowed folders","Agents may only touch these. One per line.",`<textarea data-c="roots" spellcheck="false">${esc((CFG.roots||[]).join("\n"))}</textarea>`,"col2")+
     sRow("Refine prompts","An agent rewrites each request into a precise brief before work starts.",sTog("refine"))+
+    sRow("Steps per task","How many actions (reading, moving, writing files…) an agent may take before it stops and reports. Big jobs such as organizing a folder need more.",`<select data-k="steps">${[15,25,40,60,100,200].map(n=>`<option${SET().steps==n?" selected":""}>${n}</option>`).join("")}</select>`)+
     sRow("Parallel agents","The most workers that can run at once.",`<select data-k="workers">${[2,3,4,5,6].map(n=>`<option${SET().workers==n?" selected":""}>${n}</option>`).join("")}</select>`)+
     sRow("OMNI pause between steps","Seconds OMNI waits between steps, which keeps free quotas from running out.",`<select data-k="omniGap">${[5,10,30,60,120].map(n=>`<option${SET().omniGap==n?" selected":""}>${n}</option>`).join("")}</select>`)+
     sRow("OMNI may use the strong model","Only after the fast models have failed twice in a row. Off keeps OMNI on the free tier.",sTog("omniStrong")),
