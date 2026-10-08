@@ -6389,6 +6389,7 @@
       "gitlawb": "Hankige oma API-võti Gitlawb Opengateway juhtpaneelilt.",
       "glm": "Ühendage GLM Coding API-võtmega.",
       "glm-cn": "Ühendage GLM Coding (China) API-võtmega.",
+      "bigmodel": "Create an API key at https://bigmodel.cn/usercenter/proj-mgmt/apikeys. OmniRoute uses the official BigModel.cn OpenAI-compatible chat endpoint.",
       "glmt": "Eelseadistatud GLM-profiil suurema tokenieelarve, lubatud mõtlemise ja pikema ajalõpuga.",
       "getgoapi": "Ühendage GoAPI API-võtmega.",
       "groq": "Tasuta pakett: mudelipõhised limiidid (200K tokenit päevas iga vestlusmudeli kohta; RPM/RPD limiite vaadake aadressilt console.groq.com/docs/rate-limits) — makseviisi ei pea lisama.",

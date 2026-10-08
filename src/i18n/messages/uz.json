@@ -6389,6 +6389,7 @@
       "gitlawb": "API kalitingizni Gitlawb Opengateway boshqaruv panelidan oling.",
       "glm": "GLM Coding’ni API kaliti bilan ulang.",
       "glm-cn": "GLM Coding (Xitoy)’ni API kaliti bilan ulang.",
+      "bigmodel": "Create an API key at https://bigmodel.cn/usercenter/proj-mgmt/apikeys. OmniRoute uses the official BigModel.cn OpenAI-compatible chat endpoint.",
       "glmt": "Yuqoriroq token byudjeti, fikrlash funksiyasi yoqilgan va uzoqroq kutish vaqtiga ega tayyor GLM profili.",
       "getgoapi": "GoAPI’ni API kaliti bilan ulang.",
       "groq": "Bepul tarif: har bir model uchun cheklovlar (har bir chat modeli uchun kuniga 200K token; RPM/RPD haqida console.groq.com/docs/rate-limits sahifasiga qarang) — hisobga hech qanday toʻlov usuli biriktirilmagan.",

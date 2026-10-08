@@ -6389,6 +6389,7 @@
       "gitlawb": "Iegūstiet savu API atslēgu Gitlawb Opengateway informācijas panelī.",
       "glm": "Savienojiet GLM Coding ar API atslēgu.",
       "glm-cn": "Savienojiet GLM Coding (Ķīna) ar API atslēgu.",
+      "bigmodel": "Create an API key at https://bigmodel.cn/usercenter/proj-mgmt/apikeys. OmniRoute uses the official BigModel.cn OpenAI-compatible chat endpoint.",
       "glmt": "Iepriekš iestatīts GLM profils ar lielāku tokenu budžetu, ieslēgtu domāšanas režīmu un ilgāku noildzi.",
       "getgoapi": "Savienojiet GoAPI ar API atslēgu.",
       "groq": "Bezmaksas plāns: katram modelim noteikti ierobežojumi (200 tūkst. tokenu dienā katram tērzēšanas modelim; RPM/RPD ierobežojumus skatiet vietnē console.groq.com/docs/rate-limits) — kontam nav pievienots maksājuma veids.",

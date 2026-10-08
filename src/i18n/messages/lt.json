@@ -6389,6 +6389,7 @@
       "gitlawb": "Gaukite savo API raktą Gitlawb Opengateway valdymo skydelyje.",
       "glm": "Prijunkite GLM Coding naudodami API raktą.",
       "glm-cn": "Prijunkite GLM Coding (China) naudodami API raktą.",
+      "bigmodel": "Create an API key at https://bigmodel.cn/usercenter/proj-mgmt/apikeys. OmniRoute uses the official BigModel.cn OpenAI-compatible chat endpoint.",
       "glmt": "Iš anksto nustatytas GLM profilis su didesniu žetonų biudžetu, įjungtu mąstymu ir ilgesniu skirtuoju laiku.",
       "getgoapi": "Prijunkite GoAPI naudodami API raktą.",
       "groq": "Nemokamas planas: kiekvienam modeliui taikomi atskiri apribojimai (200K žetonų per dieną kiekvienam pokalbių modeliui; RPM/RPD apribojimus žr. console.groq.com/docs/rate-limits) – mokėjimo metodo pridėti nereikia.",

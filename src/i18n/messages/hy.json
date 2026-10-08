@@ -6389,6 +6389,7 @@
       "gitlawb": "Ստացեք ձեր API բանալին Gitlawb Opengateway-ի կառավարման վահանակից։",
       "glm": "Միացրեք GLM Coding-ը API բանալիով։",
       "glm-cn": "Միացրեք GLM Coding (China)-ը API բանալիով։",
+      "bigmodel": "Create an API key at https://bigmodel.cn/usercenter/proj-mgmt/apikeys. OmniRoute uses the official BigModel.cn OpenAI-compatible chat endpoint.",
       "glmt": "Նախապես կարգավորված GLM պրոֆիլ՝ ավելի մեծ թոքենային բյուջեով, միացված մտածողության ռեժիմով և ավելի երկար ժամանակային սահմանափակմամբ։",
       "getgoapi": "Միացրեք GoAPI-ն API բանալիով։",
       "groq": "Անվճար պլան՝ սահմանաչափեր ըստ մոդելի (օրական 200K թոքեն՝ յուրաքանչյուր չաթային մոդելի համար․ RPM/RPD-ի մասին տե՛ս console.groq.com/docs/rate-limits) — վճարման եղանակ կցված չէ։",

@@ -6389,6 +6389,7 @@
       "gitlawb": "የAPI ቁልፍዎን ከGitlawb Opengateway ዳሽቦርድ ያግኙ።",
       "glm": "GLM Codingን በAPI ቁልፍ ያገናኙ።",
       "glm-cn": "GLM Coding (China)ን በAPI ቁልፍ ያገናኙ።",
+      "bigmodel": "Create an API key at https://bigmodel.cn/usercenter/proj-mgmt/apikeys. OmniRoute uses the official BigModel.cn OpenAI-compatible chat endpoint.",
       "glmt": "ከፍተኛ የቶከን በጀት፣ የነቃ የአስተሳሰብ ባህሪ እና ረዘም ያለ የጊዜ ገደብ ያለው ቀድሞ የተዘጋጀ GLM መገለጫ።",
       "getgoapi": "GoAPIን በAPI ቁልፍ ያገናኙ።",
       "groq": "ነፃ ዕቅድ፦ ለእያንዳንዱ ሞዴል ገደቦች (ለእያንዳንዱ የውይይት ሞዴል በቀን 200K ቶከኖች፤ ለRPM/RPD console.groq.com/docs/rate-limitsን ይመልከቱ) — የክፍያ ዘዴ አልተመዘገበም።",
