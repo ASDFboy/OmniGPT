@@ -53,14 +53,17 @@ const rules = [
   ["web_search", { query: "node lts" }, true], ["web_search", { query: "   " }, false], ["web_open", { url: "https://1.1.1.1/" }, true], ["web_open", { url: "http://127.0.0.1:20128/v1/models" }, false], ["web_open", { url: "http://localhost:20129/" }, false], ["web_open", { url: "http://169.254.169.254/latest/meta-data" }, false], ["web_open", { url: "http://192.168.1.1/" }, false], ["web_open", { url: "file:///c:/windows/win.ini" }, false],
   ["download_file", { url: "http://127.0.0.1:20128/api/x", path: "a.bin" }, false], ["download_file", { url: "file:///c:/x", path: "a.bin" }, false],
 ];
-const STD = { ...tools.loadConfig(), approval: "ask" }; // the checks must not depend on the approval mode the user happens to have selected
+// the checks must not depend on the folders or approval mode the user happens to have selected
+const H = os.homedir();
+const FIXED = { cwd: W, roots: [W, path.join(H, "Documents"), path.join(H, "Downloads"), path.join(H, "Desktop")], granted: [] };
+const STD = { ...tools.loadConfig(), ...FIXED, approval: "ask" };
 let bad = [];
 for (const [n, i, exp] of rules) { let ok = true; try { await tools.precheck(n, i, STD); } catch { ok = false; } if (ok !== exp) bad.push(n + " " + JSON.stringify(i).slice(0, 60)); }
 check(`hard safety rules (${rules.length} cases)`, bad.length === 0, bad.join("; "));
 
 // 2b. bypass mode: fewer command rules, but secrets and drive-level damage stay blocked
 {
-  const bc = { ...tools.loadConfig(), approval: "bypass" };
+  const bc = { ...tools.loadConfig(), ...FIXED, approval: "bypass" };
   const cases = [
     ["reg add HKCU\\Software\\X /v a", true], ["schtasks /create /tn x /tr calc", true], ["iwr http://x/a.zip -OutFile a.zip", true], ["Stop-Process -Name node", true], ["Write-Output " + "x".repeat(5000), true],
     ["Remove-Item C:\\ -Recurse -Force", false], ["Get-Content $env:OMNIROUTE_API_KEY", false], ["format-volume -DriveLetter D", false], ["shutdown /s", false], ["Get-Content C:\\Users\\x\\.ssh\\id_rsa", false],
