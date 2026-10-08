@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 import { pipeline } from "node:stream/promises";
 import { webOpen, webSearch } from "./web.mjs";
 import { inspect } from "./files.mjs";
+import { zipBuild, zipRead } from "./zip.mjs";
 
 const HOME = os.homedir();
 // ---------- code sandbox (AppContainer helper, see Sandbox.cs): code runs with no network and no access to the user's files
@@ -250,6 +251,28 @@ export async function precheck(name, input, cfg = loadConfig(), scope) {
     }
     case "download_file": { const u = await checkUrl(i.url); const p = W(i.path); return { class: "network", summary: `Download ${u.href}\n  to ${p}` }; }
     case "inspect_file": { const p = checkPath(i.path, cfg); return { class: "read", summary: `Inspect ${p}` }; }
+    case "find_files": { const p = checkPath(i.path || ".", cfg); return { class: "read", summary: `Find ${i.pattern || "*"} in ${p}` }; }
+    case "search_files": { const p = checkPath(i.path || ".", cfg); if (!String(i.query || "")) throw new Error("query is required"); if (i.regex) new RegExp(String(i.query)); return { class: "read", summary: `Search for "${String(i.query).slice(0, 120)}" in ${p}` }; }
+    case "system_info": return { class: "read", summary: "Read system information (Windows version, memory, disks, installed runtimes)" };
+    case "notify": return { class: "read", summary: `Notification: ${String(i.title || "OmniGPT").slice(0, 80)}` };
+    case "open_path": {
+      if (i.url) { const u = new URL(String(i.url)); if (!/^https?:$/.test(u.protocol)) throw new Error("only http(s) addresses can be opened"); return { class: "read", summary: `Open ${u.href} in the default browser` }; }
+      const p = checkPath(i.path, cfg);
+      if (!i.reveal && RUN_EXT.test(p)) throw new Error("Programs and scripts are never opened. Use reveal to show the file in File Explorer instead.");
+      return { class: "read", summary: `${i.reveal ? "Show in File Explorer" : "Open"} ${p}` };
+    }
+    case "clipboard": {
+      if (i.action === "read") return { class: "read", confirm: true, summary: "Read the clipboard (it can contain passwords, so this always asks)" };
+      if (i.action === "write") { if (String(i.text ?? "").length > 1e6) throw new Error("text too long"); return { class: "write", summary: `Copy to the clipboard: ${String(i.text ?? "").slice(0, 200)}` }; }
+      throw new Error('action must be "read" or "write"');
+    }
+    case "archive": {
+      const a = String(i.action || "");
+      if (a === "list") return { class: "read", summary: `List the contents of ${checkPath(i.source, cfg)}` };
+      if (a === "unzip") { const s = checkPath(i.source, cfg), d = W(i.destination || s.replace(/\.(zip|7z|rar|tar|gz|tgz|bz2|xz)$/i, "").replace(/\.tar$/i, "")); return { class: "write", summary: `Extract ${s}\n  to ${d}` }; }
+      if (a === "zip") { const L = (Array.isArray(i.source) ? i.source : [i.source]).map((p) => checkPath(p, cfg)); if (!L.length) throw new Error("source is required"); const d = W(i.destination || L[0] + ".zip"); return { class: "write", summary: `Pack ${L.length > 1 ? L.length + " items" : L[0]}\n  into ${d}` }; }
+      throw new Error('action must be "zip", "unzip" or "list"');
+    }
     case "view_images": {
       const L = list(i.paths, 8).map((p) => checkPath(p, cfg));
       return { class: "read", summary: `Look at ${L.length} image${L.length > 1 ? "s" : ""}:\n${L.map((p) => "- " + p).join("\n")}` };
@@ -266,6 +289,150 @@ export async function precheck(name, input, cfg = loadConfig(), scope) {
     case "web_open": { const u = await checkUrl(i.url); return { class: "web", summary: `Open ${u.href}` }; }
     default: throw new Error(`Unknown tool: ${name}`);
   }
+}
+
+// ---------- finding, searching, system information, notifications, archives
+const RUN_EXT = /\.(exe|com|bat|cmd|ps1|psm1|psd1|vbs|vbe|js|jse|wsf|wsh|msi|msp|mst|scr|hta|cpl|lnk|url|jar|reg|pif|appx|appxbundle|msix|msixbundle|application|gadget|inf|scf|ws|sct|py|pyw|sh)$/i;
+function globRe(g) {
+  let s = "";
+  for (let k = 0; k < g.length; k++) {
+    const c = g[k];
+    if (c === "*") { if (g[k + 1] === "*") { s += ".*"; k++; if (g[k + 1] === "/" || g[k + 1] === "\\") k++; } else s += "[^/]*"; }
+    else if (c === "?") s += "[^/]";
+    else if (c === "/" || c === "\\") s += "/";
+    else s += c.replace(/[.+^${}()|[\]\\]/g, "\\$&");
+  }
+  return new RegExp("^" + s + "$", "i");
+}
+function* walk(root, { recursive = true, dirs = false, max = 200000 } = {}) {
+  let seen = 0; const stack = [[root, 0]];
+  while (stack.length) {
+    const [d, depth] = stack.pop(); let ents; try { ents = fs.readdirSync(d, { withFileTypes: true }); } catch { continue; }
+    for (const e of ents) {
+      if (++seen > max) return;
+      if (DENY_SEG.has(lc(e.name))) continue;
+      const full = path.join(d, e.name), rel = path.relative(root, full).split(path.sep).join("/");
+      if (e.isDirectory()) { if (dirs) yield { full, rel, dir: true }; if (recursive && depth < 40) stack.push([full, depth + 1]); }
+      else if (e.isFile() && !DENY_FILE.test(e.name)) yield { full, rel, dir: false };
+    }
+  }
+}
+const fmtB = (n) => n < 1024 ? n + " B" : n < 1048576 ? (n / 1024).toFixed(1) + " KB" : n < 1073741824 ? (n / 1048576).toFixed(1) + " MB" : (n / 1073741824).toFixed(2) + " GB";
+const when = (v) => { if (v === undefined || v === null || v === "") return null; const t = Date.parse(String(v)); if (Number.isNaN(t)) throw new Error("bad date: " + v); return t; };
+async function findFiles(root, i) {
+  if (!fs.statSync(root).isDirectory()) throw new Error("not a folder");
+  const pat = String(i.pattern || "*"), re = globRe(pat), byPath = /[\\/]/.test(pat), type = i.type || "file";
+  const minS = Number(i.min_size) || 0, maxS = Number(i.max_size) || Infinity, after = when(i.modified_after) ?? -Infinity, before = when(i.modified_before) ?? Infinity;
+  const limit = Math.min(Math.max(Number(i.limit) | 0 || 300, 1), 2000), hits = [];
+  for (const f of walk(root, { recursive: i.recursive !== false, dirs: type !== "file" })) {
+    if (type === "folder" && !f.dir) continue;
+    if (!re.test(byPath ? f.rel : f.rel.split("/").pop())) continue;
+    let st; try { st = fs.statSync(f.full); } catch { continue; }
+    if (!f.dir && (st.size < minS || st.size > maxS)) continue;
+    if (st.mtimeMs < after || st.mtimeMs > before) continue;
+    hits.push({ rel: f.rel + (f.dir ? "/" : ""), size: f.dir ? 0 : st.size, mtime: st.mtimeMs, dir: f.dir });
+  }
+  const sort = i.sort || "name";
+  hits.sort(sort === "newest" ? (a, b) => b.mtime - a.mtime : sort === "oldest" ? (a, b) => a.mtime - b.mtime : sort === "largest" ? (a, b) => b.size - a.size : sort === "smallest" ? (a, b) => a.size - b.size : (a, b) => a.rel.localeCompare(b.rel, undefined, { numeric: true }));
+  const shown = hits.slice(0, limit), total = hits.reduce((s, h) => s + h.size, 0);
+  return `Found ${hits.length} ${type === "folder" ? "folders" : "matches"} for ${pat} in ${root}${hits.length ? ` (${fmtB(total)} in total)` : ""}${hits.length > limit ? `; showing ${limit}` : ""}.\n` +
+    shown.map((h) => `${h.rel}${h.dir ? "" : "  " + fmtB(h.size)}  ${new Date(h.mtime).toISOString().slice(0, 16).replace("T", " ")}`).join("\n");
+}
+async function searchFiles(root, i) {
+  const q = String(i.query || ""), flags = i.case_sensitive ? "" : "i";
+  const re = i.regex ? new RegExp(q, flags) : new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), flags);
+  const only = i.glob ? globRe(String(i.glob)) : null, byPath = i.glob && /[\\/]/.test(String(i.glob));
+  const max = Math.min(Math.max(Number(i.max_results) | 0 || 200, 1), 1000), out = []; let files = 0, matchedFiles = 0, skipped = 0;
+  const one = (full, rel) => {
+    let st; try { st = fs.statSync(full); } catch { return; }
+    if (st.size > 5 * 1024 * 1024) { skipped++; return; }
+    const buf = fs.readFileSync(full); if (buf.subarray(0, 8000).includes(0)) return; // binary
+    files++; let hit = false;
+    const lines = buf.toString("utf8").split(/\r?\n/);
+    for (let n = 0; n < lines.length && out.length < max; n++) {
+      const L = lines[n].length > 2000 ? lines[n].slice(0, 2000) : lines[n];
+      if (!re.test(L)) continue; hit = true;
+      const m = L.search(re), s = Math.max(0, m - 120);
+      out.push(`${rel}:${n + 1}: ${(s ? "…" : "") + L.slice(s, s + 300).trim()}`);
+    }
+    if (hit) matchedFiles++;
+  };
+  if (fs.statSync(root).isFile()) one(root, path.basename(root));
+  else for (const f of walk(root, { recursive: i.recursive !== false, max: 100000 })) { if (out.length >= max) break; if (only && !only.test(byPath ? f.rel : f.rel.split("/").pop())) continue; one(f.full, f.rel); }
+  return `${out.length ? `${out.length} matching lines in ${matchedFiles} files` : "No matches"} for ${i.regex ? "/" + q + "/" : JSON.stringify(q)} (searched ${files} text files${skipped ? `, skipped ${skipped} over 5 MB` : ""}${out.length >= max ? `; stopped at ${max} matches` : ""}).\n` + out.join("\n");
+}
+const TOOLS_TO_FIND = ["python", "py", "node", "npm", "git", "gh", "ffmpeg", "winget", "7z", "magick", "code"];
+async function systemInfo(cfg) {
+  const L = [`System: ${os.type()} ${os.release()} (${os.arch()})`, `CPU: ${os.cpus()[0]?.model || "?"} (${os.cpus().length} threads)`, `Memory: ${fmtB(os.totalmem())} total, ${fmtB(os.freemem())} free`, `User folder: ${HOME}`, `Working folder: ${cfg.cwd}`];
+  if (process.platform === "win32") {
+    const r = await ps(`$o=Get-CimInstance Win32_OperatingSystem; "Windows: $($o.Caption) $($o.Version)"
+Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Used -ne $null } | ForEach-Object { "Drive $($_.Name): $([math]::Round($_.Free/1GB,1)) GB free of $([math]::Round(($_.Used+$_.Free)/1GB,1)) GB" }
+Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Screen]::AllScreens | ForEach-Object { "Display: $($_.Bounds.Width)x$($_.Bounds.Height)$(if($_.Primary){' (main)'})" }
+foreach($c in ($env:ORC_C -split ',')){ $g=Get-Command $c -ErrorAction SilentlyContinue | Select-Object -First 1; if($g){ "Installed: $c ($($g.Source))" } else { "Not installed: $c" } }`, { ORC_C: TOOLS_TO_FIND.join(",") }, cfg.cwd, 30000);
+    L.push(...r.out.trim().split(/\r?\n/).filter(Boolean));
+  } else {
+    for (const c of TOOLS_TO_FIND) { const f = String(process.env.PATH || "").split(":").map((d) => path.join(d, c)).find((x) => fs.existsSync(x)); L.push(f ? `Installed: ${c} (${f})` : `Not installed: ${c}`); }
+  }
+  return L.join("\n");
+}
+// Windows toast through PowerShell's registered app id, so it shows without registering OmniGPT
+const TOAST_PS = `[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
+$x=[Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02)
+$t=$x.GetElementsByTagName("text"); [void]$t.Item(0).AppendChild($x.CreateTextNode($env:ORC_T)); [void]$t.Item(1).AppendChild($x.CreateTextNode($env:ORC_M))
+[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe').Show([Windows.UI.Notifications.ToastNotification]::new($x))`;
+async function find7z(cwd) {
+  if (process.platform !== "win32") return null;
+  const r = await ps("$g=Get-Command 7z -ErrorAction SilentlyContinue; if($g){$g.Source}elseif(Test-Path \"$env:ProgramFiles\\7-Zip\\7z.exe\"){\"$env:ProgramFiles\\7-Zip\\7z.exe\"}", {}, cwd, 15000);
+  const f = r.out.trim().split(/\r?\n/).pop(); return f && fs.existsSync(f) ? f : null;
+}
+const ZIP_EXT = /\.(zip|docx|xlsx|pptx|odt|ods|odp|epub|jar|apk|cbz|xpi|vsix|nupkg|whl)$/i;
+async function archiveTool(i, cfg, jr) {
+  const a = String(i.action);
+  if (a === "list") {
+    const s = checkPath(i.source, cfg);
+    if (!ZIP_EXT.test(s)) { const z = await find7z(cfg.cwd); if (!z) throw new Error("listing this archive type needs 7-Zip: install_tool winget 7zip.7zip"); const r = await execFile(z, ["l", s], 120000); return cap(r.out); }
+    const z = zipRead(fs.readFileSync(s)), files = z.entries.filter((e) => !e.dir);
+    return `${s}: ${files.length} files, ${fmtB(files.reduce((t, e) => t + e.size, 0))} unpacked.\n` + z.entries.slice(0, 1000).map((e) => `${e.name}${e.dir ? "" : "  " + fmtB(e.size)}${e.encrypted ? "  (password)" : ""}`).join("\n");
+  }
+  if (a === "zip") {
+    const L = (Array.isArray(i.source) ? i.source : [i.source]).map((p) => checkPath(p, cfg)), d = checkPath(i.destination || L[0] + ".zip", cfg);
+    if (fs.existsSync(d)) throw new Error("destination already exists: " + d);
+    if (/\.7z$/i.test(d)) { const z = await find7z(cfg.cwd); if (!z) throw new Error("making .7z needs 7-Zip: install_tool winget 7zip.7zip, or use a .zip destination"); const r = await execFile(z, ["a", d, ...L], 3600000); if (r.code !== 0) throw new Error(r.out.slice(-400)); jr.push({ op: "created", path: d }); return `Packed into ${d}.`; }
+    const files = []; let total = 0;
+    for (const s of L) {
+      const st = fs.statSync(s), base = path.basename(s);
+      if (st.isFile()) { files.push({ name: base, full: s, mtime: st.mtime }); total += st.size; continue; }
+      files.push({ name: base + "/" });
+      for (const f of walk(s, { dirs: true })) { if (f.dir) { files.push({ name: `${base}/${f.rel}/` }); continue; } const fst = fs.statSync(f.full); total += fst.size; files.push({ name: `${base}/${f.rel}`, full: f.full, mtime: fst.mtime }); }
+      if (total > 1024 * 1024 * 1024) throw new Error("more than 1 GB to pack; use 7-Zip (install_tool winget 7zip.7zip) with run_command");
+    }
+    const buf = zipBuild(files.map((f) => ({ name: f.name, data: f.full ? fs.readFileSync(f.full) : undefined, mtime: f.mtime })));
+    fs.mkdirSync(path.dirname(d), { recursive: true }); fs.writeFileSync(d, buf); jr.push({ op: "created", path: d });
+    return `Packed ${files.filter((f) => !f.name.endsWith("/")).length} files (${fmtB(total)}) into ${d} (${fmtB(buf.length)}).`;
+  }
+  // unzip
+  const s = checkPath(i.source, cfg), d = checkPath(i.destination || s.replace(/\.(zip|7z|rar|tar|gz|tgz|bz2|xz)$/i, "").replace(/\.tar$/i, ""), cfg);
+  const fresh = !fs.existsSync(d);
+  if (!ZIP_EXT.test(s)) {
+    const z = await find7z(cfg.cwd); if (!z) throw new Error("extracting this archive type needs 7-Zip: install_tool winget 7zip.7zip");
+    const r = await execFile(z, ["x", s, "-o" + d, i.overwrite ? "-aoa" : "-aos", "-y"], 3600000); if (r.code !== 0) throw new Error(r.out.slice(-400));
+    if (fresh) jr.push({ op: "created", path: d }); return `Extracted to ${d}.\n` + r.out.split(/\r?\n/).filter((l) => /files|folders|size/i.test(l)).join("\n");
+  }
+  const z = zipRead(fs.readFileSync(s)); let wrote = 0, skipped = [];
+  fs.mkdirSync(d, { recursive: true }); if (fresh) jr.push({ op: "created", path: d });
+  for (const e of z.entries) {
+    const name = e.name.replace(/\\/g, "/");
+    if (/^([a-z]:|\/)/i.test(name) || name.split("/").includes("..")) { skipped.push(name + " (unsafe path)"); continue; } // zip-slip
+    let t; try { t = checkPath(path.join(d, ...name.split("/").filter(Boolean)), cfg); } catch (err) { skipped.push(name + " (" + err.message + ")"); continue; }
+    if (!under(t, real(d))) { skipped.push(name + " (outside the folder)"); continue; }
+    if (e.dir) { fs.mkdirSync(t, { recursive: true }); continue; }
+    if (fs.existsSync(t) && !i.overwrite) { skipped.push(name + " (exists)"); continue; }
+    let data; try { data = z.read(e); } catch (err) { skipped.push(name + " (" + err.message + ")"); continue; }
+    fs.mkdirSync(path.dirname(t), { recursive: true });
+    if (!fresh) { const b = backup(t); jr.push(b ? { op: "modified", path: t, backup: b } : { op: "created", path: t }); }
+    fs.writeFileSync(t, data); wrote++;
+  }
+  return `Extracted ${wrote} files to ${d}.` + (skipped.length ? `\nSkipped ${skipped.length}: ${skipped.slice(0, 30).join("; ")}` : "");
 }
 
 // ---------- install_tool: package names only, never a path, URL or extra arguments
@@ -484,7 +651,7 @@ export function run(name, input, cfg = loadConfig(), scope, meta) {
     catch (e) { logActivity({ t: Date.now(), chat: meta?.chat || null, turn: meta?.turn || null, tool: name, summary: String(pre.summary || "").slice(0, 600), ok: false, error: String(e.message || e).slice(0, 300) }); throw e; }
     finally { journal(meta, jr); } // a bulk action that partly failed still records what it did
   };
-  if (["run_command", "run_code", "read_file", "read_files", "list_dir", "download_file", "web_search", "web_open", "inspect_file", "find_duplicates", "view_images", "install_tool"].includes(name)) return go();
+  if (["run_command", "run_code", "read_file", "read_files", "list_dir", "download_file", "web_search", "web_open", "inspect_file", "find_duplicates", "view_images", "install_tool", "find_files", "search_files", "system_info", "notify", "open_path", "clipboard"].includes(name)) return go();
   const p = chain.then(go, go); chain = p.catch(() => {}); return p;
 }
 async function runInner(name, input, cfg, jr = []) {
@@ -553,6 +720,28 @@ async function runInner(name, input, cfg, jr = []) {
     }
     case "inspect_file": return inspect(checkPath(i.path, cfg), Math.max(0, Number(i.offset) || 0));
     case "find_duplicates": return findDuplicates(checkPath(i.path || ".", cfg), i.recursive !== false);
+    case "find_files": return findFiles(checkPath(i.path || ".", cfg), i, cfg);
+    case "search_files": return searchFiles(checkPath(i.path || ".", cfg), i, cfg);
+    case "system_info": return systemInfo(cfg);
+    case "notify": {
+      const t = String(i.title || "OmniGPT").slice(0, 120), m = String(i.message || "").slice(0, 400);
+      if (process.platform !== "win32") return `Notification (shown in the app only on this system): ${t} - ${m}`;
+      const r = await ps(TOAST_PS, { ORC_T: t, ORC_M: m }, cfg.cwd, 20000);
+      return r.code === 0 ? `Notification shown: ${t}` : `The Windows notification could not be shown (${r.out.trim().slice(0, 160)}); the app shows it instead.`;
+    }
+    case "open_path": {
+      if (i.url) { const u = new URL(String(i.url)); if (process.platform === "win32") spawn("explorer.exe", [u.href], { windowsHide: true, detached: true, stdio: "ignore" }).unref(); return `Opened ${u.href} in the default browser.`; }
+      const p = checkPath(i.path, cfg); if (!fs.existsSync(p)) throw new Error("not found: " + p);
+      if (!i.reveal && RUN_EXT.test(p)) throw new Error("Programs and scripts are never opened.");
+      if (process.platform === "win32") spawn("explorer.exe", i.reveal ? ["/select," + p] : [p], { windowsHide: true, detached: true, stdio: "ignore" }).unref();
+      return i.reveal ? `Showed ${p} in File Explorer.` : `Opened ${p}${fs.statSync(p).isDirectory() ? " in File Explorer" : " in its default app"}.`;
+    }
+    case "clipboard": {
+      if (process.platform !== "win32") throw new Error("the clipboard tool needs Windows");
+      if (i.action === "read") { const r = await ps("Get-Clipboard -Raw", {}, cfg.cwd, 15000); return r.out ? "Clipboard text:\n" + r.out : "The clipboard holds no text."; }
+      const r = await ps("Set-Clipboard -Value $env:ORC_T", { ORC_T: String(i.text ?? "") }, cfg.cwd, 15000); if (r.code !== 0) throw new Error(r.out.trim().slice(0, 200)); return "Copied to the clipboard.";
+    }
+    case "archive": return archiveTool(i, cfg, jr);
     case "view_images": return viewImages(i.paths.map((p) => checkPath(p, cfg)), Number(i.max_side) || 768, cfg);
     case "install_tool": {
       const m = String(i.manager), pkg = String(i.package).trim();

@@ -26,7 +26,7 @@ function Find-WebView2Sdk {
 $pkg = Find-WebView2Sdk
 $sdkCore = "$pkg\lib\net462"; $sdkLoader = "$pkg\runtimes\win-x64\native"
 if (-not (Test-Path "$sdkCore\Microsoft.Web.WebView2.Core.dll")) { $sdkCore = $pkg; $sdkLoader = $pkg } # a plain folder of DLLs passed with -WebView2Sdk
-foreach ($p in @($csc, "$sdkCore\Microsoft.Web.WebView2.Core.dll", "$sdkCore\Microsoft.Web.WebView2.WinForms.dll", "$sdkLoader\WebView2Loader.dll", $Node, "$src\index.html", "$src\app.js", "$src\brain.js", "$src\style.css", "$src\server.mjs", "$src\tools.mjs", "$src\web.mjs", "$src\files.mjs", "$src\console-theme.css")) {
+foreach ($p in @($csc, "$sdkCore\Microsoft.Web.WebView2.Core.dll", "$sdkCore\Microsoft.Web.WebView2.WinForms.dll", "$sdkLoader\WebView2Loader.dll", $Node, "$src\index.html", "$src\app.js", "$src\brain.js", "$src\style.css", "$src\server.mjs", "$src\tools.mjs", "$src\web.mjs", "$src\files.mjs", "$src\zip.mjs", "$src\console-theme.css")) {
   if (-not (Test-Path $p)) { throw "Missing required file: $p" }
 }
 New-Item -ItemType Directory -Force $Out, "$Out\app", "$Out\runtime" | Out-Null
@@ -64,7 +64,7 @@ Copy-Item "$sdkCore\Microsoft.Web.WebView2.Core.dll", "$sdkCore\Microsoft.Web.We
 if ($LASTEXITCODE -ne 0) { throw "Compilation failed" }
 
 # 3. the web app and the Node runtime it runs on
-Copy-Item "$src\index.html", "$src\app.js", "$src\brain.js", "$src\style.css", "$src\server.mjs", "$src\tools.mjs", "$src\web.mjs", "$src\files.mjs", "$src\console-theme.css" "$Out\app" -Force
+Copy-Item "$src\index.html", "$src\app.js", "$src\brain.js", "$src\style.css", "$src\server.mjs", "$src\tools.mjs", "$src\web.mjs", "$src\files.mjs", "$src\zip.mjs", "$src\console-theme.css" "$Out\app" -Force
 if (-not (Test-Path "$Out\runtime\node.exe") -or (Get-Item "$Out\runtime\node.exe").Length -ne (Get-Item $Node).Length) {
   Copy-Item $Node "$Out\runtime\node.exe" -Force
 }
