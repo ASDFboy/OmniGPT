@@ -240,3 +240,6 @@ body.nograph #brainpane{display:none!important}
 .askq .opts .btn.on{background:var(--fg);color:var(--bg)}
 .askq .free{display:flex;gap:8px}.askq .free input{flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--fg);font:inherit}
 .askq.answered .opts,.askq.answered .free{display:none}.askq .a{color:var(--mut);font-size:13px}.askq .a::before{content:"Answer: "}
+.todo{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:4px 0 14px;background:var(--card);font-size:13.5px}
+.todo-h{font-weight:600;margin-bottom:6px}.todo-i{display:flex;gap:8px;padding:2px 0;color:var(--mut)}.todo-i span{width:14px;text-align:center}
+.todo-i.doing{color:var(--fg);font-weight:600}.todo-i.done{text-decoration:line-through}
