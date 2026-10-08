@@ -18,9 +18,9 @@ const Brain=(()=>{
     key=String(key);label=okLabel(label);
     if(hubs[key]){if(label&&hubs[key].label!==label){hubs[key].label=LB[key]=label}return hubs[key]}
     if(label)LB[key]=label;
-    const wk=/^W(\d)$/.exec(key);
-    const name=LB[key]||LABEL[key]||(toolKey(key)?key.slice(2).replace(/_/g," "):fileKey(key)?key.split(/[\\/]/).pop():ctxKey(key)?key.replace(/^\w+:/,""):wk?"worker "+wk[1]:String(key).split("/").pop().replace(/-\d{4}.*$/,"").replace(/^gemini-/,"gemini ").replace(/-/g," "));
-    return hubs[key]={key,label:okLabel(name)||key,row:ROWOF[key]!==undefined?ROWOF[key]:ctxKey(key)?1:toolKey(key)?4:fileKey(key)?6:wk?3:2,ord:ORDER[key]!==undefined?ORDER[key]:wk?+wk[1]:100+seq++,vis:key==="user",fade:key==="user"?1:0,sc:1,x:0,y:0,tx:0,ty:0,placed:false,busy:0,act:0,mark:null,glow:0,gc:0,leaving:false,vx:0,vy:0,from:null,lastTurn:turnNo};
+    const wk=/^W(\d)$/.exec(key), hk=/^D(\d+)$/.exec(key); // W: parallel worker, D: helper agent
+    const name=LB[key]||LABEL[key]||(toolKey(key)?key.slice(2).replace(/_/g," "):fileKey(key)?key.split(/[\\/]/).pop():ctxKey(key)?key.replace(/^\w+:/,""):wk?"worker "+wk[1]:hk?"helper "+hk[1]:String(key).split("/").pop().replace(/-\d{4}.*$/,"").replace(/^gemini-/,"gemini ").replace(/-/g," "));
+    return hubs[key]={key,label:okLabel(name)||key,row:ROWOF[key]!==undefined?ROWOF[key]:ctxKey(key)?1:toolKey(key)?4:fileKey(key)?6:wk||hk?3:2,ord:ORDER[key]!==undefined?ORDER[key]:wk?+wk[1]:100+seq++,vis:key==="user",fade:key==="user"?1:0,sc:1,x:0,y:0,tx:0,ty:0,placed:false,busy:0,act:0,mark:null,glow:0,gc:0,leaving:false,vx:0,vy:0,from:null,lastTurn:turnNo};
   }
   hub("user");
   const okKey=k=>typeof k==="string"&&!!k.trim()&&k!=="undefined"&&k!=="null"; // a missing model name must not become a node
@@ -128,7 +128,7 @@ const Brain=(()=>{
     last:"user",
     turn(){if(!okKey(this.last))this.last="user";try{fed.clear();pending.clear();ctxPruned=false;ctxReady=false;turnNo++;this.last="user";
       for(const k in hubs){const h=hubs[k];if(!h.vis||h.leaving||ctxKey(k))continue;
-        const idle=turnNo-h.lastTurn, lim=/^W\d$/.test(k)?1:toolKey(k)||["guard","sandbox","tools","browser"].includes(k)?3:2;
+        const idle=turnNo-h.lastTurn, lim=/^(W|D)\d+$/.test(k)?1:toolKey(k)||["guard","sandbox","tools","browser"].includes(k)?3:2;
         if(idle>=lim)drop(k)}}catch(e){}},
     // a memory or skill that was given to the agents: it lights up and feeds the next model that starts
     ctx(key,label){try{touch(key,label);if(!fed.has(key)){fed.add(key);pending.add(key);msg("user",key,0)}}catch(e){}},
