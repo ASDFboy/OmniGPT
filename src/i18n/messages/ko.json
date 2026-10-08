@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "분석",
     "usageAnalyticsTitle": "사용량 분석",
+    "tokenDisplayCompact": "간략",
+    "tokenDisplayExact": "정확",
+    "tokenDisplayMode": "토큰 표시 모드",
     "diversityScoreTitle": "공급자 다양성",
     "diversityScoreDesc": "최근 트래픽 기간의 제공업체 집중도 스냅샷입니다.",
     "diversityShannonEntropy": "섀넌 엔트로피",

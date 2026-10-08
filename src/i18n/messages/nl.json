@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Analyses",
     "usageAnalyticsTitle": "Gebruiksanalyses",
+    "tokenDisplayCompact": "Compact",
+    "tokenDisplayExact": "Exact",
+    "tokenDisplayMode": "Weergavemodus voor tokens",
     "diversityScoreTitle": "Diversiteit van aanbieders",
     "diversityScoreDesc": "Momentopname van providerconcentratie voor het recente verkeersvenster.",
     "diversityShannonEntropy": "Shannon-entropie",

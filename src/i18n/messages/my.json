@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "ခွဲခြမ်းစိတ်ဖြာချက်များ",
     "usageAnalyticsTitle": "အသုံးပြုမှု ခွဲခြမ်းစိတ်ဖြာချက်များ",
+    "tokenDisplayCompact": "ချုံ့",
+    "tokenDisplayExact": "အတိအကျ",
+    "tokenDisplayMode": "တိုကင် ပြသမှု မုဒ်",
     "diversityScoreTitle": "ဝန်ဆောင်မှုပေးသူ ကွဲပြားစုံလင်မှု",
     "diversityScoreDesc": "လတ်တလော traffic ကာလအတွင်း ဝန်ဆောင်မှုပေးသူများထံ traffic စုစည်းမှု၏ အခြေအနေအကျဉ်း။",
     "diversityShannonEntropy": "ရှန်နွန် အင်ထရိုပီ",

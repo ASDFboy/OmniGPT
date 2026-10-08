@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Анализ",
     "usageAnalyticsTitle": "Анализ на потреблението",
+    "tokenDisplayCompact": "Компактно",
+    "tokenDisplayExact": "Точно",
+    "tokenDisplayMode": "Режим на показване на токени",
     "diversityScoreTitle": "Разнообразие на доставчиците",
     "diversityScoreDesc": "Моментна снимка на концентрацията на доставчици за последния прозорец на трафика.",
     "diversityShannonEntropy": "Ентропия на Шанън",

@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Analys",
     "usageAnalyticsTitle": "Användningsanalys",
+    "tokenDisplayCompact": "Kompakt",
+    "tokenDisplayExact": "Exakt",
+    "tokenDisplayMode": "Visningsläge för tokens",
     "diversityScoreTitle": "Leverantörs mångfald",
     "diversityScoreDesc": "Ögonblicksbild av leverantörskoncentration för det senaste trafikfönstret.",
     "diversityShannonEntropy": "Shannon-entropi",

@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "ವಿಶ್ಲೇಷಣೆ",
     "usageAnalyticsTitle": "ಬಳಕೆ ವಿಶ್ಲೇಷಣೆ",
+    "tokenDisplayCompact": "ಸಂಕ್ಷಿಪ್ತ",
+    "tokenDisplayExact": "ನಿಖರ",
+    "tokenDisplayMode": "ಟೋಕನ್ ಪ್ರದರ್ಶನ ಮೋಡ್",
     "diversityScoreTitle": "ಪ್ರೊವೈಡರ್ ವೈವಿಧ್ಯತೆ",
     "diversityScoreDesc": "ಇತ್ತೀಚಿನ ಟ್ರಾಫಿಕ್ ವಿಂಡೋದಲ್ಲಿನ ಪ್ರೊವೈಡರ್ ಸಾಂದ್ರತೆಯ ಸ್ನ್ಯಾಪ್ಶಾಟ್.",
     "diversityShannonEntropy": "ಶ್ಯಾನನ್ ಎಂಟ್ರೋಪಿ",

@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "التحليلات",
     "usageAnalyticsTitle": "تحليلات الاستخدام",
+    "tokenDisplayCompact": "مختصر",
+    "tokenDisplayExact": "دقيق",
+    "tokenDisplayMode": "وضع عرض الرموز",
     "diversityScoreTitle": "تنوع مقدمي الخدمة",
     "diversityScoreDesc": "لقطة تركيز الموفر لنافذة حركة المرور الأخيرة.",
     "diversityShannonEntropy": "إنتروبيا شانون",

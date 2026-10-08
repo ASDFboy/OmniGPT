@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Analüütika",
     "usageAnalyticsTitle": "Kasutusanalüütika",
+    "tokenDisplayCompact": "Kompaktne",
+    "tokenDisplayExact": "Täpne",
+    "tokenDisplayMode": "Tokenite kuvarežiim",
     "diversityScoreTitle": "Teenusepakkujate mitmekesisus",
     "diversityScoreDesc": "Teenusepakkujate kontsentratsiooni ülevaade hiljutise liikluse põhjal.",
     "diversityShannonEntropy": "Shannoni entroopia",

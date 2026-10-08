@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Analyse",
     "usageAnalyticsTitle": "Bruksanalyse",
+    "tokenDisplayCompact": "Kompakt",
+    "tokenDisplayExact": "Nøyaktig",
+    "tokenDisplayMode": "Visningsmodus for tokens",
     "diversityScoreTitle": "Leverandørmangfold",
     "diversityScoreDesc": "Øyeblikksbilde av leverandørkonsentrasjon for det nylige trafikkvinduet.",
     "diversityShannonEntropy": "Shannon-entropi",

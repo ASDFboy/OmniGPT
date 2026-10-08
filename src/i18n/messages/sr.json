@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Аналитика",
     "usageAnalyticsTitle": "Аналитика коришћења",
+    "tokenDisplayCompact": "Компактно",
+    "tokenDisplayExact": "Тачно",
+    "tokenDisplayMode": "Режим приказа токена",
     "diversityScoreTitle": "Разноврсност провајдера",
     "diversityScoreDesc": "Преглед концентрације провајдера током недавног периода саобраћаја.",
     "diversityShannonEntropy": "Шенонова ентропија",

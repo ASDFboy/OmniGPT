@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Phân tích",
     "usageAnalyticsTitle": "Phân tích mức sử dụng",
+    "tokenDisplayCompact": "Rút gọn",
+    "tokenDisplayExact": "Chính xác",
+    "tokenDisplayMode": "Chế độ hiển thị token",
     "diversityScoreTitle": "Đa dạng nhà cung cấp",
     "diversityScoreDesc": "Ảnh chụp nhanh sự tập trung của nhà cung cấp trong khung thời gian lưu lượng truy cập gần đây.",
     "diversityShannonEntropy": "Entropy Shannon",

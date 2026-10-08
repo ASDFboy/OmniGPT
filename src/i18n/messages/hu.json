@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Analitika",
     "usageAnalyticsTitle": "Használati elemzések",
+    "tokenDisplayCompact": "Tömör",
+    "tokenDisplayExact": "Pontos",
+    "tokenDisplayMode": "Tokenmegjelenítési mód",
     "diversityScoreTitle": "Szolgáltatói sokszínűség",
     "diversityScoreDesc": "Szolgáltató-koncentrációs pillanatkép a legutóbbi forgalmi ablakról.",
     "diversityShannonEntropy": "Shannon-entrópia",

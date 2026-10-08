@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "ანალიტიკა",
     "usageAnalyticsTitle": "გამოყენების ანალიტიკა",
+    "tokenDisplayCompact": "კომპაქტური",
+    "tokenDisplayExact": "ზუსტი",
+    "tokenDisplayMode": "ტოკენების ჩვენების რეჟიმი",
     "diversityScoreTitle": "პროვაიდერების მრავალფეროვნება",
     "diversityScoreDesc": "პროვაიდერების კონცენტრაციის სურათი ტრაფიკის ბოლო პერიოდისთვის.",
     "diversityShannonEntropy": "შენონის ენტროპია",

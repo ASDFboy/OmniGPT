@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Analitika",
     "usageAnalyticsTitle": "Analitika tal-użu",
+    "tokenDisplayCompact": "Kompatt",
+    "tokenDisplayExact": "Eżatt",
+    "tokenDisplayMode": "Modalità tal-wiri tat-tokens",
     "diversityScoreTitle": "Diversità tal-fornituri",
     "diversityScoreDesc": "Ħarsa ġenerali lejn il-konċentrazzjoni tal-fornituri fit-tieqa riċenti tat-traffiku.",
     "diversityShannonEntropy": "Entropija ta’ Shannon",

@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "تحلیلها",
     "usageAnalyticsTitle": "تحلیل مصرف",
+    "tokenDisplayCompact": "فشرده",
+    "tokenDisplayExact": "دقیق",
+    "tokenDisplayMode": "حالت نمایش توکن",
     "diversityScoreTitle": "تنوع ارائه دهنده",
     "diversityScoreDesc": "تصویر لحظه‌ای از تمرکز ارائه‌دهندگان برای بازه ترافیک اخیر.",
     "diversityShannonEntropy": "آنتروپی شانون",

@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "വിശകലനം",
     "usageAnalyticsTitle": "ഉപയോഗ വിശകലനം",
+    "tokenDisplayCompact": "സംക്ഷിപ്തം",
+    "tokenDisplayExact": "കൃത്യം",
+    "tokenDisplayMode": "ടോക്കൺ പ്രദർശന മോഡ്",
     "diversityScoreTitle": "പ്രൊവൈഡർ വൈവിധ്യം",
     "diversityScoreDesc": "സമീപകാല ട്രാഫിക് കാലയളവിലെ പ്രൊവൈഡർ കേന്ദ്രീകരണത്തിന്റെ സംക്ഷിപ്ത ചിത്രം.",
     "diversityShannonEntropy": "ഷാനൺ എൻട്രോപ്പി",

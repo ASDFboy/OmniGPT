@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Վերլուծություն",
     "usageAnalyticsTitle": "Օգտագործման վերլուծություն",
+    "tokenDisplayCompact": "Սեղմ",
+    "tokenDisplayExact": "Ճշգրիտ",
+    "tokenDisplayMode": "Թոքենների ցուցադրման ռեժիմ",
     "diversityScoreTitle": "Մատակարարների բազմազանություն",
     "diversityScoreDesc": "Մատակարարների կենտրոնացվածության ամփոփ պատկերը՝ տրաֆիկի վերջին ժամանակահատվածի համար։",
     "diversityShannonEntropy": "Շենոնի էնտրոպիա",

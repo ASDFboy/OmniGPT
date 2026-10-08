@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "ការវិភាគ",
     "usageAnalyticsTitle": "ការវិភាគការប្រើប្រាស់",
+    "tokenDisplayCompact": "បង្រួម",
+    "tokenDisplayExact": "ពិតប្រាកដ",
+    "tokenDisplayMode": "របៀបបង្ហាញថូខឹន",
     "diversityScoreTitle": "ភាពចម្រុះនៃអ្នកផ្តល់សេវា",
     "diversityScoreDesc": "ទិដ្ឋភាពសង្ខេបនៃការប្រមូលផ្តុំលើអ្នកផ្តល់សេវា សម្រាប់ចន្លោះពេលចរាចរណ៍ថ្មីៗនេះ។",
     "diversityShannonEntropy": "អង់ត្រូពី Shannon",

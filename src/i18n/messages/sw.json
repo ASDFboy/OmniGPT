@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Uchanganuzi",
     "usageAnalyticsTitle": "Uchambuzi wa Matumizi",
+    "tokenDisplayCompact": "Fupi",
+    "tokenDisplayExact": "Kamili",
+    "tokenDisplayMode": "Hali ya Kuonyesha Tokeni",
     "diversityScoreTitle": "Utofauti wa Watoa Huduma",
     "diversityScoreDesc": "Picha ya haraka ya mkusanyiko wa watoa huduma kwa dirisha la hivi karibuni la trafiki.",
     "diversityShannonEntropy": "Entropia ya Shannon",
