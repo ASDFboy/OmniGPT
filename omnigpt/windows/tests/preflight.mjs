@@ -13,7 +13,9 @@ const check = (name, ok, extra = "") => { if (!ok) failed++; console.log((ok ? "
 
 // 1. syntax
 const html = fs.readFileSync(path.join(src, "index.html"), "utf8");
-const script = html.match(/<script>([\s\S]*)<\/script>/)?.[1] || "";
+// the page's script: the inline token line, then brain.js and app.js, which share one global scope
+const script = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]).join("\n") + "\n" + ["brain.js", "app.js"].map((f) => fs.readFileSync(path.join(src, f), "utf8")).join("\n");
+check("index.html loads style.css, brain.js and app.js", html.includes('href="style.css"') && html.indexOf('src="brain.js"') > 0 && html.indexOf('src="brain.js"') < html.indexOf('src="app.js"'));
 const tmp = path.join(os.tmpdir(), "omnigpt-preflight.js"); fs.writeFileSync(tmp, script);
 for (const [n, f] of [["index.html script", tmp], ["server.mjs", path.join(src, "server.mjs")], ["tools.mjs", path.join(src, "tools.mjs")], ["web.mjs", path.join(src, "web.mjs")], ["files.mjs", path.join(src, "files.mjs")]]) {
   try { execFileSync(process.execPath, ["--check", f], { stdio: "pipe" }); check("syntax: " + n, true); } catch (e) { check("syntax: " + n, false, String(e.stderr).slice(0, 200)); }
