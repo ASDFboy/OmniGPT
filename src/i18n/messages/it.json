@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "Cpa Mode Enabled Title",
     "customUserAgentHint": "Suggerimento per lo user agent personalizzato",
     "customUserAgentLabel": "Etichetta dello user agent personalizzato",
+    "huggingfaceBillToHint": "Facoltativo. L'identificativo del tuo account di fatturazione Hugging Face, inviato come intestazione X-HF-Bill-To per l'attribuzione dei costi.",
+    "huggingfaceBillToLabel": "Account Bill-To Hugging Face",
     "databricksBaseUrlHint": "Suggerimento per l'URL di base di Databricks",
     "defaultThinkingStrengthHint": "Utilizzato quando una richiesta non specifica il livello di ragionamento.",
     "defaultThinkingStrengthLabel": "Intensità predefinita del ragionamento",

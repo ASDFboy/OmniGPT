@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "Tá mód comhoiriúnachta CLIProxyAPI cumasaithe",
     "customUserAgentHint": "Leid Gníomhaire Úsáideora Saincheaptha",
     "customUserAgentLabel": "Lipéad Gníomhaire Úsáideora Saincheaptha",
+    "huggingfaceBillToHint": "Roghnach. Aitheantóir do chuntais billeála Hugging Face, a sheoltar mar an ceanntásc X-HF-Bill-To chun costais a chur i leith.",
+    "huggingfaceBillToLabel": "Cuntas Bill-To Hugging Face",
     "databricksBaseUrlHint": "Leid maidir le Bun-URL Databricks",
     "defaultThinkingStrengthHint": "Úsáidtear é nuair nach sonraíonn iarratas iarracht réasúnaíochta.",
     "defaultThinkingStrengthLabel": "Neart smaointeoireachta réamhshocraithe",

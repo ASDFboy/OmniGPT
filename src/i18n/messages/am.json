@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "የCLIProxyAPI ተኳኋኝነት ሁነታ ነቅቷል",
     "customUserAgentHint": "ብጁ User Agent ፍንጭ",
     "customUserAgentLabel": "ብጁ User Agent መለያ",
+    "huggingfaceBillToHint": "አማራጭ። ለወጪ መመደቢያ እንደ X-HF-Bill-To ራስጌ የሚላከው የHugging Face የክፍያ መለያዎ መለያ ቁጥር።",
+    "huggingfaceBillToLabel": "የHugging Face Bill-To መለያ",
     "databricksBaseUrlHint": "የDatabricks መሠረታዊ URL ፍንጭ",
     "defaultThinkingStrengthHint": "ጥያቄው የማመዛዘን ጥረትን ካልገለጸ ጥቅም ላይ ይውላል።",
     "defaultThinkingStrengthLabel": "ነባሪ የማሰብ ጥንካሬ",

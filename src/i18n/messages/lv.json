@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "CLIProxyAPI saderības režīms ir iespējots",
     "customUserAgentHint": "Pielāgotā lietotāja aģenta padoms",
     "customUserAgentLabel": "Pielāgota lietotāja aģenta etiķete",
+    "huggingfaceBillToHint": "Neobligāti. Jūsu Hugging Face norēķinu konta identifikators, kas tiek nosūtīts kā X-HF-Bill-To galvene izmaksu attiecināšanai.",
+    "huggingfaceBillToLabel": "Hugging Face Bill-To konts",
     "databricksBaseUrlHint": "Databricks bāzes URL norāde",
     "defaultThinkingStrengthHint": "Tiek izmantota, ja pieprasījumā nav norādīta spriešanas intensitāte.",
     "defaultThinkingStrengthLabel": "Noklusējuma domāšanas intensitāte",

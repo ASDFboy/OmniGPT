@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "Način kompatibilnosti za CLIProxyAPI je omogućen",
     "customUserAgentHint": "Savjet za prilagođeni korisnički agent",
     "customUserAgentLabel": "Oznaka prilagođenog korisničkog agenta",
+    "huggingfaceBillToHint": "Neobavezno. Identifikator vašeg Hugging Face računa za naplatu, koji se šalje kao zaglavlje X-HF-Bill-To radi pripisivanja troškova.",
+    "huggingfaceBillToLabel": "Hugging Face Bill-To račun",
     "databricksBaseUrlHint": "Naznaka osnovnog URL-a za Databricks",
     "defaultThinkingStrengthHint": "Koristi se kada zahtjev ne navodi razinu zaključivanja.",
     "defaultThinkingStrengthLabel": "Zadana razina razmišljanja",

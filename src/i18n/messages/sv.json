@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "Cpa Mode Enabled Title",
     "customUserAgentHint": "Tips om anpassad User-Agent",
     "customUserAgentLabel": "Etikett för anpassad User-Agent",
+    "huggingfaceBillToHint": "Valfritt. Identifieraren för ditt Hugging Face-faktureringskonto, som skickas som X-HF-Bill-To-rubriken för kostnadsfördelning.",
+    "huggingfaceBillToLabel": "Hugging Face Bill-To-konto",
     "databricksBaseUrlHint": "Tips om bas-URL för Databricks",
     "defaultThinkingStrengthHint": "Används när en begäran inte anger någon resonemangsnivå.",
     "defaultThinkingStrengthLabel": "Standardnivå för tankegång",

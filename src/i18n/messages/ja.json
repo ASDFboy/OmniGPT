@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "Cpa Mode Enabled Title",
     "customUserAgentHint": "カスタムユーザーエージェントのヒント",
     "customUserAgentLabel": "カスタムユーザーエージェントのラベル",
+    "huggingfaceBillToHint": "任意。コストの帰属先を指定するために X-HF-Bill-To ヘッダーとして送信される、Hugging Face 請求アカウントの識別子です。",
+    "huggingfaceBillToLabel": "Hugging Face Bill-To アカウント",
     "databricksBaseUrlHint": "Databricks ベース URL のヒント",
     "defaultThinkingStrengthHint": "リクエストで推論の強度が指定されていない場合に使用されます。",
     "defaultThinkingStrengthLabel": "デフォルトの思考強度",

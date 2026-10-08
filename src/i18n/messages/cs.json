@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "Cpa Mode Enabled Title",
     "customUserAgentHint": "Nápověda k vlastnímu uživatelskému agentovi",
     "customUserAgentLabel": "Vlastní uživatelský agent",
+    "huggingfaceBillToHint": "Volitelné. Identifikátor vašeho fakturačního účtu Hugging Face, odesílaný jako hlavička X-HF-Bill-To pro přiřazení nákladů.",
+    "huggingfaceBillToLabel": "Účet Bill-To služby Hugging Face",
     "databricksBaseUrlHint": "Nápověda k základní URL Databricks",
     "defaultThinkingStrengthHint": "Použije se, když požadavek neurčuje míru úsilí při uvažování.",
     "defaultThinkingStrengthLabel": "Výchozí intenzita uvažování",

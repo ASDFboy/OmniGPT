@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "وضع CPA مفعّل",
     "customUserAgentHint": "اتركه فارغًا لاستخدام وكيل المستخدم الافتراضي",
     "customUserAgentLabel": "وكيل المستخدم المخصص",
+    "huggingfaceBillToHint": "اختياري. معرّف حساب الفوترة الخاص بك في Hugging Face، ويُرسل في ترويسة X-HF-Bill-To لإسناد التكلفة.",
+    "huggingfaceBillToLabel": "حساب Bill-To في Hugging Face",
     "databricksBaseUrlHint": "عنوان URL الأساسي لـ Databricks",
     "defaultThinkingStrengthHint": "يُستخدم عندما لا يحدد الطلب جهد الاستدلال.",
     "defaultThinkingStrengthLabel": "قوة التفكير الافتراضية",

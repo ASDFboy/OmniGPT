@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "CLIProxyAPI ühilduvusrežiim on lubatud",
     "customUserAgentHint": "Kohandatud User Agenti vihje",
     "customUserAgentLabel": "Kohandatud User Agenti silt",
+    "huggingfaceBillToHint": "Valikuline. Teie Hugging Face arvelduskonto identifikaator, mis saadetakse kulude omistamiseks päisena X-HF-Bill-To.",
+    "huggingfaceBillToLabel": "Hugging Face Bill-To konto",
     "databricksBaseUrlHint": "Databricksi baas-URL-i vihje",
     "defaultThinkingStrengthHint": "Kasutatakse siis, kui päringus pole arutluskäigu põhjalikkust määratud.",
     "defaultThinkingStrengthLabel": "Arutluskäigu vaikimisi põhjalikkus",

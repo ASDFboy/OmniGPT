@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "CLIProxyAPI 兼容模式已开启",
     "customUserAgentHint": "发送给上游 Provider 的自定义 User-Agent。",
     "customUserAgentLabel": "自定义 User-Agent",
+    "huggingfaceBillToHint": "可选。您的 Hugging Face 账单账户标识符，将作为 X-HF-Bill-To 标头发送，用于费用归属。",
+    "huggingfaceBillToLabel": "Hugging Face Bill-To 账户",
     "databricksBaseUrlHint": "Databricks Serving Endpoint 的 Base URL。",
     "defaultThinkingStrengthHint": "请求未指定 reasoning effort 时使用。",
     "defaultThinkingStrengthLabel": "默认思考强度",

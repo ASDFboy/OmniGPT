@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "Cpa Mode Enabled Title",
     "customUserAgentHint": "Egyéni User-Agent súgója",
     "customUserAgentLabel": "Egyéni User-Agent címkéje",
+    "huggingfaceBillToHint": "Nem kötelező. A Hugging Face számlázási fiók azonosítója, amelyet a költségek hozzárendeléséhez X-HF-Bill-To fejlécként küldünk el.",
+    "huggingfaceBillToLabel": "Hugging Face Bill-To-fiók",
     "databricksBaseUrlHint": "Databricks alap-URL súgója",
     "defaultThinkingStrengthHint": "Akkor használatos, ha a kérelem nem határozza meg az érvelés intenzitását.",
     "defaultThinkingStrengthLabel": "Alapértelmezett gondolkodási intenzitás",

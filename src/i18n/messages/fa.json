@@ -6034,6 +6034,8 @@
     "cpaModeEnabledTitle": "Cpa Mode Enabled Title",
     "customUserAgentHint": "راهنمای عامل کاربر سفارشی",
     "customUserAgentLabel": "برچسب عامل کاربر سفارشی",
+    "huggingfaceBillToHint": "اختیاری. شناسه حساب صورتحساب Hugging Face شما که برای انتساب هزینه بهعنوان سرآیند X-HF-Bill-To ارسال میشود.",
+    "huggingfaceBillToLabel": "حساب Bill-To در Hugging Face",
     "databricksBaseUrlHint": "راهنمای URL پایه Databricks",
     "defaultThinkingStrengthHint": "زمانی استفاده میشود که درخواستی میزان تلاش برای استدلال را مشخص نکرده باشد.",
     "defaultThinkingStrengthLabel": "قدرت پیشفرض تفکر",
