@@ -788,9 +788,11 @@ async function toolFlow(u,userReq,intent,lead,cfg,T,scope){
   if(r.ok&&/^(write_file|write_files|edit_file|copy_file|move_file|move_files|download_file)$/.test(u.name))(String(r.output).match(/[A-Za-z]:\\[^\n"<>|*?]*?\.[A-Za-z0-9]{1,8}(?=$|[\s(,]|\.(?:\s|$))/g)||[]).forEach(p=>{(TURN.written||(TURN.written=[])).push(p);knowFile(p)});
   return r.ok?{text:`<tool_output untrusted="true">\n${r.output.slice(0,9000)}\n</tool_output>`,err:false}:{text:"Error: "+r.error,err:true};
 }
+// Steps per task: -1 = auto (40, or no limit when approval is "bypass"), 0 = no limit, otherwise that number
+const stepLimit=cfg=>{const s=Number(SET().steps);return s===0||(s<0&&cfg&&cfg.approval==="bypass")?Infinity:s>0?s:40};
 // o: {T: lane for a parallel worker, system, tools, scope:{writes:[abs paths]}, maxSteps}
 async function agent(q,ctx,leads,o={}){
-  const T=o.T, cfg=await effCfg(), sys=typeof o.system==="function"?o.system(cfg):(o.system||agentSystem(cfg)), tools=o.tools||[...TOOLS,...(curProject?PROJ_TOOLS:[])], max=o.maxSteps||Number(SET().steps)||40;
+  const T=o.T, cfg=await effCfg(), sys=typeof o.system==="function"?o.system(cfg):(o.system||agentSystem(cfg)), tools=o.tools||[...TOOLS,...(curProject?PROJ_TOOLS:[])], max=o.maxSteps||stepLimit(cfg);
   let msgs=[...ctx], actions=[], final="", stopSent=0;
   for(let step=0;step<=max;step++){ // the extra step is for the wrap-up summary once the limit is reached
     const out={};
@@ -868,7 +870,7 @@ async function runParallel(q,plan,leads,useTools,rotN,web){
       +(s.abs.length?"You may create or modify ONLY: "+s.abs.join("; ")+". Any other write is rejected by the system. write_file creates missing parent folders by itself, so you rarely need make_dir.":"You may not modify any files (read-only worker).")
       +" Other workers cover:\n"+others+"\nDo not duplicate their work and do not wait for them. Shared conventions: "+(plan.shared||"none")+". If you need something outside your lane, say so in your report. Command execution is unavailable to you."
       +"\nFinish with a REPORT of at most 250 words: what you found or did, the files you changed (full paths), the sources you used, and how you checked your part"+(s.check?" against: "+s.check:"")+".";
-    return agent(q,task,rot,{T:lanes[i],system:sys,tools:webW?[...WEB_TOOLS]:wtools,scope:{writes:s.abs},maxSteps:Math.max(10,Math.round((Number(SET().steps)||40)*0.75))});
+    return agent(q,task,rot,{T:lanes[i],system:sys,tools:webW?[...WEB_TOOLS]:wtools,scope:{writes:s.abs},maxSteps:Math.max(10,Math.round(stepLimit(cfg)*0.75))});
   };
   while(started.size<n&&!(ctrl&&ctrl.signal.aborted)){
     let ready=plan.subs.map((_,i)=>i).filter(i=>!started.has(i)&&plan.subs[i].after.every(k=>out[k]!==null));
@@ -1645,7 +1647,7 @@ const PROFILES={
   unfiltered:{router:["gemini/gemini-3.1-flash-lite","ddgw/mistral-small-2603"],fast:["ddgw/mistral-small-2603","unc/turboderp/Qwen3.8-27B-exl3","ddgw/tinfoil/gemma4-31b","gemini/gemini-3.1-flash-lite"],strong:["unc/turboderp/Qwen3.8-27B-exl3","ddgw/mistral-small-2603","ddgw/tinfoil/gemma4-31b"],reviewer:["gemini/gemini-3.1-flash-lite","ddgw/mistral-small-2603"],vision:["gemini/gemini-3.1-flash-lite"]}
 };
 const UNFILTERED_NOTE="\n\nThe user is an adult and chose Unfiltered mode: mature and explicit content for adults, including sexual content between consenting adult characters, is allowed when they ask for it. Never produce sexual content involving minors or anyone who could be a minor, sexual content about real people, or help with anything that could hurt people (weapons, malware, violence, self-harm).";
-const DEF={theme:"system",size:"m",font:"serif",width:"normal",graph:true,enter:"enter",workers:4,steps:40,models:{},memory:true,skills:true,learn:true,omniStrong:false,omniGap:10,refine:true,mode:"default",updates:true,skipVersion:"",accent:"none"};
+const DEF={theme:"system",size:"m",font:"serif",width:"normal",graph:true,enter:"enter",workers:4,steps:-1,models:{},memory:true,skills:true,learn:true,omniStrong:false,omniGap:10,refine:true,mode:"default",updates:true,skipVersion:"",accent:"none"};
 const ACCENTS=[["none","None"],["#e54d5e","Red"],["#e08a2e","Orange"],["#3f9d6a","Green"],["#3b82c4","Blue"],["#7c5cc4","Violet"],["#c2508f","Pink"]];
 const DEFTIERS=JSON.parse(JSON.stringify(TIERS));
 const SET=()=>({...DEF,...(LS.get("orc.settings")||{})});
@@ -1708,7 +1710,7 @@ const PANES={
     sRow("Attached folders","Folders you attached in a conversation. Agents may do anything inside them.",(CFG.granted||[]).length?`<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">${CFG.granted.map(g=>`<span class="mut" style="font-size:12.5px">${esc(g)} <button class="btn" data-ungrant="${esc(g)}">Remove</button></span>`).join("")}</div>`:'<span class="mut">None</span>')+
     sRow("Allowed folders","Agents may only touch these. One per line.",`<textarea data-c="roots" spellcheck="false">${esc((CFG.roots||[]).join("\n"))}</textarea>`,"col2")+
     sRow("Refine prompts","An agent rewrites each request into a precise brief before work starts.",sTog("refine"))+
-    sRow("Steps per task","How many actions (reading, moving, writing files…) an agent may take before it stops and reports. Big jobs such as organizing a folder need more.",`<select data-k="steps">${[15,25,40,60,100,200].map(n=>`<option${SET().steps==n?" selected":""}>${n}</option>`).join("")}</select>`)+
+    sRow("Steps per task","How many actions (reading, moving, writing files…) an agent may take before it stops and reports. Big jobs such as organizing a folder need more.",`<select data-k="steps">${[[-1,"Auto (40, no limit when bypassing)"],[15,"15"],[25,"25"],[40,"40"],[60,"60"],[100,"100"],[200,"200"],[0,"No limit"]].map(([n,l])=>`<option value="${n}"${Number(SET().steps)===n?" selected":""}>${l}</option>`).join("")}</select>`)+
     sRow("Parallel agents","The most workers that can run at once.",`<select data-k="workers">${[2,3,4,5,6].map(n=>`<option${SET().workers==n?" selected":""}>${n}</option>`).join("")}</select>`)+
     sRow("OMNI pause between steps","Seconds OMNI waits between steps, which keeps free quotas from running out.",`<select data-k="omniGap">${[5,10,30,60,120].map(n=>`<option${SET().omniGap==n?" selected":""}>${n}</option>`).join("")}</select>`)+
     sRow("OMNI may use the strong model","Only after the fast models have failed twice in a row. Off keeps OMNI on the free tier.",sTog("omniStrong")),
