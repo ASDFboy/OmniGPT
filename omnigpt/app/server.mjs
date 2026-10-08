@@ -8,7 +8,7 @@ import os from "node:os";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { Readable } from "node:stream";
-import { loadConfig, saveConfig, precheck, run, resolveScope, runSandboxRaw, sandboxInfo, checkPath, grantFolder, ungrantFolder, folderConfig, insideFolder, undoTurn, undoInfo, readActivity } from "./tools.mjs";
+import { loadConfig, saveConfig, precheck, run, resolveScope, runSandboxRaw, sandboxInfo, checkPath, grantFolder, ungrantFolder, folderConfig, insideFolder, undoTurn, undoInfo, readActivity, setOmniRoute } from "./tools.mjs";
 import { inspect, MIME, RUNNABLE } from "./files.mjs";
 import { pipeline } from "node:stream/promises";
 
@@ -22,6 +22,7 @@ const CHAT_DIR_ = path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 
 const KEYFILE = path.join(CHAT_DIR_, "omniroute-key.txt"); // the key can also be saved from Settings instead of an environment variable
 const key = () => { if (process.env.OMNIROUTE_API_KEY) return process.env.OMNIROUTE_API_KEY; try { return fs.readFileSync(KEYFILE, "utf8").trim(); } catch { return ""; } };
 let updateCache = { at: 0, data: null };
+setOmniRoute(OR, () => key()); // media tools (images, speech) use the user's OmniRoute providers
 const semver = (v) => String(v).split(".").map((n) => parseInt(n, 10) || 0);
 const newer = (a, b) => { const x = semver(a), y = semver(b); for (let i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); } return false; };
 async function checkUpdate(force) {
