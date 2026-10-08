@@ -24,7 +24,7 @@ static class Setup
         if (silent)
         {
             bool relaunch = Array.Exists(args, a => a.Equals("/launch", StringComparison.OrdinalIgnoreCase)); // set by the in-app updater
-            try { Install(true, relaunch, null); return 0; }
+            try { Install(Pref("DesktopShortcut", true), relaunch, null); return 0; } // an update keeps the user's shortcut choice
             catch (Exception e)
             {   // a windowed program has no console: leave the reason where it can be read
                 try { File.WriteAllText(Path.Combine(Path.GetTempPath(), "OmniGPT-Setup.log"), e.ToString()); } catch (Exception) { }
@@ -34,6 +34,26 @@ static class Setup
         Application.EnableVisualStyles();
         Application.Run(new SetupForm());
         return 0;
+    }
+
+    // The installer's choices (desktop shortcut, start when finished) are remembered for this Windows user.
+    const string PrefsKey = @"Software\OmniGPT\Installer";
+    public static bool Pref(string name, bool def)
+    {
+        try
+        {
+            using (RegistryKey k = Registry.CurrentUser.OpenSubKey(PrefsKey))
+            {
+                object v = k == null ? null : k.GetValue(name);
+                return v is int ? (int)v != 0 : def;
+            }
+        }
+        catch (Exception) { return def; }
+    }
+    public static void SavePref(string name, bool on)
+    {
+        try { using (RegistryKey k = Registry.CurrentUser.CreateSubKey(PrefsKey)) { k.SetValue(name, on ? 1 : 0, RegistryValueKind.DWord); } }
+        catch (Exception) { }
     }
 
     public static bool WebView2Installed()
@@ -112,6 +132,7 @@ static class Setup
         Shortcut(menu, exe);
         string desk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "OmniGPT.lnk");
         if (desktop) Shortcut(desk, exe);
+        else if (File.Exists(desk)) { try { File.Delete(desk); } catch (Exception) { } } // the user chose no desktop shortcut
         string un = Path.Combine(Dest, "Uninstall OmniGPT.cmd");
         File.WriteAllText(un,
             "@echo off\r\n" +
@@ -121,6 +142,7 @@ static class Setup
             "del \"" + menu + "\" >nul 2>&1\r\n" +
             "del \"" + desk + "\" >nul 2>&1\r\n" +
             "reg delete \"HKCU\\" + UninstallKey + "\" /f >nul 2>&1\r\n" +
+            "reg delete \"HKCU\\" + PrefsKey + "\" /f >nul 2>&1\r\n" +
             "start \"\" /min cmd /c \"ping -n 3 127.0.0.1 >nul & rmdir /s /q \"\"%~dp0\"\"\"\r\n" +
             "echo OmniGPT removed.\r\n");
         say(94, "Registering...");
@@ -167,8 +189,8 @@ class SetupForm : Form
         text.Text = "OmniGPT will be installed for your Windows account in:\r\n" + Setup.Dest +
             "\r\n\r\nNo administrator rights are needed. Your chats and settings are kept when you update.";
         if (!Setup.WebView2Installed()) text.Text += "\r\n\r\nNote: the Microsoft Edge WebView2 Runtime was not found. Install it from microsoft.com before starting OmniGPT.";
-        desktop.Text = "Create a desktop shortcut"; desktop.Checked = true; desktop.Location = new Point(28, 148); desktop.AutoSize = true;
-        launch.Text = "Start OmniGPT when finished"; launch.Checked = true; launch.Location = new Point(28, 174); launch.AutoSize = true;
+        desktop.Text = "Create a desktop shortcut"; desktop.Checked = Setup.Pref("DesktopShortcut", true); desktop.Location = new Point(28, 148); desktop.AutoSize = true;
+        launch.Text = "Start OmniGPT when finished"; launch.Checked = Setup.Pref("StartAfterInstall", true); launch.Location = new Point(28, 174); launch.AutoSize = true;
         bar.Location = new Point(28, 206); bar.Size = new Size(444, 8); bar.Visible = false;
         go.Text = "Install"; go.Size = new Size(96, 30); go.Location = new Point(276, 226);
         cancel.Text = "Cancel"; cancel.Size = new Size(96, 30); cancel.Location = new Point(376, 226);
@@ -181,6 +203,7 @@ class SetupForm : Form
     {
         go.Enabled = false; cancel.Enabled = false; desktop.Enabled = false; launch.Enabled = false; bar.Visible = true;
         bool d = desktop.Checked, l = launch.Checked;
+        Setup.SavePref("DesktopShortcut", d); Setup.SavePref("StartAfterInstall", l); // shown again next time
         Action<int, string> progress = delegate(int pct, string msg) { BeginInvoke((Action)delegate { bar.Value = Math.Min(100, pct); text.Text = msg; }); };
         try
         {
