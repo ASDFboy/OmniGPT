@@ -212,8 +212,9 @@ test("shared set size includes live REGISTRY and retired Designer + Felo + Qwen 
   // dedicated notrack-web prefix test below is the regression lock for this provider.
   // Apmix (#14821) registers id "apmix" with the same alias — one more (420 -> 421).
   // Token Market (#13191) registers id "tokenmarket" with the same alias — one more.
-  // Measured on the #13191 branch: RESERVED_PROVIDER_PREFIXES.size = 425.
-  assert.equal(RESERVED_PREFIX_COUNT, 425);
+  // Twinmind (#14131) registers id "twinmind" and alias "tm" — two more.
+  // Measured on the merged tree: RESERVED_PROVIDER_PREFIXES.size = 427.
+  assert.equal(RESERVED_PREFIX_COUNT, 427);
 });
 
 test("notrack-web registry id and alias stay reserved", () => {
