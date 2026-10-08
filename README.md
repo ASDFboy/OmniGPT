@@ -198,8 +198,16 @@ on the right shows which models are talking.
 * **OMNI mode:** click the OmniGPT name at the top. Give it a goal and it keeps working on its own; send messages to
   steer it, press Stop to finish. "Run indefinitely" keeps improving the result with free models until you stop it.
 * **OmniRoute console** (bottom left): the OmniRoute dashboard inside the app. "Back to OmniGPT" returns.
-* **Projects and folders** in the sidebar organise chats; right-click a chat to rename, move or delete it.
-* **Settings:** theme, accent color, text size, memory, skills, models, approvals, attached folders, data export.
+* **Projects and folders** in the sidebar organise chats; right-click a chat to rename, move, delete it, or
+  **Export as Markdown**. The **Search chats** box finds chats by title or anything said in them.
+* **Undo:** when an answer changed files on your PC, an **Undo N changes** button appears under it (click twice).
+  It restores overwritten files, moves files back, removes files and folders the agent created (to the Recycle Bin)
+  and brings deleted files back from the Recycle Bin. Commands the agent ran cannot be undone and are listed.
+* **Usage:** the top bar shows this conversation's model calls, tokens and, when OmniRoute shares its prices, the cost.
+* **Activity:** Settings, **Activity** lists every action agents took on your PC, newest first, with a link to the chat.
+* **Brain graph** (right side): the models, memories, skills, tools and files taking part in the conversation.
+* **Settings:** theme, accent color, text size, memory, skills, models, approvals, steps per task, token budget,
+  attached folders, data export.
 
 ## 11. Safety and approvals
 
@@ -214,11 +222,19 @@ Settings, **Agents and safety**, **Approval**:
 
 Always active, whatever the setting: agents can only touch your **allowed folders**; they cannot read credential files,
 environment variables or OmniRoute's data folder; deletes go to the Recycle Bin; code checks run in an isolated
-sandbox with no network and no access to your files.
+sandbox with no network and no access to your files; drives, your user folder and its main personal folders
+(Documents, Desktop, Downloads, Pictures, Music, Videos, OneDrive) can never be deleted.
+
+Even with **Bypass all checks**, once an agent has read a web page or downloaded something in a request, deletes,
+moves or writes of more than 10 files and destructive commands ask first (a web page can try to trick the agent).
+
+Limits, under **Agents and safety**: **Steps per task** (Auto = 40 actions, no limit when bypassing) and **Token budget
+per request** (off by default). An agent that repeats the same action or keeps failing is warned and then stopped.
 
 ## 12. Updates
 
 When a newer version is published on the Releases page, OmniGPT shows a small notice in the bottom-right corner.
+**Install now** downloads the installer, checks it against the release's SHA-256, installs it and reopens OmniGPT.
 Turn it off in Settings, General, **Update notifications**. Settings, About, **Check for updates** checks by hand.
 
 ## 13. Where your data lives, and uninstalling
@@ -226,7 +242,8 @@ Turn it off in Settings, General, **Update notifications**. Settings, About, **C
 | What | Where |
 |---|---|
 | The program | `%LOCALAPPDATA%\Programs\OmniGPT` |
-| Chats, settings, memories, skills, saved key | `%LOCALAPPDATA%\OmniRouteChat` |
+| Chats, settings, memories, skills, saved key, undo journal, activity log | `%LOCALAPPDATA%\OmniRouteChat` |
+| Backups of files agents overwrote | `%LOCALAPPDATA%\OmniRouteChat\backups` |
 | Logs, sandbox runs, window data | `%LOCALAPPDATA%\OmniGPT` |
 | Attached files | `Documents\OmniRoute Workspace\Attachments` |
 | OmniRoute's data (provider keys) | `%USERPROFILE%\.omniroute` (or your `DATA_DIR`) |
@@ -267,16 +284,21 @@ Layout:
 
 ```
 omnigpt/
-  app/        the OmniGPT web app and its local backend (Node): index.html, server.mjs, tools.mjs, web.mjs, files.mjs
+  app/        the OmniGPT web app (index.html, style.css, brain.js, app.js) and its local backend (Node):
+              server.mjs, tools.mjs (PC tools, safety rules, undo journal), web.mjs, files.mjs
   windows/    the Windows host (OmniGPT.cs), code sandbox (Sandbox.cs), installer (Setup.cs), build scripts, tests
 ```
 
 To run the OmniRoute dashboard from this fork (with the OmniGPT look built in), follow
 [README.omniroute.md](README.omniroute.md) (`npm install`, `npm run build`, `npm start`).
 
+**Automatic builds:** every change under `omnigpt/` runs the checks and builds the installer on GitHub
+(`.github/workflows/omnigpt.yml`). Open the run under **Actions** and download the `OmniGPT-Setup` artifact.
+
 **Publishing a release (maintainers):** set the new version in `omnigpt/app/server.mjs` (`VERSION`) and
-`omnigpt/windows/Setup.cs` (`Version`), build the installer, then
-`gh release create omnigpt-vX.Y.Z omnigpt/windows/release/OmniGPT-Setup.exe`. The update check only looks at tags named
+`omnigpt/windows/Setup.cs` (`Version`), build the installer (locally or from the Actions artifact), then
+`gh release create omnigpt-vX.Y.Z omnigpt/windows/release/OmniGPT-Setup.exe omnigpt/windows/release/OmniGPT-Setup.exe.sha256`
+(the `.sha256` file is needed for **Install now**). The update check only looks at tags named
 `omnigpt-vX.Y.Z`.
 
 ---
