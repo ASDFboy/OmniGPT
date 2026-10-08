@@ -13,15 +13,18 @@ const Brain=(()=>{
   const ROWOF={user:0,guard:4,tools:4,sandbox:4,browser:4,output:5}, ORDER={guard:0,tools:1,sandbox:2,browser:3};
   const hubs={}, LB={}; let seq=0, dirty=true, turnNo=0; // LB: labels of memory and skill nodes (their keys are ids)
   const ctxKey=k=>/^(mem|skill):/.test(k), toolKey=k=>/^t:/.test(k), fileKey=k=>/^file:/.test(k);
+  const okLabel=l=>typeof l==="string"&&l.trim()?l:undefined; // anything else (an array index, an object) is ignored
   function hub(key,label){
+    key=String(key);label=okLabel(label);
     if(hubs[key]){if(label&&hubs[key].label!==label){hubs[key].label=LB[key]=label}return hubs[key]}
     if(label)LB[key]=label;
     const wk=/^W(\d)$/.exec(key);
     const name=LB[key]||LABEL[key]||(toolKey(key)?key.slice(2).replace(/_/g," "):fileKey(key)?key.split(/[\\/]/).pop():ctxKey(key)?key.replace(/^\w+:/,""):wk?"worker "+wk[1]:String(key).split("/").pop().replace(/-\d{4}.*$/,"").replace(/^gemini-/,"gemini ").replace(/-/g," "));
-    return hubs[key]={key,label:name,row:ROWOF[key]!==undefined?ROWOF[key]:ctxKey(key)?1:toolKey(key)?4:fileKey(key)?6:wk?3:2,ord:ORDER[key]!==undefined?ORDER[key]:wk?+wk[1]:100+seq++,vis:key==="user",fade:key==="user"?1:0,sc:1,x:0,y:0,tx:0,ty:0,placed:false,busy:0,act:0,mark:null,glow:0,gc:0,leaving:false,vx:0,vy:0,from:null,lastTurn:turnNo};
+    return hubs[key]={key,label:okLabel(name)||key,row:ROWOF[key]!==undefined?ROWOF[key]:ctxKey(key)?1:toolKey(key)?4:fileKey(key)?6:wk?3:2,ord:ORDER[key]!==undefined?ORDER[key]:wk?+wk[1]:100+seq++,vis:key==="user",fade:key==="user"?1:0,sc:1,x:0,y:0,tx:0,ty:0,placed:false,busy:0,act:0,mark:null,glow:0,gc:0,leaving:false,vx:0,vy:0,from:null,lastTurn:turnNo};
   }
   hub("user");
-  const touch=(k,label,from)=>{const h=hub(k,label);h.lastTurn=turnNo;
+  const okKey=k=>typeof k==="string"&&!!k.trim()&&k!=="undefined"&&k!=="null"; // a missing model name must not become a node
+  const touch=(k,label,from)=>{if(!okKey(k))return{};const h=hub(k,label);if(typeof from!=="string")from=null;h.lastTurn=turnNo;
     if(h.leaving){h.leaving=false;h.vx=h.vy=0;dirty=true} // needed again after all: it comes back
     if(!h.vis){h.vis=true;h.fade=0;h.sc=.3;h.placed=false;h.from=from||null;dirty=true}
     return h};
@@ -47,11 +50,12 @@ const Brain=(()=>{
   function layout(){
     dirty=false;
     const vis=Object.values(hubs).filter(h=>h.vis&&!h.leaving);
-    const rows=[];
-    const per=Math.max(1,Math.min(3,Math.floor((W-20)/96))); // labels need about 96 px each, so a narrow pane gets fewer per row
-    for(let r=0;r<=6;r++){const L=vis.filter(h=>h.row===r).sort((a,b)=>a.ord-b.ord);for(let i=0;i<L.length;i+=per)rows.push(L.slice(i,i+per))}
-    const gap=Math.max(70,Math.min(84,(H-90)/Math.max(1,rows.length-1))), total=(rows.length-1)*gap, top=Math.max(34,(H-total)/2-18);
-    rows.forEach((L,ri)=>{const step=Math.min(100,(W-20)/Math.max(1,L.length)),w=(L.length-1)*step;L.forEach((h,i)=>{h.tx=W/2-w/2+i*step;h.ty=top+ri*gap;if(!h.placed){const f=h.from&&hubs[h.from];if(f&&f.placed&&f.vis){h.x=f.x;h.y=f.y}else{h.x=h.tx+(Math.random()-.5)*60;h.y=h.ty-40}h.placed=true}})});
+    let rows=[], per=Math.max(1,Math.min(3,Math.floor((W-20)/96))); // labels need about 96 px each, so a narrow pane gets fewer per row
+    const build=()=>{rows=[];for(let r=0;r<=6;r++){const L=vis.filter(h=>h.row===r).sort((a,b)=>a.ord-b.ord);for(let i=0;i<L.length;i+=per)rows.push(L.slice(i,i+per))}};
+    build();
+    while((rows.length-1)*48+90>H&&per<6&&(W-20)/(per+1)>=74){per++;build()} // too many rows for the height: put more nodes side by side
+    const gap=Math.max(44,Math.min(84,(H-90)/Math.max(1,rows.length-1))), total=(rows.length-1)*gap, top=Math.max(34,(H-total)/2-18);
+    rows.forEach((L,ri)=>{const step=Math.min(100,(W-20)/Math.max(1,per)),w=(L.length-1)*step;L.forEach((h,i)=>{h.tx=W/2-w/2+i*step;h.ty=top+ri*gap;if(!h.placed){const f=h.from&&hubs[h.from];if(f&&f.placed&&f.vis){h.x=f.x;h.y=f.y}else{h.x=h.tx+(Math.random()-.5)*60;h.y=h.ty-40}h.placed=true}})});
   }
   // a path between two neurons: an S-curve between rows, an arc inside a row
   function curve(a,b){
@@ -61,9 +65,9 @@ const Brain=(()=>{
     return{at:t=>{const u=1-t;return[u*u*u*a.x+3*u*u*t*c1x+3*u*t*t*c2x+t*t*t*b.x,u*u*u*a.y+3*u*u*t*c1y+3*u*t*t*c2y+t*t*t*b.y]},draw:c=>c.bezierCurveTo(c1x,c1y,c2x,c2y,b.x,b.y)};
   }
   function msg(a,b,c=0){
-    if(a===b)return;touch(a);touch(b,undefined,a);
+    if(a===b||!okKey(a)||!okKey(b))return;touch(a);touch(b,undefined,a);
     const k=a+">"+b;(links[k]||(links[k]={a,b,t:0,grow:0}));links[k].t=performance.now();links[k].keep=false;
-    pulses.push({a,b,pos:0,sp:1.1+Math.random()*.4,c});
+    if(cv.offsetParent){pulses.push({a,b,pos:0,sp:1.1+Math.random()*.4,c});if(pulses.length>120)pulses.splice(0,pulses.length-120)} // hidden graph: no signals to queue up
   }
   const mark=(key,c)=>{const h=touch(key);h.mark={c,t:performance.now()};h.glow=1;h.gc=c;h.act=1};
   function draw(now,dt){
@@ -95,9 +99,10 @@ const Brain=(()=>{
       const q=g.at(p.pos),gr=cx.createRadialGradient(q[0],q[1],0,q[0],q[1],R*2);gr.addColorStop(0,rgb(c,.6));gr.addColorStop(1,rgb(c,0));cx.fillStyle=gr;cx.beginPath();cx.arc(q[0],q[1],R*2,0,6.3);cx.fill();
       cx.fillStyle=rgb(c,1);cx.beginPath();cx.arc(q[0],q[1],3,0,6.3);cx.fill();
     }
-    // neurons
+    // neurons (each in its own try: one bad node must never stop the rest of the graph from drawing)
     for(const key in hubs){
-      const h=hubs[key];if(!h.vis)continue;h.glow=Math.max(0,h.glow-dt*.8);h.act=Math.max(0,h.act-dt*.3);
+      const h=hubs[key];if(!h.vis)continue;
+      try{h.glow=Math.max(0,h.glow-dt*.8);h.act=Math.max(0,h.act-dt*.3);
       const x=h.x,y=h.y,al=Math.max(0,h.fade),active=h.busy||h.act>.05||h.mark,c=h.glow>.02?color(h.gc):ink,R=7*h.sc;
       cx.globalAlpha=al;
       if(h.glow>.02){const rr=R*(2.4+2*h.glow),gr=cx.createRadialGradient(x,y,0,x,y,rr);gr.addColorStop(0,rgb(c,.5*h.glow));gr.addColorStop(1,rgb(c,0));cx.fillStyle=gr;cx.beginPath();cx.arc(x,y,rr,0,6.3);cx.fill()}
@@ -106,17 +111,22 @@ const Brain=(()=>{
       cx.fillStyle=rgb(c,active?1:.85);cx.beginPath();cx.arc(x,y,R*.5,0,6.3);cx.fill();
       if(h.busy){const a=now*5;cx.fillStyle=rgb(ink,1);cx.beginPath();cx.arc(x+Math.cos(a)*R*1.7,y+Math.sin(a)*R*1.7,2.4,0,6.3);cx.fill()}
       cx.font=`${active?600:500} 12.5px 'Segoe UI Variable Text','Segoe UI',sans-serif`;cx.textAlign="center";cx.textBaseline="top";cx.fillStyle=rgb(ink,active?1:.82);
-      const words=h.label.split(" "),lines=[];let cur="";for(const w of words){if((cur+" "+w).trim().length>13&&cur){lines.push(cur);cur=w}else cur=(cur+" "+w).trim()}if(cur)lines.push(cur);
+      const words=String(h.label).split(" ").map(w=>w.length>15?w.slice(0,14)+"…":w),lines=[];let cur="";for(const w of words){if((cur+" "+w).trim().length>13&&cur){lines.push(cur);cur=w}else cur=(cur+" "+w).trim()}if(cur)lines.push(cur);
+      if(lines.length>3){lines.length=3;lines[2]=lines[2].replace(/…?$/,"…")}
       lines.forEach((ln,i)=>cx.fillText(ln,x,y+R+7+i*15));
+      }catch(e){errs++}
       cx.globalAlpha=1;
     }
   }
-  function frame(t){requestAnimationFrame(frame);if(!cv.offsetParent||t-last<32)return;const dt=Math.min(.1,(t-last)/1000);last=t;draw(t/1000,dt)}
+  let errs=0;
+  function frame(t){requestAnimationFrame(frame);if(!cv.offsetParent||t-last<32)return;const dt=Math.min(.1,(t-last)/1000);last=t;
+    if((window.devicePixelRatio||1)!==dpr)size(); // moved to a screen with different scaling
+    try{draw(t/1000,dt)}catch(e){errs++;try{cx.globalAlpha=1}catch{}}}
   requestAnimationFrame(frame);
   const fed=new Set(), pending=new Set(); let ctxPruned=true, ctxReady=false; // ctxReady: this turn's memories and skills have been chosen // memories and skills shown this turn, and the ones waiting for the next model to start
   return{
     last:"user",
-    turn(){try{fed.clear();pending.clear();ctxPruned=false;ctxReady=false;turnNo++;this.last="user";
+    turn(){if(!okKey(this.last))this.last="user";try{fed.clear();pending.clear();ctxPruned=false;ctxReady=false;turnNo++;this.last="user";
       for(const k in hubs){const h=hubs[k];if(!h.vis||h.leaving||ctxKey(k))continue;
         const idle=turnNo-h.lastTurn, lim=/^W\d$/.test(k)?1:toolKey(k)||["guard","sandbox","tools","browser"].includes(k)?3:2;
         if(idle>=lim)drop(k)}}catch(e){}},
@@ -132,10 +142,11 @@ const Brain=(()=>{
     ok(k){try{mark(k,1)}catch(e){}},
     fail(k){try{mark(k,2)}catch(e){}},
     busy(k,on){try{const h=touch(k);h.busy=on?1:0;if(on)h.act=1}catch(e){}},
-    plan(keys){try{keys.filter(Boolean).forEach(touch)}catch(e){}},
+    plan(keys){try{keys.filter(Boolean).forEach(k=>touch(k))}catch(e){}}, // not forEach(touch): that passes the index as a label
     register(){},
-    snapshot(){try{const n=Object.values(hubs).filter(h=>h.vis&&!h.leaving&&h.key!=="user").sort((a,b)=>a.ord-b.ord).map(h=>h.key);return{n,l:Object.values(links).map(l=>[l.a,l.b]),lb:Object.fromEntries(n.filter(k=>LB[k]).map(k=>[k,LB[k]]))}}catch(e){return null}},
-    restore(g){try{if(!g||!Array.isArray(g.n))return;g.n.forEach(k=>touch(k,g.lb&&g.lb[k]));(g.l||[]).forEach(([a,b])=>{if(hubs[a]&&hubs[b])links[a+">"+b]={a,b,t:0,keep:true,grow:0}});dirty=true}catch(e){}},
+    get errors(){return errs}, // drawing problems caught so far (for tests)
+    snapshot(){try{const n=Object.values(hubs).filter(h=>h.vis&&!h.leaving&&h.key!=="user").sort((a,b)=>a.ord-b.ord).map(h=>h.key);const N=new Set(["user",...n]);return{n,l:Object.values(links).filter(l=>N.has(l.a)&&N.has(l.b)).map(l=>[l.a,l.b]),lb:Object.fromEntries(n.filter(k=>LB[k]).map(k=>[k,LB[k]]))}}catch(e){return null}},
+    restore(g){try{if(!g||!Array.isArray(g.n))return;const n=new Set(g.n.filter(k=>typeof k==="string"&&k));n.forEach(k=>touch(k,g.lb&&g.lb[k]));(Array.isArray(g.l)?g.l:[]).forEach(l=>{if(Array.isArray(l)&&n.has(l[0])&&n.has(l[1]))links[l[0]+">"+l[1]]={a:l[0],b:l[1],t:0,keep:true,grow:0}});dirty=true}catch(e){}},
     reset(){pulses.length=0;fed.clear();pending.clear();for(const k in links)delete links[k];for(const k in hubs){const h=hubs[k];h.busy=0;h.mark=null;h.glow=0;if(k!=="user"){h.vis=false;h.fade=0;h.placed=false;h.leaving=false;h.sc=1}}ctxPruned=true;dirty=true;this.last="user"}
   };
 })();
