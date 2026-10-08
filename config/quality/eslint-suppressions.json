@@ -4292,11 +4292,6 @@
       "count": 2
     }
   },
-  "tests/unit/proxyfetch-direct-response-start-timeout-10214.test.ts": {
-    "@typescript-eslint/no-unused-vars": {
-      "count": 3
-    }
-  },
   "tests/unit/qoder-executor.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 3
