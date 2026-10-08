@@ -250,11 +250,93 @@ export async function precheck(name, input, cfg = loadConfig(), scope) {
     }
     case "download_file": { const u = await checkUrl(i.url); const p = W(i.path); return { class: "network", summary: `Download ${u.href}\n  to ${p}` }; }
     case "inspect_file": { const p = checkPath(i.path, cfg); return { class: "read", summary: `Inspect ${p}` }; }
+    case "view_images": {
+      const L = list(i.paths, 8).map((p) => checkPath(p, cfg));
+      return { class: "read", summary: `Look at ${L.length} image${L.length > 1 ? "s" : ""}:\n${L.map((p) => "- " + p).join("\n")}` };
+    }
+    case "install_tool": {
+      if (scope) throw new Error("Installing programs is not available to parallel workers");
+      const m = String(i.manager || ""), pkg = String(i.package || "").trim();
+      if (!INSTALL_RE[m]) throw new Error('manager must be "winget", "pip" or "npm"');
+      if (!INSTALL_RE[m].test(pkg)) throw new Error(`"${pkg.slice(0, 80)}" is not a valid ${m} package name`);
+      return { class: "exec", summary: `Install ${pkg} with ${m}${i.reason ? ` (${String(i.reason).slice(0, 160)})` : ""}` };
+    }
     case "find_duplicates": { const p = checkPath(i.path || ".", cfg); return { class: "read", summary: `Find duplicate files in ${p}${i.recursive === false ? "" : " and its subfolders"}` }; }
     case "web_search": { const q = String(i.query || "").trim(); if (!q) throw new Error("query is required"); if (q.length > 300) throw new Error("query is too long (300 chars max)"); return { class: "web", summary: `Search the web: ${q}` }; }
     case "web_open": { const u = await checkUrl(i.url); return { class: "web", summary: `Open ${u.href}` }; }
     default: throw new Error(`Unknown tool: ${name}`);
   }
+}
+
+// ---------- install_tool: package names only, never a path, URL or extra arguments
+const INSTALL_RE = { winget: /^[A-Za-z0-9][\w.+-]{0,99}$/, pip: /^[A-Za-z0-9][A-Za-z0-9._\-\[\],<>=!~]{0,99}$/, npm: /^(@[a-z0-9._-]+\/)?[a-z0-9._-]+(@[\w.^~<>=-]+)?$/ };
+
+// ---------- view_images: the agent looks at pictures itself. Images are scaled down (smaller and cheaper for the model);
+// GIFs give their first frame; videos give 3 frames when ffmpeg is installed. Returned as image blocks the model sees.
+const IMG_EXT = /\.(jpe?g|png|gif|bmp|tiff?|webp|heic|heif|avif|ico|jfif)$/i, VID_EXT = /\.(mp4|mov|m4v|webm|mkv|avi|wmv|flv|3gp|mpe?g)$/i;
+const RAW_OK = { ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".jfif": "image/jpeg", ".png": "image/png", ".gif": "image/gif", ".webp": "image/webp" };
+let ffmpegPath;
+async function findFfmpeg(cwd) {
+  if (ffmpegPath) return ffmpegPath; // found once; a later install is picked up on the next call (null is not cached)
+  if (process.platform === "win32") { const r = await ps("(Get-Command ffmpeg -ErrorAction SilentlyContinue).Source", {}, cwd, 15000); const f = r.out.trim().split(/\r?\n/).pop(); if (f && fs.existsSync(f)) ffmpegPath = f; }
+  else { for (const d of String(process.env.PATH || "").split(":")) if (d && fs.existsSync(path.join(d, "ffmpeg"))) { ffmpegPath = path.join(d, "ffmpeg"); break; } }
+  return ffmpegPath || null;
+}
+const execFile = (exe, args, ms) => new Promise((ok) => { const c = spawn(exe, args, { windowsHide: true, stdio: ["ignore", "pipe", "pipe"] }); let out = ""; c.stdout.on("data", (d) => (out += d)); c.stderr.on("data", (d) => (out += d)); const t = setTimeout(() => { try { c.kill(); } catch {} }, ms); c.on("close", (code) => { clearTimeout(t); ok({ code, out }); }); c.on("error", (e) => { clearTimeout(t); ok({ code: -1, out: String(e) }); }); });
+const SHRINK_PS = `Add-Type -AssemblyName System.Drawing
+$max=[int]$env:ORC_MAX
+foreach($j in ($env:ORC_JOBS | ConvertFrom-Json)){ try{
+  $img=[System.Drawing.Image]::FromFile($j.src); $W=$img.Width; $H=$img.Height
+  $s=[Math]::Min(1.0, $max/[Math]::Max($W,$H)); $w=[int][Math]::Max(1,$W*$s); $h=[int][Math]::Max(1,$H*$s)
+  $bmp=New-Object System.Drawing.Bitmap $w,$h; $g=[System.Drawing.Graphics]::FromImage($bmp)
+  $g.InterpolationMode='HighQualityBicubic'; $g.Clear([System.Drawing.Color]::White); $g.DrawImage($img,0,0,$w,$h)
+  $enc=[System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders()|Where-Object{$_.MimeType -eq 'image/jpeg'}
+  $p=New-Object System.Drawing.Imaging.EncoderParameters 1; $p.Param[0]=New-Object System.Drawing.Imaging.EncoderParameter ([System.Drawing.Imaging.Encoder]::Quality),([long]82)
+  $bmp.Save($j.dst,$enc,$p); $g.Dispose(); $bmp.Dispose(); $img.Dispose(); Write-Output ("OK|"+$j.dst+"|"+$W+"x"+$H)
+} catch { Write-Output ("ERR|"+$j.dst+"|"+$_.Exception.Message) } }`;
+async function viewImages(paths, maxSide, cfg) {
+  const max = Math.min(Math.max(maxSide | 0 || 768, 256), 1568);
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "omnigpt-view-"));
+  const out = []; // { path, note, frames: [{ file, mime }] }
+  try {
+    const jobs = [];
+    for (const [n, p] of paths.entries()) {
+      const item = { path: p, note: "", frames: [] }; out.push(item);
+      if (!fs.existsSync(p) || !fs.statSync(p).isFile()) { item.note = "not found"; continue; }
+      if (VID_EXT.test(p)) {
+        const ff = await findFfmpeg(cfg.cwd);
+        if (!ff) { item.note = "this is a video and ffmpeg is not installed, so no frames could be taken. Install it with install_tool (manager winget, package Gyan.FFmpeg) and call view_images again."; continue; }
+        let dur = 0; const pr = await execFile(ff, ["-hide_banner", "-i", p], 30000); const m = /Duration: (\d+):(\d+):([\d.]+)/.exec(pr.out); if (m) dur = +m[1] * 3600 + +m[2] * 60 + +m[3];
+        for (const [k, f] of [0.15, 0.5, 0.85].entries()) {
+          const dst = path.join(tmp, `v${n}_${k}.jpg`);
+          await execFile(ff, ["-hide_banner", "-loglevel", "error", "-y", "-ss", String(dur ? (dur * f).toFixed(2) : k * 2), "-i", p, "-frames:v", "1", "-vf", `scale='min(${max},iw)':-2`, "-q:v", "4", dst], 60000);
+          if (fs.existsSync(dst)) item.frames.push({ file: dst, mime: "image/jpeg" });
+        }
+        item.note = item.frames.length ? `video${dur ? ", " + Math.round(dur) + " s" : ""}: ${item.frames.length} frames at 15%, 50% and 85%` : "ffmpeg could not read this video";
+        continue;
+      }
+      if (!IMG_EXT.test(p)) { item.note = "not an image or video file"; continue; }
+      jobs.push({ src: p, dst: path.join(tmp, `i${n}.jpg`), item });
+    }
+    if (jobs.length && process.platform === "win32") {
+      const r = await ps(SHRINK_PS, { ORC_MAX: String(max), ORC_JOBS: JSON.stringify(jobs.map(({ src, dst }) => ({ src, dst }))) }, cfg.cwd, 120000);
+      for (const line of r.out.split(/\r?\n/)) { const [st, dst, info] = line.split("|"); const j = jobs.find((x) => x.dst === dst); if (!j) continue; if (st === "OK" && fs.existsSync(dst)) { j.item.frames.push({ file: dst, mime: "image/jpeg" }); j.item.note = (info || "") + (/\.gif$/i.test(j.src) ? ", first frame of the GIF" : ""); } else j.item.err = info; }
+    }
+    for (const j of jobs) {
+      if (j.item.frames.length) continue;
+      const ext = path.extname(j.src).toLowerCase(), size = fs.statSync(j.src).size, ff = await findFfmpeg(cfg.cwd);
+      if (ff) { const dst = j.dst; await execFile(ff, ["-hide_banner", "-loglevel", "error", "-y", "-i", j.src, "-frames:v", "1", "-vf", `scale='min(${max},iw)':-2`, "-q:v", "4", dst], 60000); if (fs.existsSync(dst)) { j.item.frames.push({ file: dst, mime: "image/jpeg" }); continue; } }
+      if (RAW_OK[ext] && size <= 3.5e6) { j.item.frames.push({ file: j.src, mime: RAW_OK[ext] }); j.item.note = "original file"; continue; }
+      j.item.note = `could not be converted (${(j.item.err || ext + " is not supported").slice(0, 120)}). Installing ffmpeg (install_tool winget Gyan.FFmpeg) lets view_images read more formats.`;
+    }
+    const blocks = []; let shown = 0;
+    for (const [n, it] of out.entries()) {
+      blocks.push({ type: "text", text: `Image ${n + 1}: ${it.path}${it.note ? " (" + it.note + ")" : ""}` });
+      for (const f of it.frames) { blocks.push({ type: "image", source: { type: "base64", media_type: f.mime, data: fs.readFileSync(f.file).toString("base64") } }); shown++; }
+    }
+    const summary = `Showing ${shown} picture${shown === 1 ? "" : "s"} from ${paths.length} file${paths.length === 1 ? "" : "s"}. Describe only what you can actually see in them.`;
+    return { text: summary + "\n" + out.map((it, n) => `Image ${n + 1}: ${it.path}${it.note ? " (" + it.note + ")" : ""}`).join("\n"), blocks };
+  } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
 }
 
 // ---------- duplicates: same size first (cheap), then SHA-256 of the content of same-size files only. Read-only.
@@ -305,7 +387,8 @@ function backup(p) {
 function ps(script, env, cwd, timeoutMs) {
   return new Promise((ok) => {
     const clean = Object.fromEntries(Object.entries({ ...process.env, ...env }).filter(([k]) => !/key|token|secret|passw|omniroute|api/i.test(k) || k in env));
-    const c = spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "[Console]::OutputEncoding=[Text.Encoding]::UTF8\n" + script], { cwd, env: clean, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
+    const refresh = "$env:Path=[Environment]::GetEnvironmentVariable('Path','Machine')+';'+[Environment]::GetEnvironmentVariable('Path','User')+';'+$env:Path\n"; // programs installed during this session are found
+    const c = spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "[Console]::OutputEncoding=[Text.Encoding]::UTF8\n" + refresh + script], { cwd, env: clean, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
     let out = "", timedOut = false;
     c.stdout.on("data", (d) => (out += d)); c.stderr.on("data", (d) => (out += d));
     const t = setTimeout(() => { timedOut = true; spawn("taskkill", ["/pid", String(c.pid), "/t", "/f"], { windowsHide: true }); }, timeoutMs);
@@ -401,7 +484,7 @@ export function run(name, input, cfg = loadConfig(), scope, meta) {
     catch (e) { logActivity({ t: Date.now(), chat: meta?.chat || null, turn: meta?.turn || null, tool: name, summary: String(pre.summary || "").slice(0, 600), ok: false, error: String(e.message || e).slice(0, 300) }); throw e; }
     finally { journal(meta, jr); } // a bulk action that partly failed still records what it did
   };
-  if (["run_command", "run_code", "read_file", "read_files", "list_dir", "download_file", "web_search", "web_open", "inspect_file", "find_duplicates"].includes(name)) return go();
+  if (["run_command", "run_code", "read_file", "read_files", "list_dir", "download_file", "web_search", "web_open", "inspect_file", "find_duplicates", "view_images", "install_tool"].includes(name)) return go();
   const p = chain.then(go, go); chain = p.catch(() => {}); return p;
 }
 async function runInner(name, input, cfg, jr = []) {
@@ -470,6 +553,16 @@ async function runInner(name, input, cfg, jr = []) {
     }
     case "inspect_file": return inspect(checkPath(i.path, cfg), Math.max(0, Number(i.offset) || 0));
     case "find_duplicates": return findDuplicates(checkPath(i.path || ".", cfg), i.recursive !== false);
+    case "view_images": return viewImages(i.paths.map((p) => checkPath(p, cfg)), Number(i.max_side) || 768, cfg);
+    case "install_tool": {
+      const m = String(i.manager), pkg = String(i.package).trim();
+      const script = m === "winget" ? 'winget install --id "$env:ORC_PKG" -e --silent --accept-package-agreements --accept-source-agreements --disable-interactivity'
+        : m === "pip" ? 'if(Get-Command py -ErrorAction SilentlyContinue){py -m pip install --user --upgrade "$env:ORC_PKG"}elseif(Get-Command python -ErrorAction SilentlyContinue){python -m pip install --user --upgrade "$env:ORC_PKG"}else{Write-Output "Python is not installed. Install it first: install_tool winget Python.Python.3.12"; exit 9}'
+        : 'npm install -g "$env:ORC_PKG"';
+      jr.push({ op: "command", text: `install ${pkg} with ${m}` });
+      const r = await ps(script, { ORC_PKG: pkg }, cfg.cwd, 15 * 60000);
+      return `${r.timedOut ? "[timed out after 15 minutes]\n" : ""}${r.out || "(no output)"}\n[exit code ${r.code}]` + (r.code === 0 ? "\nInstalled. run_command finds new programs right away (PATH is refreshed for every command)." : "");
+    }
     case "web_search": return webSearch(i);
     case "web_open": return webOpen(i);
     case "download_file": {

@@ -194,7 +194,12 @@ on the right shows which models are talking.
   install it with `pip`.
 * **Attach a folder** (folder icon): the agents may do anything inside that folder and its subfolders without asking.
 * **Files in answers:** file names in answers open File Explorer; created files appear as cards with previews.
-* **Web:** agents search and read web pages when a question needs current information.
+* **Web:** with **Search the web first** (Settings, Agents and safety; on by default) agents look facts up online
+  instead of answering from memory, and list their sources.
+* **Pictures and videos:** agents look at images themselves (**view images**; videos need ffmpeg, which they install
+  when needed) and sort or describe them by what they show, never by file name.
+* **Missing tools:** when a job needs a program OmniGPT does not have, the agent searches for a free one and installs it
+  with winget, pip or npm (**install tool**), then uses it.
 * **OMNI mode:** click the OmniGPT name at the top. Give it a goal and it keeps working on its own; send messages to
   steer it, press Stop to finish. "Run indefinitely" keeps improving the result with free models until you stop it.
 * **OmniRoute console** (bottom left): the OmniRoute dashboard inside the app. "Back to OmniGPT" returns.
