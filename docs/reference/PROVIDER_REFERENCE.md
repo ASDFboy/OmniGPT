@@ -10,7 +10,7 @@ lastUpdated: 2026-10-08
 > Regenerate with: `npm run gen:provider-reference`
 > **Last generated:** 2026-10-08
 
-Total providers: **367**. See category breakdown below.
+Total providers: **368**. See category breakdown below.
 
 ## Categories
 
@@ -120,7 +120,7 @@ Use the dashboard at `/dashboard/providers` to enable, configure, and test each 
 | `zai-web` | `zw` | Z.ai Web | Web cookie | [link](https://chat.z.ai) | Copy the "token" value from chat.z.ai → DevTools → Application → Local Storage. Do not copy cookies; OmniRoute handles the per-request CAPTCHA through its browser transport. | — |
 | `zenmux-free` | `zmf` | ZenMux Free (Web) | Web cookie | [link](https://zenmux.ai) | Login at zenmux.ai, then export all cookies using EditThisCookie or Cookie-Editor and paste the full Cookie header string here. Refresh every ~30 days. | — |
 
-## API Key Providers (paid / paid-with-free-credits) (247)
+## API Key Providers (paid / paid-with-free-credits) (248)
 
 | ID | Alias | Name | Tags | Website | Notes |
 |----|-------|------|------|---------|-------|
@@ -197,7 +197,7 @@ Use the dashboard at `/dashboard/providers` to enable, configure, and test each 
 | `fireworks` | `fireworks` | Fireworks AI | API key | [link](https://fireworks.ai) | $1 free starter credits on signup for API testing |
 | `free-ai` | `free-ai` | Free.ai | API key, aggregator | [link](https://free.ai) | 30,000 tokens/day cover self-hosted models after email verification. Usage beyond the pool can bill at raw cost, and premium external models are paid. |
 | `freeaiapikey` | `faik` | FreeAIAPIKey | API key | [link](https://freeaiapikey.com) | — |
-| `freebuff` | `freebuff` | Freebuff | API key | [link](https://freebuff.com) | Enter Freebuff / Codebuff Auth Token (obtained via CLI login or automated harvester). |
+| `freebuff` | `freebuff` | Freebuff | API key | [link](https://freebuff.com) | Enter your Freebuff / Codebuff auth token from the CLI login. |
 | `freeinference` | `freeinference` | FreeInference | API key, aggregator | [link](https://freeinference.org) | Free research access without a card; non-Harvard applicants require manual approval and no numeric quota is publicly guaranteed. |
 | `freemodel-dev` | `fmd` | FreeModel.dev | API key | [link](https://freemodel.dev) | $300 free credits on signup — no credit card required. Access GPT-5.4 and GPT-5.5 (OpenAI's latest flagship models) through an OpenAI-compatible API. |
 | `freetheai` | `fta` | FreeTheAi | API key, aggregator | [link](https://freetheai.org) | Sign up at https://freetheai.org/signup for a free API key. A daily check-in unlocks the free models; linking Discord is optional and only raises the daily limit. |
@@ -336,6 +336,7 @@ Use the dashboard at `/dashboard/providers` to enable, configure, and test each 
 | `tinyfish` | `tf` | TinyFish Fetch | API key | [link](https://docs.tinyfish.ai/fetch-api) | X-API-Key from agent.tinyfish.ai/api-keys |
 | `together` | `together` | Together AI | API key, video | [link](https://www.together.ai) | — |
 | `token-kiosk` | `tk` | Token Kiosk | API key | [link](https://agent-router.gaib.ai) | Use your Token Kiosk API key in Authorization: Bearer <key>. Fully OpenAI-compatible gateway. API base URL: https://agent-router.gaib.ai/v1. |
+| `tokenmarket` | `tokenmarket` | Token Market | API key, aggregator | [link](https://www.tokensmarket.ai) | Create an API key in the Token Market console, then paste it here as a Bearer token. |
 | `tokenreply` | `tokenreply` | TokenReply | API key, aggregator | [link](https://www.tokenreply.com) | Free-tagged models have model- and campaign-specific daily limits; no fixed global free quota is published. |
 | `tokenrouter` | `trk` | TokenRouter | API key | [link](https://tokenrouter.com) | Use your TokenRouter API key in Authorization: Bearer <key>. Fully OpenAI-compatible. API base URL: https://api.tokenrouter.com/v1. |
 | `topaz` | `topaz` | Topaz | API key, image | [link](https://topazlabs.com) | — |
