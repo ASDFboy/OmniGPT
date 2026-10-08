@@ -62,6 +62,11 @@ const DEFAULTS = {
   roots: [WORKSPACE, path.join(HOME, "Documents"), path.join(HOME, "Downloads"), path.join(HOME, "Desktop")],
 };
 
+// Never deleted, whatever folders the user has allowed: allowed roots, drives, the home folder and its main personal folders.
+const PERSONAL = ["Documents", "Desktop", "Downloads", "Pictures", "Music", "Videos", "OneDrive", "AppData", ".ssh"];
+const noDelete = (p, cfg) => { const x = lc(p).replace(/[\\/]+$/, "");
+  return /^[a-z]:$/.test(x) || x === "" || cfg.roots.map(real).some((r) => lc(r) === lc(p)) || [HOME, ...PERSONAL.map((d) => path.join(HOME, d))].some((d) => lc(real(d)) === lc(p)); };
+
 export function loadConfig() {
   let c = {};
   try { c = JSON.parse(fs.readFileSync(CFG, "utf8")); } catch {}
@@ -216,7 +221,7 @@ export async function precheck(name, input, cfg = loadConfig(), scope) {
     case "move_file": { const a = W(i.source), b = W(i.destination); return { class: "write", summary: `Move ${a}\n  to ${b}` }; }
     case "delete_file": {
       const p = W(i.path);
-      if (cfg.roots.map(real).some((r) => lc(r) === lc(p)) || lc(p) === lc(real(HOME))) throw new Error("Refusing to delete an allowed root or home folder");
+      if (noDelete(p, cfg)) throw new Error("Refusing to delete an allowed root, a drive, or a main personal folder");
       return { class: "delete", summary: `Move to Recycle Bin: ${p}` };
     }
     case "run_code": {
@@ -239,7 +244,7 @@ export async function precheck(name, input, cfg = loadConfig(), scope) {
       return { class: "write", summary: `Move ${L.length} items:\n${L.join("\n")}` };
     }
     case "delete_files": {
-      const L = list(i.paths, 50).map((p) => { const a = W(p); if (cfg.roots.map(real).some((r) => lc(r) === lc(a)) || lc(a) === lc(real(HOME))) throw new Error("Refusing to delete an allowed root or home folder"); return a; });
+      const L = list(i.paths, 50).map((p) => { const a = W(p); if (noDelete(a, cfg)) throw new Error("Refusing to delete an allowed root, a drive, or a main personal folder"); return a; });
       return { class: "delete", summary: `Move ${L.length} items to the Recycle Bin:\n${L.map((p) => "- " + p).join("\n")}` };
     }
     case "download_file": { const u = await checkUrl(i.url); const p = W(i.path); return { class: "network", summary: `Download ${u.href}\n  to ${p}` }; }
