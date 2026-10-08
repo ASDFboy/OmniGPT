@@ -448,6 +448,12 @@ function showUsage(){const el=$("#usage");if(!el)return;if(!USAGE.calls){el.text
   el.textContent=USAGE.calls+" call"+(USAGE.calls>1?"s":"")+" · "+fmtTok(USAGE.in+USAGE.out)+" tokens"+(USAGE.cost>0?" · $"+(USAGE.cost<.01?USAGE.cost.toFixed(4):USAGE.cost.toFixed(2))+(USAGE.unpriced?"+":""):"");
   el.title="This conversation: "+USAGE.calls+" model calls, "+USAGE.in.toLocaleString()+" input and "+USAGE.out.toLocaleString()+" output tokens"+(USAGE.cost>0?", about $"+USAGE.cost.toFixed(4):"")+(USAGE.unpriced?". "+USAGE.unpriced+" calls had no price from OmniRoute (free or unknown).":".")}
 const budgetHit=()=>{const b=Number(SET().budget)||0;return b>0&&TURN&&TURN.tok>b};
+// What the user sees when every model stayed silent: never a blank answer.
+function noReplyText(models,stops){
+  const names=[...new Set(models.filter(Boolean).map(m=>String(m).split("/").pop()))], filt=stops.some(s=>/refus|filter|safety|block|recitation|prohibit/i.test(s));
+  return "(No answer: "+(names.length?names.join(", "):"the models")+" returned empty replies"+(stops.length?" (stop reason: "+[...new Set(stops)].join(", ")+")":"")+". "+
+    (filt?"A content filter blocked the reply. Models with strict filters will not handle this request; try the Unfiltered mode or another model.":"This often means a model's content filter silently blocked the reply, for example on explicit images. Try the Unfiltered mode or another model, or say \"continue\".")+")";
+}
 // Pictures in tool results are sent to the model once; after that they become a short note (keeps long sorting jobs affordable).
 function seenPictures(msgs){
   for(let i=0;i<msgs.length-1;i++){const m=msgs[i];if(m.role!=="user"||!Array.isArray(m.content))continue;
@@ -457,17 +463,26 @@ function seenPictures(msgs){
 async function agent(q,ctx,leads,o={}){
   const T=o.T, cfg=await effCfg(), sys=typeof o.system==="function"?o.system(cfg):(o.system||agentSystem(cfg)), tools=o.tools||[...TOOLS,...(curProject?PROJ_TOOLS:[])], max=o.maxSteps||stepLimit(cfg);
   let msgs=[...ctx], actions=[], final="", stopSent=0;
-  const seen=new Map(); let failRun=0, warned=false, nudged=false; // runaway guard: the same action again and again, or nothing but failures
+  const seen=new Map(); let failRun=0, warned=false, empties=0, cur=leads; const silent=[], stops=[]; // silent: models that gave an empty reply // runaway guard: the same action again and again, or nothing but failures
   for(let step=0;step<=max;step++){ // the extra step is for the wrap-up summary once the limit is reached
     const out={};
     seenPictures(msgs); // pictures the model has already looked at are replaced by a note, so they are not sent again every step
     const mkA=m=>({model:m,system:sys,messages:msgs,tools});
-    const r=step===0?await answerWith(leads,"Agent",mkA,"",out,T,q):await runAny(leads,"Agent",mkA,"",out,T);
+    const r=step===0?await answerWith(cur,"Agent",mkA,"",out,T,q):await runAny(cur,"Agent",mkA,"",out,T);
     const uses=(out.content||[]).filter(b=>b.type==="tool_use");
-    if(!uses.length&&!String(r.text||"").trim()&&actions.length&&!nudged&&step<max){ // stopped mid-task without a word
-      nudged=true;const nudge="You stopped without replying. If the task is not finished, continue it now with your tools. If it is finished, reply with a summary of what you actually did.";
-      const lastM=msgs[msgs.length-1];if(lastM&&lastM.role==="user"&&Array.isArray(lastM.content))lastM.content=[...lastM.content,{type:"text",text:nudge}];else msgs.push({role:"user",content:nudge});
-      continue}
+    if(!uses.length&&!String(r.text||"").trim()){ // an empty reply is never accepted as the answer
+      empties++;silent.push(r.model);if(out.stop)stops.push(out.stop);
+      if(empties<=3&&step<max){ // ask again, each time starting with a model that has not gone silent
+        const all=[...leads,...TIERS.vision,...TIERS.fast,...TIERS.strong,...TIERS.reviewer].filter((m,i,a)=>a.indexOf(m)===i);
+        cur=[...all.filter(m=>!silent.includes(m)),...all.filter(m=>silent.includes(m))];
+        const n=turn("Retry","",T);n.end();n.text((r.model||"The model").split("/").pop()+" returned an empty reply"+(out.stop?" ("+out.stop+")":"")+"; asking "+String(cur[0]).split("/").pop()+".");
+        const nudge=actions.length?"Your last reply was empty. If the task is not finished, continue it now with your tools. If it is finished, reply with a summary of what you actually did, with real counts.":"Your last reply was empty. Answer the user now: do the task with your tools, or explain exactly what is stopping you.";
+        const lastM=msgs[msgs.length-1];
+        if(lastM&&lastM.role==="user"&&Array.isArray(lastM.content))lastM.content=[...lastM.content.filter(b=>!(b&&b.type==="text"&&/^Your last reply was empty/.test(b.text))),{type:"text",text:nudge}];
+        else if(lastM&&lastM.role==="user"&&typeof lastM.content==="string")msgs[msgs.length-1]={role:"user",content:[{type:"text",text:lastM.content},{type:"text",text:nudge}]};
+        else msgs.push({role:"user",content:nudge});
+        continue}
+      final=noReplyText(silent,stops);break}
     if(!uses.length){
       final=r.text;
       if(!T&&!actions.includes("view_images")&&/\b(visual(ly)?|by (their|the) (actual )?(content|appearance)|what (they|it|the images?) (actually )?(look|show)|look(s|ed)? like|judged|appearance)\b/i.test(final)&&/\b(image|picture|photo|video|gif)s?\b/i.test(q))
@@ -812,6 +827,7 @@ async function send(){
     }
     if(SET().refine&&final===undefined){const b=await refine(q);if(/^ASK:/i.test(b))final=b.replace(/^ASK:\s*/i,"");else if(b){rq=briefed(q,b);ctxR=fitCtx([...history,{role:"user",content:rq}])}}
     if(final===undefined) final=await auto(rq,withImages(ctxR,A));
+    if(final!==undefined&&!String(final||"").replace(/\s*\[Actions this turn:[^\]]*\]\s*$/,"").trim())final=noReplyText([],[])+(String(final||"").match(/\n*\[Actions this turn:[^\]]*\]\s*$/)||[""])[0]; // never a blank answer
     if(final&&col.querySelectorAll(".turn.final").length===finalsBefore){ // e.g. the reviewer approved the first draft, which lives inside the trace
       const ui=turn("Answer","final"); ui.text(String(final).replace(/\n\n\[Actions this turn:[^\]]*\]$/,"")); ui.end();
     }
