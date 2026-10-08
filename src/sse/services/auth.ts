@@ -46,6 +46,7 @@ import {
   toProviderConnection,
   type ProviderConnectionView,
 } from "@/lib/db/providers/lazyConnectionView";
+import { buildConnectionConcurrencyFields } from "./connectionConcurrencyFields.ts"; // #13700
 import {
   DEFAULT_QUOTA_THRESHOLD_PERCENT,
   getCachedClaudeQuotaScopeDecision as readClaudeScope,
@@ -1112,8 +1113,7 @@ async function materializeConnection(
     lastErrorSource: connection.lastErrorSource,
     errorCode: connection.errorCode,
     rateLimitedUntil: connection.rateLimitedUntil,
-    maxConcurrent: connection.maxConcurrent,
-    rateLimitMaxConcurrent: connection.rateLimitMaxConcurrent,
+    ...buildConnectionConcurrencyFields(connection),
     quotaWindowThresholds: connection.quotaWindowThresholds ?? null,
     ...(releaseOAuthSession ? { releaseOAuthSession } : {}),
     ...buildAntigravityRoutingFields(extra.routingLease, connection.id, extra.requestedModel),

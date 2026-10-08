@@ -22,6 +22,12 @@ import { maskEmail } from "@/shared/utils/maskEmail";
 import useEmailPrivacyStore from "@/store/emailPrivacyStore";
 import { useNotificationStore } from "@/store/notificationStore";
 import { type CodexServiceTier } from "@/lib/providers/requestDefaults";
+import type { ConnectionRateLimitOverrides } from "@/lib/db/providers/columns";
+import ModelConcurrencyField from "./ModelConcurrencyField";
+import {
+  buildRateLimitOverridesFromForm,
+  modelConcurrencyFormValue,
+} from "./rateLimitOverridesFromForm";
 import { resolveDashboardProviderInfo } from "../../../providerPageUtils";
 import {
   isBaseUrlConfigurableProvider,
@@ -82,7 +88,7 @@ export interface EditConnectionModalConnection {
   email?: string;
   priority?: number;
   maxConcurrent?: number | null;
-  rateLimitOverrides?: Record<string, number> | null;
+  rateLimitOverrides?: ConnectionRateLimitOverrides | null;
   authType?: string;
   provider?: string;
   apiKey?: string;
@@ -128,6 +134,7 @@ export default function EditConnectionModal({
     minTime: "",
     maxWaitMs: "",
     rateLimitMaxConcurrent: "",
+    modelConcurrency: "",
     apiKey: "",
     healthCheckInterval: "" as number | "",
     baseUrl: "",
@@ -341,6 +348,7 @@ export default function EditConnectionModal({
           connection.rateLimitOverrides?.maxConcurrent != null
             ? String(connection.rateLimitOverrides.maxConcurrent)
             : "",
+        modelConcurrency: modelConcurrencyFormValue(connection.rateLimitOverrides),
         apiKey: "",
         // Unset per-connection override means "follow the global default" —
         // surface that as an empty field (0 renders as an explicit opt-out).
@@ -546,16 +554,10 @@ export default function EditConnectionModal({
         healthCheckInterval:
           formData.healthCheckInterval === "" ? undefined : formData.healthCheckInterval,
       };
-      const overrides: Record<string, number> = {};
-      if (formData.rpm.trim()) overrides.rpm = Number(formData.rpm);
-      if (formData.rpd.trim()) overrides.rpd = Number(formData.rpd);
-      if (formData.tpm.trim()) overrides.tpm = Number(formData.tpm);
-      if (formData.tpd.trim()) overrides.tpd = Number(formData.tpd);
-      if (formData.minTime.trim()) overrides.minTime = Number(formData.minTime);
-      if (formData.maxWaitMs.trim()) overrides.maxWaitMs = Number(formData.maxWaitMs);
-      if (formData.rateLimitMaxConcurrent.trim())
-        overrides.maxConcurrent = Number(formData.rateLimitMaxConcurrent);
-      updates.rateLimitOverrides = Object.keys(overrides).length > 0 ? overrides : null;
+      const rateLimit = buildRateLimitOverridesFromForm(formData, connection?.rateLimitOverrides);
+      const invalid = rateLimit.invalidModelConcurrency;
+      if (invalid) return setSaveError(t("rateLimitOverridesModelConcurrencyInvalid", invalid));
+      updates.rateLimitOverrides = rateLimit.overrides;
       if (isAntigravityFamily) {
         updates.projectId = trimmedCloudCodeProjectId || null;
       }
@@ -1310,6 +1312,12 @@ export default function EditConnectionModal({
                       }
                       placeholder={t("inherit")}
                       hint={t("rateLimitOverridesMaxConcurrentHint")}
+                    />
+                    <ModelConcurrencyField
+                      value={formData.modelConcurrency}
+                      onChange={(modelConcurrency) =>
+                        setFormData({ ...formData, modelConcurrency })
+                      }
                     />
                   </div>
                 </div>
