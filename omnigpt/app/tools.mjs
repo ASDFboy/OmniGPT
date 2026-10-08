@@ -4,6 +4,7 @@ import fs from "node:fs";
 import fsp from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
+import crypto from "node:crypto";
 import dns from "node:dns/promises";
 import net from "node:net";
 import { spawn } from "node:child_process";
@@ -249,10 +250,48 @@ export async function precheck(name, input, cfg = loadConfig(), scope) {
     }
     case "download_file": { const u = await checkUrl(i.url); const p = W(i.path); return { class: "network", summary: `Download ${u.href}\n  to ${p}` }; }
     case "inspect_file": { const p = checkPath(i.path, cfg); return { class: "read", summary: `Inspect ${p}` }; }
+    case "find_duplicates": { const p = checkPath(i.path || ".", cfg); return { class: "read", summary: `Find duplicate files in ${p}${i.recursive === false ? "" : " and its subfolders"}` }; }
     case "web_search": { const q = String(i.query || "").trim(); if (!q) throw new Error("query is required"); if (q.length > 300) throw new Error("query is too long (300 chars max)"); return { class: "web", summary: `Search the web: ${q}` }; }
     case "web_open": { const u = await checkUrl(i.url); return { class: "web", summary: `Open ${u.href}` }; }
     default: throw new Error(`Unknown tool: ${name}`);
   }
+}
+
+// ---------- duplicates: same size first (cheap), then SHA-256 of the content of same-size files only. Read-only.
+async function findDuplicates(root, recursive) {
+  if (!fs.statSync(root).isDirectory()) throw new Error("not a folder");
+  const files = []; let unreadable = 0, capped = false;
+  const walk = (d, depth) => {
+    let ents; try { ents = fs.readdirSync(d, { withFileTypes: true }); } catch { unreadable++; return; }
+    for (const e of ents) {
+      if (files.length >= 100000) { capped = true; return; }
+      if (DENY_SEG.has(lc(e.name))) continue;
+      const full = path.join(d, e.name);
+      if (e.isDirectory()) { if (recursive && depth < 30) walk(full, depth + 1); continue; }
+      if (!e.isFile() || DENY_FILE.test(e.name)) continue;
+      try { const st = fs.statSync(full); if (st.size > 0) files.push({ p: full, size: st.size }); } catch { unreadable++; }
+    }
+  };
+  walk(root, 0);
+  const bySize = new Map();
+  for (const f of files) { if (!bySize.has(f.size)) bySize.set(f.size, []); bySize.get(f.size).push(f.p); }
+  const sha = (p) => new Promise((ok, bad) => { const h = crypto.createHash("sha256"); fs.createReadStream(p, { highWaterMark: 1 << 20 }).on("error", bad).on("data", (c) => h.update(c)).on("end", () => ok(h.digest("hex"))); });
+  const groups = []; let hashed = 0;
+  for (const [size, L] of bySize) {
+    if (L.length < 2) continue;
+    const byHash = new Map();
+    for (const p of L) { try { const k = await sha(p); hashed++; if (!byHash.has(k)) byHash.set(k, []); byHash.get(k).push(p); } catch { unreadable++; } }
+    for (const [k, P] of byHash) if (P.length > 1) groups.push({ size, hash: k, paths: P.sort() });
+  }
+  groups.sort((a, b) => b.size * (b.paths.length - 1) - a.size * (a.paths.length - 1));
+  const mb = (n) => n < 1024 ? n + " B" : n < 1048576 ? (n / 1024).toFixed(1) + " KB" : n < 1073741824 ? (n / 1048576).toFixed(1) + " MB" : (n / 1073741824).toFixed(2) + " GB";
+  const extra = groups.reduce((s, g) => s + g.size * (g.paths.length - 1), 0), copies = groups.reduce((s, g) => s + g.paths.length - 1, 0);
+  const head = `Checked ${files.length} files in ${root}${recursive ? " and its subfolders" : ""} (${hashed} with a same-size twin were compared by content).` +
+    (capped ? " Stopped at 100000 files." : "") + (unreadable ? ` ${unreadable} files or folders could not be read.` : "");
+  if (!groups.length) return head + "\nNo duplicates: every file's content is unique.";
+  const lines = groups.slice(0, 300).map((g, n) => `Group ${n + 1}: ${g.paths.length} identical files, ${mb(g.size)} each (sha256 ${g.hash.slice(0, 12)})\n` + g.paths.map((p) => "  " + p).join("\n"));
+  return `${head}\nFound ${groups.length} groups of identical files: ${copies} extra copies using ${mb(extra)}.` + (groups.length > 300 ? " The 300 largest groups are listed." : "") +
+    "\nNothing was changed. To remove extra copies, keep one file per group and delete the others with delete_files (they go to the Recycle Bin).\n\n" + lines.join("\n\n");
 }
 
 // ---------- run
@@ -362,7 +401,7 @@ export function run(name, input, cfg = loadConfig(), scope, meta) {
     catch (e) { logActivity({ t: Date.now(), chat: meta?.chat || null, turn: meta?.turn || null, tool: name, summary: String(pre.summary || "").slice(0, 600), ok: false, error: String(e.message || e).slice(0, 300) }); throw e; }
     finally { journal(meta, jr); } // a bulk action that partly failed still records what it did
   };
-  if (["run_command", "run_code", "read_file", "read_files", "list_dir", "download_file", "web_search", "web_open", "inspect_file"].includes(name)) return go();
+  if (["run_command", "run_code", "read_file", "read_files", "list_dir", "download_file", "web_search", "web_open", "inspect_file", "find_duplicates"].includes(name)) return go();
   const p = chain.then(go, go); chain = p.catch(() => {}); return p;
 }
 async function runInner(name, input, cfg, jr = []) {
@@ -430,6 +469,7 @@ async function runInner(name, input, cfg, jr = []) {
       return out.join("\n") + (failed ? `\n[${failed} of ${single[2].length} failed]` : "");
     }
     case "inspect_file": return inspect(checkPath(i.path, cfg), Math.max(0, Number(i.offset) || 0));
+    case "find_duplicates": return findDuplicates(checkPath(i.path || ".", cfg), i.recursive !== false);
     case "web_search": return webSearch(i);
     case "web_open": return webOpen(i);
     case "download_file": {
