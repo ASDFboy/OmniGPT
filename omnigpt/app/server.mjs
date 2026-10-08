@@ -168,6 +168,11 @@ http.createServer(async (req, res) => {
       res.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "x-frame-options": "DENY" });
       return res.end(fs.readFileSync(path.join(here, "index.html"), "utf8").replace("__TOKEN__", TOKEN));
     }
+    const STATIC = { "/app.js": "text/javascript", "/brain.js": "text/javascript", "/style.css": "text/css" }; // the page's own code: not secret, loaded by <script>/<link>, which cannot send the token
+    if (req.method === "GET" && STATIC[req.url]) {
+      res.writeHead(200, { "content-type": STATIC[req.url] + "; charset=utf-8", "cache-control": "no-store" });
+      return res.end(fs.readFileSync(path.join(here, req.url.slice(1)), "utf8"));
+    }
     const qtok = req.method === "GET" && req.url.startsWith("/api/file?") ? new URL(req.url, "http://x").searchParams.get("t") : null; // previews load through <img>/<iframe>, which cannot send headers
     if (req.headers["x-app-token"] !== TOKEN && qtok !== TOKEN) return json(res, 403, { error: { message: "bad token" } });
     const origin = req.headers.origin;

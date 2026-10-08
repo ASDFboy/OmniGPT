@@ -17,7 +17,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let failed = 0;
 const check = (name, ok, extra = "") => { if (!ok) failed++; console.log((ok ? "PASS  " : "FAIL  ") + name + (extra ? "  " + extra : "")); };
 
-const html = fs.readFileSync(path.join(src, "index.html"), "utf8");
+const html = fs.readFileSync(path.join(src, "index.html"), "utf8") + fs.readFileSync(path.join(src, "app.js"), "utf8");
 const tokenRe = /TOKEN0="([0-9a-f]{16,})"/; // the same pattern the page uses to pick up a new token
 check("page re-reads the token when the backend refuses it", html.includes("renewToken") && html.includes(String(tokenRe)));
 check("settings changed while loading are kept", /if\(!KVOK\)PRESET\[k\]=v/.test(html));
