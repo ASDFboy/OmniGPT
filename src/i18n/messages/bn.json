@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "বিশ্লেষণ",
     "usageAnalyticsTitle": "ব্যবহারের বিশ্লেষণ",
+    "tokenDisplayCompact": "সংক্ষিপ্ত",
+    "tokenDisplayExact": "সঠিক",
+    "tokenDisplayMode": "টোকেন প্রদর্শন মোড",
     "diversityScoreTitle": "প্রদানকারী বৈচিত্র্য",
     "diversityScoreDesc": "সাম্প্রতিক ট্রাফিক উইন্ডোর জন্য প্রোভাইডার কনসেন্ট্রেশন স্ন্যাপশট।",
     "diversityShannonEntropy": "শ্যানন এনট্রপি",

@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Analiză",
     "usageAnalyticsTitle": "Analiza utilizării",
+    "tokenDisplayCompact": "Compact",
+    "tokenDisplayExact": "Exact",
+    "tokenDisplayMode": "Mod de afișare a tokenilor",
     "diversityScoreTitle": "Diversitatea furnizorilor",
     "diversityScoreDesc": "Instantaneu al concentrării furnizorilor pentru fereastra recentă de trafic.",
     "diversityShannonEntropy": "Entropie Shannon",

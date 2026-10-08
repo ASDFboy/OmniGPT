@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "विश्लेषण",
     "usageAnalyticsTitle": "वापर विश्लेषण",
+    "tokenDisplayCompact": "संक्षिप्त",
+    "tokenDisplayExact": "अचूक",
+    "tokenDisplayMode": "टोकन प्रदर्शन मोड",
     "diversityScoreTitle": "प्रदाता विविधता",
     "diversityScoreDesc": "अलीकडील ट्रॅफिक विंडोसाठी प्रदाता केंद्रीकरणाचा स्नॅपशॉट.",
     "diversityShannonEntropy": "शॅनन एन्ट्रॉपी",

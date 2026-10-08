@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "การวิเคราะห์",
     "usageAnalyticsTitle": "การวิเคราะห์การใช้งาน",
+    "tokenDisplayCompact": "แบบย่อ",
+    "tokenDisplayExact": "แบบละเอียด",
+    "tokenDisplayMode": "โหมดแสดงโทเค็น",
     "diversityScoreTitle": "ความหลากหลายของผู้ให้บริการ",
     "diversityScoreDesc": "ภาพรวมความหนาแน่นของผู้ให้บริการสำหรับช่วงเวลาทราฟฟิกล่าสุด",
     "diversityShannonEntropy": "เอนโทรปีของแชนนอน",

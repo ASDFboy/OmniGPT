@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "విశ్లేషణలు",
     "usageAnalyticsTitle": "వినియోగ విశ్లేషణలు",
+    "tokenDisplayCompact": "సంక్షిప్తం",
+    "tokenDisplayExact": "ఖచ్చితం",
+    "tokenDisplayMode": "టోకెన్ ప్రదర్శన మోడ్",
     "diversityScoreTitle": "ప్రొవైడర్ వైవిధ్యం",
     "diversityScoreDesc": "ఇటీవలి ట్రాఫిక్ విండో కోసం ప్రొవైడర్ కేంద్రీకరణ స్నాప్‌షాట్.",
     "diversityShannonEntropy": "షానన్ ఎంట్రోపీ",

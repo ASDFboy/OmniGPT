@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "વિશ્લેષણ",
     "usageAnalyticsTitle": "વપરાશ એનાલિટિક્સ",
+    "tokenDisplayCompact": "સંક્ષિપ્ત",
+    "tokenDisplayExact": "ચોક્કસ",
+    "tokenDisplayMode": "ટોકન પ્રદર્શન મોડ",
     "diversityScoreTitle": "પ્રદાતા વિવિધતા",
     "diversityScoreDesc": "તાજેતરના ટ્રાફિક વિન્ડો માટે પ્રોવાઇડર કોન્સન્ટ્રેશન સ્નેપશોટ.",
     "diversityShannonEntropy": "શેનન એન્ટ્રોપી",

@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Analitis",
     "usageAnalyticsTitle": "Analitis Penggunaan",
+    "tokenDisplayCompact": "Ringkas",
+    "tokenDisplayExact": "Tepat",
+    "tokenDisplayMode": "Mod Paparan Token",
     "diversityScoreTitle": "Kepelbagaian Pembekal",
     "diversityScoreDesc": "Ringkasan penumpuan penyedia untuk tetingkap trafik baru-baru ini.",
     "diversityShannonEntropy": "Entropi Shannon",

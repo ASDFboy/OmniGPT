@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Nazari",
     "usageAnalyticsTitle": "Nazarin Amfani",
+    "tokenDisplayCompact": "Takaitacce",
+    "tokenDisplayExact": "Daidai",
+    "tokenDisplayMode": "Yanayin nuna tokens",
     "diversityScoreTitle": "Bambancin Masu Samarwa",
     "diversityScoreDesc": "Takaitaccen bayani kan yadda zirga-zirga ta kwanan nan ta karkata ga masu samarwa.",
     "diversityShannonEntropy": "Entropin Shannon",

@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "විශ්ලේෂණ",
     "usageAnalyticsTitle": "භාවිත විශ්ලේෂණ",
+    "tokenDisplayCompact": "සංක්ෂිප්ත",
+    "tokenDisplayExact": "නිවැරදි",
+    "tokenDisplayMode": "ටෝකන ප්‍රදර්ශන ප්‍රකාරය",
     "diversityScoreTitle": "සපයන්නන්ගේ විවිධත්වය",
     "diversityScoreDesc": "මෑත ගමනාගමන කාල පරාසය සඳහා සපයන්නන්ගේ සංකේන්ද්රණය පිළිබඳ සාරාංශයක්.",
     "diversityShannonEntropy": "Shannon එන්ට්රොපිය",

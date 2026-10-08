@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Nnyocha Data",
     "usageAnalyticsTitle": "Nnyocha Ojiji",
+    "tokenDisplayCompact": "Nkenke",
+    "tokenDisplayExact": "Kpọmkwem",
+    "tokenDisplayMode": "Ụdị ngosi Tọkịn",
     "diversityScoreTitle": "Ọdịiche Ndị Na-enye Ọrụ",
     "diversityScoreDesc": "Nchịkọta nkenke nke etu arịrịọ si gbakọba n’etiti ndị na-enye ọrụ n’oge na-adịbeghị anya.",
     "diversityShannonEntropy": "Entropi Shannon",

@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Аналітика",
     "usageAnalyticsTitle": "Аналітика використання",
+    "tokenDisplayCompact": "Компактно",
+    "tokenDisplayExact": "Точно",
+    "tokenDisplayMode": "Режим відображення токенів",
     "diversityScoreTitle": "Різноманітність постачальників",
     "diversityScoreDesc": "Розподіл навантаження між провайдерами для останнього вікна трафіку.",
     "diversityShannonEntropy": "Ентропія Шеннона",

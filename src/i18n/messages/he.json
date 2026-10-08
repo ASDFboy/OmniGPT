@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "אנליטיקס",
     "usageAnalyticsTitle": "ניתוח נתוני שימוש",
+    "tokenDisplayCompact": "מקוצר",
+    "tokenDisplayExact": "מדויק",
+    "tokenDisplayMode": "מצב תצוגת טוקנים",
     "diversityScoreTitle": "מגוון ספקים",
     "diversityScoreDesc": "תמונת מצב של ריכוזיות ספקים עבור חלון התעבורה האחרון.",
     "diversityShannonEntropy": "אנטרופיית שנון",

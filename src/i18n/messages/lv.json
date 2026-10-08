@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Analītika",
     "usageAnalyticsTitle": "Lietojuma analītika",
+    "tokenDisplayCompact": "Kompakts",
+    "tokenDisplayExact": "Precīzs",
+    "tokenDisplayMode": "Tokenu attēlošanas režīms",
     "diversityScoreTitle": "Pakalpojumu sniedzēju daudzveidība",
     "diversityScoreDesc": "Pakalpojumu sniedzēju koncentrācijas momentuzņēmums par neseno datplūsmas periodu.",
     "diversityShannonEntropy": "Šenona entropija",

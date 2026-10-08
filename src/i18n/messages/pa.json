@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "ਵਿਸ਼ਲੇਸ਼ਣ",
     "usageAnalyticsTitle": "ਵਰਤੋਂ ਦਾ ਵਿਸ਼ਲੇਸ਼ਣ",
+    "tokenDisplayCompact": "ਸੰਖੇਪ",
+    "tokenDisplayExact": "ਸਹੀ",
+    "tokenDisplayMode": "ਟੋਕਨ ਡਿਸਪਲੇ ਮੋਡ",
     "diversityScoreTitle": "ਪ੍ਰਦਾਤਾ ਵਿਭਿੰਨਤਾ",
     "diversityScoreDesc": "ਹਾਲੀਆ ਟ੍ਰੈਫਿਕ ਅਵਧੀ ਲਈ ਪ੍ਰਦਾਤਾ ਕੇਂਦਰੀਕਰਨ ਦੀ ਝਲਕ।",
     "diversityShannonEntropy": "ਸ਼ੈਨਨ ਐਂਟਰੋਪੀ",

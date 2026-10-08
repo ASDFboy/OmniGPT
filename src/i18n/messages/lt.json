@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Analitika",
     "usageAnalyticsTitle": "Naudojimo analitika",
+    "tokenDisplayCompact": "Glaustas",
+    "tokenDisplayExact": "Tikslus",
+    "tokenDisplayMode": "Žetonų rodymo režimas",
     "diversityScoreTitle": "Teikėjų įvairovė",
     "diversityScoreDesc": "Pastarojo srauto laikotarpio teikėjų koncentracijos apžvalga.",
     "diversityShannonEntropy": "Šenono entropija",

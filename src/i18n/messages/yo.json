@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Ìtúpalẹ̀",
     "usageAnalyticsTitle": "Ìtúpalẹ̀ Ìlò",
+    "tokenDisplayCompact": "Kúkúrú",
+    "tokenDisplayExact": "Pípé",
+    "tokenDisplayMode": "Ipò Ìfihàn Tókìnì",
     "diversityScoreTitle": "Onírúurú Olùpèsè",
     "diversityScoreDesc": "Àwòrán ṣókí ìpọkànsí olùpèsè fún àkókò ìrìnwọlé tó ṣẹ̀ṣẹ̀ kọjá.",
     "diversityShannonEntropy": "Ẹ̀ntrópì Shannon",

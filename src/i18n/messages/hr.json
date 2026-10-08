@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Analitika",
     "usageAnalyticsTitle": "Analitika korištenja",
+    "tokenDisplayCompact": "Sažeto",
+    "tokenDisplayExact": "Točno",
+    "tokenDisplayMode": "Način prikaza tokena",
     "diversityScoreTitle": "Raznolikost pružatelja usluga",
     "diversityScoreDesc": "Pregled koncentracije pružatelja usluga u nedavnom razdoblju prometa.",
     "diversityShannonEntropy": "Shannonova entropija",

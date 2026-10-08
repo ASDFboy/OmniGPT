@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Analyse",
     "usageAnalyticsTitle": "Analyses d'utilisation",
+    "tokenDisplayCompact": "Compact",
+    "tokenDisplayExact": "Exact",
+    "tokenDisplayMode": "Mode d'affichage des jetons",
     "diversityScoreTitle": "Diversité des fournisseurs",
     "diversityScoreDesc": "Aperçu de la concentration des fournisseurs pour la fenêtre de trafic récente.",
     "diversityShannonEntropy": "Entropie de Shannon",

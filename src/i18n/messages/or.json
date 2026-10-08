@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "ବିଶ୍ଳେଷଣ",
     "usageAnalyticsTitle": "ବ୍ୟବହାର ବିଶ୍ଳେଷଣ",
+    "tokenDisplayCompact": "ସଂକ୍ଷିପ୍ତ",
+    "tokenDisplayExact": "ସଠିକ୍",
+    "tokenDisplayMode": "ଟୋକେନ୍ ପ୍ରଦର୍ଶନ ମୋଡ୍",
     "diversityScoreTitle": "ପ୍ରଦାନକାରୀ ବିବିଧତା",
     "diversityScoreDesc": "ସାମ୍ପ୍ରତିକ ଟ୍ରାଫିକ୍ ସମୟସୀମା ପାଇଁ ପ୍ରଦାନକାରୀଙ୍କ ଏକାଗ୍ରତାର ସଂକ୍ଷିପ୍ତ ଚିତ୍ର।",
     "diversityShannonEntropy": "ଶାନନ୍ ଏଣ୍ଟ୍ରୋପି",

@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "பகுப்பாய்வு",
     "usageAnalyticsTitle": "பயன்பாட்டு பகுப்பாய்வு",
+    "tokenDisplayCompact": "சுருக்கம்",
+    "tokenDisplayExact": "துல்லியம்",
+    "tokenDisplayMode": "டோக்கன் காட்சி பயன்முறை",
     "diversityScoreTitle": "வழங்குநர் பன்முகத்தன்மை",
     "diversityScoreDesc": "சமீபத்திய டிராஃபிக் சாளரத்திற்கான வழங்குநர் செறிவு ஸ்னாப்ஷாட்.",
     "diversityShannonEntropy": "ஷானன் என்ட்ரோபி",

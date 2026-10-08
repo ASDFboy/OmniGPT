@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Tahlil",
     "usageAnalyticsTitle": "Foydalanish tahlili",
+    "tokenDisplayCompact": "Ixcham",
+    "tokenDisplayExact": "Aniq",
+    "tokenDisplayMode": "Tokenlarni ko'rsatish rejimi",
     "diversityScoreTitle": "Provayderlar xilma-xilligi",
     "diversityScoreDesc": "Soʻnggi trafik davri uchun provayderlar konsentratsiyasi koʻrsatkichi.",
     "diversityShannonEntropy": "Shannon entropiyasi",

@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Analyse",
     "usageAnalyticsTitle": "Forbrugsanalyser",
+    "tokenDisplayCompact": "Kompakt",
+    "tokenDisplayExact": "Præcis",
+    "tokenDisplayMode": "Visningstilstand for tokens",
     "diversityScoreTitle": "Udbyder mangfoldighed",
     "diversityScoreDesc": "Øjebliksbillede af udbyderkoncentration for det seneste trafikvindue.",
     "diversityShannonEntropy": "Shannon-entropi",

@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "分析",
     "usageAnalyticsTitle": "使用状況分析",
+    "tokenDisplayCompact": "コンパクト",
+    "tokenDisplayExact": "正確",
+    "tokenDisplayMode": "トークン表示モード",
     "diversityScoreTitle": "プロバイダーの多様性",
     "diversityScoreDesc": "直近のトラフィック期間におけるプロバイダー集中度のスナップショット。",
     "diversityShannonEntropy": "シャノンエントロピー",

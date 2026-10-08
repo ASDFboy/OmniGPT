@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Αναλυτικά στοιχεία",
     "usageAnalyticsTitle": "Αναλυτικά στοιχεία χρήσης",
+    "tokenDisplayCompact": "Συμπαγής",
+    "tokenDisplayExact": "Ακριβής",
+    "tokenDisplayMode": "Λειτουργία εμφάνισης tokens",
     "diversityScoreTitle": "Ποικιλία παρόχων",
     "diversityScoreDesc": "Στιγμιότυπο συγκέντρωσης παρόχων για το πρόσφατο παράθυρο κίνησης.",
     "diversityShannonEntropy": "Εντροπία Shannon",

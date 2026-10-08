@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "分析",
     "usageAnalyticsTitle": "用量分析",
+    "tokenDisplayCompact": "精簡",
+    "tokenDisplayExact": "精確",
+    "tokenDisplayMode": "Token 顯示模式",
     "diversityScoreTitle": "提供者多元化",
     "diversityScoreDesc": "近期流量視窗內提供者集中度的快照。",
     "diversityShannonEntropy": "夏農熵",

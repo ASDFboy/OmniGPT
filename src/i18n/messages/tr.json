@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Analitik",
     "usageAnalyticsTitle": "Kullanım Analitiği",
+    "tokenDisplayCompact": "Kısa",
+    "tokenDisplayExact": "Tam",
+    "tokenDisplayMode": "Token Görüntüleme Modu",
     "diversityScoreTitle": "Sağlayıcı Çeşitliliği",
     "diversityScoreDesc": "Son trafik penceresi için sağlayıcı yoğunluğu anlık görüntüsü.",
     "diversityShannonEntropy": "Shannon entropisi",

@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Anailísíocht",
     "usageAnalyticsTitle": "Anailísíocht Úsáide",
+    "tokenDisplayCompact": "Dlúth",
+    "tokenDisplayExact": "Beacht",
+    "tokenDisplayMode": "Mód taispeána comharthaí",
     "diversityScoreTitle": "Éagsúlacht Soláthraithe",
     "diversityScoreDesc": "Léargas ar thiúchan soláthraithe don fhuinneog tráchta is déanaí.",
     "diversityShannonEntropy": "Eantrópacht Shannon",

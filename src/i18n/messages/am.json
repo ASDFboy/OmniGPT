@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "ትንታኔ",
     "usageAnalyticsTitle": "የአጠቃቀም ትንታኔ",
+    "tokenDisplayCompact": "አጭር",
+    "tokenDisplayExact": "ትክክለኛ",
+    "tokenDisplayMode": "የቶከን ማሳያ ሁነታ",
     "diversityScoreTitle": "የአቅራቢዎች ብዝሃነት",
     "diversityScoreDesc": "በቅርብ ጊዜው የትራፊክ ጊዜ ክልል ውስጥ ያለው የአቅራቢዎች መከማቸት ቅጽበታዊ እይታ።",
     "diversityShannonEntropy": "የሻነን ኢንትሮፒ",

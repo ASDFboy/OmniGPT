@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Analitika",
     "usageAnalyticsTitle": "Analytics ng Paggamit",
+    "tokenDisplayCompact": "Siksik",
+    "tokenDisplayExact": "Eksakto",
+    "tokenDisplayMode": "Mode ng Pagpapakita ng Token",
     "diversityScoreTitle": "Pagkakaiba-iba ng Provider",
     "diversityScoreDesc": "Snapshot ng konsentrasyon ng provider para sa kamakailang window ng trapiko.",
     "diversityShannonEntropy": "Entropiyang Shannon",

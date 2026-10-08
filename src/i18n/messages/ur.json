@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "تجزیات",
     "usageAnalyticsTitle": "استعمال کے تجزیات",
+    "tokenDisplayCompact": "مختصر",
+    "tokenDisplayExact": "درست",
+    "tokenDisplayMode": "ٹوکن ڈسپلے موڈ",
     "diversityScoreTitle": "فراہم کنندہ تنوع",
     "diversityScoreDesc": "حالیہ ٹریفک ونڈو کے لیے فراہم کنندہ کے ارتکاز کا اسنیپ شاٹ۔",
     "diversityShannonEntropy": "شینن اینٹروپی",

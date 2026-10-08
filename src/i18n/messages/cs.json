@@ -1914,6 +1914,9 @@
   "analytics": {
     "title": "Analytika",
     "usageAnalyticsTitle": "Analytika využití",
+    "tokenDisplayCompact": "Kompaktní",
+    "tokenDisplayExact": "Přesné",
+    "tokenDisplayMode": "Režim zobrazení tokenů",
     "diversityScoreTitle": "Diverzita poskytovatelů",
     "diversityScoreDesc": "Snímek koncentrace poskytovatelů pro nedávné okno provozu.",
     "diversityShannonEntropy": "Shannonova entropie",
