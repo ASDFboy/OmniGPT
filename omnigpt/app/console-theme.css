@@ -1,0 +1,119 @@
+/* OmniGPT look for the OmniRoute dashboard: OmniGPT's soft monochrome surfaces, text and fonts, flat cards, no gradients
+   and no graph-paper wallpaper, while OmniRoute keeps its red as the one accent colour. Only theme variables and a
+   few global rules change, so every OmniRoute page keeps working. Values are !important because OmniRoute writes
+   some colours straight onto the page element, which would otherwise win. */
+:root {
+  --color-accent: #e54d5e !important;
+  --color-accent-hover: #c93d4e !important;
+  --color-accent-light: #ef7b88 !important;
+  --color-bg: #f4f4f3 !important;
+  --color-bg-alt: #ebebea !important;
+  --color-bg-primary: #f4f4f3 !important;
+  --color-bg-subtle: #efefee !important;
+  --color-surface: #fbfbfa !important;
+  --color-card: #fbfbfa !important;
+  --color-sidebar: #ebebea !important;
+  --color-border: #dcdcda !important;
+  --color-text-main: #262626 !important;
+  --color-text-primary: #262626 !important;
+  --color-text-muted: #7f7f7f !important;
+  --color-fd-background: #f4f4f3 !important;
+  --color-fd-foreground: #262626 !important;
+  --color-fd-muted: #efefee !important;
+  --color-fd-muted-foreground: #7f7f7f !important;
+  --color-fd-popover: #fbfbfa !important;
+  --color-fd-popover-foreground: #262626 !important;
+  --color-fd-card: #fbfbfa !important;
+  --color-fd-card-foreground: #262626 !important;
+  --color-fd-border: #dcdcda !important;
+  --color-fd-secondary: #efefee !important;
+  --color-fd-secondary-foreground: #262626 !important;
+  --color-fd-accent: rgba(0, 0, 0, 0.05) !important;
+  --color-fd-accent-foreground: #262626 !important;
+  --shadow-soft: none !important;
+  --shadow-warm: none !important;
+  --shadow-elevated: 0 10px 28px rgba(0, 0, 0, 0.1) !important;
+  --grid-line: transparent !important;
+  --section-alt: transparent !important;
+  --surface-2: #efefee !important;
+  --radius: 10px !important;
+  --radius-control: 7px !important;
+  --grad-brand: linear-gradient(var(--color-primary), var(--color-primary)) !important;
+  --table-header-bg: #efefee !important;
+  --table-row-zebra: transparent !important;
+  --table-row-hover: rgba(0, 0, 0, 0.035) !important;
+  --table-cell-border: #e6e6e4 !important;
+  --table-row-selected: rgba(0, 0, 0, 0.06) !important;
+  --orch-status-approval: #5a5a5a !important;
+}
+.dark {
+  --color-accent: #e54d5e !important;
+  --color-accent-hover: #ff586b !important;
+  --color-accent-light: #ef7b88 !important;
+  --color-bg: #1a1a1a !important;
+  --color-bg-alt: #151515 !important;
+  --color-bg-primary: #1a1a1a !important;
+  --color-bg-subtle: #202020 !important;
+  --color-surface: #202020 !important;
+  --color-card: #202020 !important;
+  --color-sidebar: #151515 !important;
+  --color-border: #2c2c2c !important;
+  --color-text-main: #d6d6d6 !important;
+  --color-text-primary: #d6d6d6 !important;
+  --color-text-muted: #858585 !important;
+  --color-fd-background: #1a1a1a !important;
+  --color-fd-foreground: #d6d6d6 !important;
+  --color-fd-muted: #202020 !important;
+  --color-fd-muted-foreground: #858585 !important;
+  --color-fd-popover: #202020 !important;
+  --color-fd-popover-foreground: #d6d6d6 !important;
+  --color-fd-card: #202020 !important;
+  --color-fd-card-foreground: #d6d6d6 !important;
+  --color-fd-border: #2c2c2c !important;
+  --color-fd-secondary: #202020 !important;
+  --color-fd-secondary-foreground: #d6d6d6 !important;
+  --color-fd-accent: rgba(255, 255, 255, 0.06) !important;
+  --color-fd-accent-foreground: #d6d6d6 !important;
+  --shadow-soft: none !important;
+  --shadow-warm: none !important;
+  --shadow-elevated: 0 10px 28px rgba(0, 0, 0, 0.4) !important;
+  --grid-line: transparent !important;
+  --section-alt: transparent !important;
+  --surface-2: #242424 !important;
+  --table-header-bg: #202020 !important;
+  --table-row-zebra: transparent !important;
+  --table-row-hover: rgba(255, 255, 255, 0.035) !important;
+  --table-cell-border: #262626 !important;
+  --table-row-selected: rgba(255, 255, 255, 0.06) !important;
+  --orch-status-approval: #9a9a9a !important;
+}
+body,
+button,
+input,
+select,
+textarea {
+  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif !important;
+}
+body::before {
+  display: none !important;
+}
+[class*="bg-gradient-"],
+[class*="from-indigo"],
+[class*="from-violet"],
+[class*="from-purple"],
+[class*="from-primary"] {
+  background-image: none !important;
+  background-color: var(--color-primary) !important;
+}
+[class*="bg-clip-text"] {
+  background-image: none !important;
+  -webkit-text-fill-color: currentColor !important;
+  color: var(--color-text-main) !important;
+}
+[class*="shadow-warm"],
+[class*="shadow-lg"] {
+  box-shadow: none !important;
+}
+::selection {
+  background: rgba(127, 127, 127, 0.25);
+}

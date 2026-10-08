@@ -1,0 +1,10 @@
+# build output and local files never belong in the repository
+windows/dist/
+windows/release/
+*.zip
+*.exe
+*.log
+.env
+.env.*
+config.json
+omniroute-key.txt

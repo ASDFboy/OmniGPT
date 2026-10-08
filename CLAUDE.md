@@ -1,3 +1,5 @@
+> **Setting up OmniGPT for a user?** Follow [omnigpt/SETUP-FOR-AI-ASSISTANTS.md](omnigpt/SETUP-FOR-AI-ASSISTANTS.md) instead of this file. Everything below is for developing OmniRoute itself.
+
 # CLAUDE.md
 
 @AGENTS.md
