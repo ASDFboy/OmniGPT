@@ -295,6 +295,12 @@ export type ExecutorExecuteResult =
       transport?: string;
       /** Wire model id actually sent upstream (from the serialized body). */
       model?: unknown;
+      /**
+       * Internal-only upstream failure classification (#3229) — never reaches the client.
+       * Not a place for raw bodies, headers, URLs, or provider text: producers project to a
+       * closed set of scalars/enums first (see `projectAntigravityValidationDiagnostic`).
+       */
+      upstreamDiagnostic?: Record<string, unknown>;
     };
 export class BaseExecutor {
   provider: string;
