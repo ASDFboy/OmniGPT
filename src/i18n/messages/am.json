@@ -989,6 +989,7 @@
   "featureFlagOmnirouteEmergencyFallbackDescription": "በጀታቸው ያለቀባቸውን ጥያቄዎች ወደ ድንገተኛው ነፃ ተተኪ አቅራቢ/ሞዴል ያዛውሩ።",
   "featureFlagArenaEloSyncEnabledDescription": "ለሞዴል ብልህነት ደረጃዎች የArena AI የደረጃ ሰንጠረዥ ELO በየጊዜው እንዲመሳሰል ያንቁ።",
   "featureFlagUniversalContextHandoffEnabledDescription": "የጥምር ማዘዋወሪያ ሞዴሎችን ሲቀይር የውይይት ማጠቃለያዎችን ያመንጩ እና ያስገቡ። የሞዴል ለውጦችን በተናጥል ለመያዝ እና ለሁሉም ነባርና ወደፊት ለሚፈጠሩ ጥምረቶች የጀርባ ርክክብ ጥያቄዎችን ለመከልከል ያሰናክሉት።",
+  "featureFlagReasoningReplayEnabledDescription": "Cache and replay model reasoning across multi-turn conversations. Disable to stop storing and re-injecting reasoning.",
   "featureFlagExposeCcDiscoveryAliasesDescription": "የClaude Code ጌትዌይ ሞዴል ፍለጋ Claude ያልሆኑ ሞዴሎችን እንዲዘረዝር፣ የclaude/&lt;provider&gt;/&lt;model&gt; መስታወት መለያዎችን በ/v1/models ላይ ያስተዋውቁ። ማስጠንቀቂያ፦ በዓለም አቀፍ ደረጃ ሲነቃ ለሁሉም ደንበኞች የካታሎግ ግቤቶችን በእጥፍ ያደርጋል።",
   "featureFlagNoThinkingAliasEnabledDescription": "ለno-think/&lt;provider&gt;/&lt;model&gt; ጌትዌይ ተለዋጭ ስሞች ዋና ማብሪያ/ማጥፊያ። ሲበራ (ነባሪ)፦ /v1/models ለእያንዳንዱ ብቁ የማሰብ ችሎታ ያለው Claude ሞዴል የማያስብ ልዩነትን ያስተዋውቃል፤ እንዲሁም በጥያቄ የተላከ no-think/ መለያ የማመዛዘን ባህሪው ታፍኖ ወደ እውነተኛው ሞዴል ይመለሳል። ሲጠፋ፦ ምንም ልዩነቶች አይተዋወቁም፣ እና no-think/ መለያ እንደ ማንኛውም ሌላ ያልታወቀ የሞዴል መለያ ይቆጠራል። ይህ ሲበራም የእያንዳንዱ ሞዴል ModelSpec.noThinkingAlias የመርጦ መግባት/መውጣት ቅንብር እንደተገበረ ይቆያል።",
   "featureFlagChatVirtualLanesEnabledDescription": "ለአቅራቢ ማሰራጨት በተከራይ ደረጃ የሚላመዱ ምናባዊ የመቀበያ መስመሮችን ያንቁ (#9654)፦ የአንድ ተከራይ ድንገተኛ ጭማሪ ከእንግዲህ በሌላው ላይ 503 ስህተት አያስከትልም። የOMNIROUTE_CHAT_VIRTUAL_LANES የአካባቢ ተለዋዋጭ ከዚህ የዳሽቦርድ ማሻሻያ ቅድሚያ ይኖረዋል፤ ለውጦች አገልጋዩ ዳግም ሲጀመር ተግባራዊ ይሆናሉ።",
