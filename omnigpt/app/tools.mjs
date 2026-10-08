@@ -9,11 +9,12 @@ import dns from "node:dns/promises";
 import net from "node:net";
 import { spawn } from "node:child_process";
 import { Readable } from "node:stream";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { pipeline } from "node:stream/promises";
 import { webOpen, webSearch } from "./web.mjs";
 import { inspect } from "./files.mjs";
 import { zipBuild, zipRead } from "./zip.mjs";
+import { parseMarkdown, toHtml, toDocx, toXlsx, toPptx, sheetsFromText, slidesFromText } from "./docs.mjs";
 
 const HOME = os.homedir();
 // ---------- code sandbox (AppContainer helper, see Sandbox.cs): code runs with no network and no access to the user's files
@@ -273,6 +274,27 @@ export async function precheck(name, input, cfg = loadConfig(), scope) {
       if (a === "zip") { const L = (Array.isArray(i.source) ? i.source : [i.source]).map((p) => checkPath(p, cfg)); if (!L.length) throw new Error("source is required"); const d = W(i.destination || L[0] + ".zip"); return { class: "write", summary: `Pack ${L.length > 1 ? L.length + " items" : L[0]}\n  into ${d}` }; }
       throw new Error('action must be "zip", "unzip" or "list"');
     }
+    case "make_document": {
+      const p = W(i.path), ext = path.extname(p).toLowerCase();
+      if (!DOC_EXT.has(ext)) throw new Error("path must end in .docx, .xlsx, .pptx, .pdf, .html, .md, .txt or .csv");
+      if (fs.existsSync(p) && !i.overwrite) throw new Error("file exists: " + p + " (set overwrite to replace it; the old version is backed up)");
+      if (!i.content && !i.sheets && !i.slides) throw new Error("content (Markdown), sheets or slides is required");
+      return { class: "write", summary: `${fs.existsSync(p) ? "OVERWRITE" : "Create"} ${p}${i.title ? ` ("${String(i.title).slice(0, 80)}")` : ""}` };
+    }
+    case "edit_image": {
+      const s = checkPath(i.path, cfg), d = W(i.output || editedName(s, i.format));
+      if (fs.existsSync(d) && d !== s && !i.overwrite) throw new Error("output exists: " + d);
+      return { class: "write", summary: `Edit ${s}${d === s ? " (in place, backed up)" : `\n  save as ${d}`}: ${imageOpsText(i)}` };
+    }
+    case "convert_media": {
+      const s = checkPath(i.input, cfg), d = W(i.output);
+      if (fs.existsSync(d) && !i.overwrite) throw new Error("output exists: " + d);
+      if (s === d) throw new Error("output must be a different file");
+      return { class: "write", summary: `Convert ${s}\n  to ${d}${i.start || i.end ? ` (from ${i.start || "start"} to ${i.end || "end"})` : ""}` };
+    }
+    case "generate_image": { if (!String(i.prompt || "").trim()) throw new Error("prompt is required"); const d = i.path ? W(i.path) : null; return { class: "write", summary: `Generate an image: ${String(i.prompt).slice(0, 200)}${d ? `\n  save as ${d}` : ""}` }; }
+    case "transcribe_audio": { const s = checkPath(i.path, cfg); if (i.output) W(i.output); return { class: "read", summary: `Transcribe ${s}${i.output ? " into " + i.output : ""}` }; }
+    case "speak": { if (!String(i.text || "").trim()) throw new Error("text is required"); if (String(i.text).length > 20000) throw new Error("text is too long (20000 characters max)"); const d = i.path ? W(i.path) : null; return { class: "write", summary: `Read aloud into an audio file${d ? " " + d : ""}: ${String(i.text).slice(0, 160)}` }; }
     case "view_images": {
       const L = list(i.paths, 8).map((p) => checkPath(p, cfg));
       return { class: "read", summary: `Look at ${L.length} image${L.length > 1 ? "s" : ""}:\n${L.map((p) => "- " + p).join("\n")}` };
@@ -433,6 +455,230 @@ async function archiveTool(i, cfg, jr) {
     fs.writeFileSync(t, data); wrote++;
   }
   return `Extracted ${wrote} files to ${d}.` + (skipped.length ? `\nSkipped ${skipped.length}: ${skipped.slice(0, 30).join("; ")}` : "");
+}
+
+// ---------- documents, images, media
+const DOC_EXT = new Set([".docx", ".xlsx", ".pptx", ".pdf", ".html", ".htm", ".md", ".txt", ".csv"]);
+const stampName = (s) => String(s || "file").replace(/[<>:"/\\|?*\x00-\x1f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60) || "file";
+// a new file that replaces nothing, or an explicit overwrite with a backup: both undoable
+function saveNew(p, data, jr, overwrite) {
+  fs.mkdirSync(path.dirname(p), { recursive: true });
+  if (fs.existsSync(p)) { if (!overwrite) throw new Error("file exists: " + p); jr.push({ op: "modified", path: p, backup: backup(p) }); } else jr.push({ op: "created", path: p });
+  fs.writeFileSync(p, data);
+}
+function findBrowser() {
+  if (process.env.OMNIGPT_BROWSER && fs.existsSync(process.env.OMNIGPT_BROWSER)) return process.env.OMNIGPT_BROWSER;
+  const pf = [process.env["ProgramFiles(x86)"], process.env.ProgramFiles, process.env.LOCALAPPDATA].filter(Boolean);
+  for (const base of pf) for (const rel of ["Microsoft\\Edge\\Application\\msedge.exe", "Google\\Chrome\\Application\\chrome.exe"]) { const f = path.join(base, rel); if (fs.existsSync(f)) return f; }
+  return null;
+}
+// prints an HTML file to PDF with Edge (or Chrome) in the background, using a throwaway profile
+async function htmlToPdf(html, out) {
+  const b = findBrowser(); if (!b) throw new Error("Microsoft Edge was not found, so the PDF could not be printed. Make an .html or .docx instead, or install Edge.");
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "omnigpt-pdf-")), src = path.join(tmp, "doc.html"), pdf = path.join(tmp, "doc.pdf");
+  try {
+    fs.writeFileSync(src, html);
+    const args = ["--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check", "--disable-extensions", "--disable-background-networking", "--disable-component-update", "--disable-sync", `--user-data-dir=${path.join(tmp, "profile")}`, "--no-pdf-header-footer", `--print-to-pdf=${pdf}`, pathToFileURL(src).href];
+    if (process.platform !== "win32" && process.getuid && process.getuid() === 0) args.unshift("--no-sandbox");
+    const r = await execFile(b, args, 90000);
+    if (!fs.existsSync(pdf) || fs.statSync(pdf).size < 100) throw new Error("the browser did not produce a PDF: " + r.out.trim().slice(-200));
+    return fs.readFileSync(pdf);
+  } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+}
+async function makeDocument(i, cfg, jr) {
+  const p = checkPath(i.path, cfg), ext = path.extname(p).toLowerCase(), title = i.title ? String(i.title) : "";
+  const content = String(i.content ?? ""), blocks = () => parseMarkdown(content);
+  let data, what;
+  if (ext === ".docx") { const b = blocks(); data = toDocx(b, title); what = `${b.length} blocks`; }
+  else if (ext === ".xlsx") { const sh = Array.isArray(i.sheets) && i.sheets.length ? i.sheets : sheetsFromText(content); data = toXlsx(sh, title); what = `${sh.length} sheet${sh.length > 1 ? "s" : ""}, ${sh.reduce((n, s) => n + (s.rows || []).length, 0)} rows`; }
+  else if (ext === ".pptx") { const sl = Array.isArray(i.slides) && i.slides.length ? i.slides : slidesFromText(content, title); data = toPptx(sl, title); what = `${sl.length} slides`; }
+  else if (ext === ".html" || ext === ".htm") { data = toHtml(blocks(), title); what = "web page"; }
+  else if (ext === ".pdf") { data = await htmlToPdf(toHtml(blocks(), title), p); what = "PDF"; }
+  else if (ext === ".csv") { const sh = Array.isArray(i.sheets) && i.sheets.length ? i.sheets : sheetsFromText(content); data = "\ufeff" + (sh[0]?.rows || []).map((r) => r.map((c) => { const t = String(c ?? ""); return /[",\n;]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; }).join(",")).join("\r\n"); what = `${(sh[0]?.rows || []).length} rows`; }
+  else { data = (title ? `# ${title}\n\n` : "") + content; what = "text"; }
+  saveNew(p, data, jr, !!i.overwrite);
+  return `Created ${p} (${what}, ${fmtB(Buffer.byteLength(data))}). Show it to the user with open_path if they want to see it.`;
+}
+function parseResize(r) {
+  if (r === undefined || r === null || r === "") return {};
+  if (typeof r === "number") return { max: r };
+  if (typeof r === "object") return { width: Number(r.width) || undefined, height: Number(r.height) || undefined, max: Number(r.max) || undefined };
+  const s = String(r).trim(); let m;
+  if ((m = /^(\d+(?:\.\d+)?)%$/.exec(s))) return { scale: Number(m[1]) / 100 };
+  if ((m = /^(\d+)?\s*[x×]\s*(\d+)?$/i.exec(s)) && (m[1] || m[2])) return { width: m[1] ? +m[1] : undefined, height: m[2] ? +m[2] : undefined };
+  if (/^\d+$/.test(s)) return { max: +s };
+  throw new Error("resize must be a number (longest side), WIDTHxHEIGHT, or a percentage like 50%");
+}
+const IMG_FMT = { jpg: "jpg", jpeg: "jpg", png: "png", bmp: "bmp", gif: "gif", tif: "tiff", tiff: "tiff", webp: "webp" };
+const editedName = (s, fmt) => { const e = fmt ? "." + (IMG_FMT[String(fmt).toLowerCase()] || fmt) : path.extname(s); return path.join(path.dirname(s), path.basename(s, path.extname(s)) + "-edited" + e); };
+const imageOpsText = (i) => [i.crop && `crop ${i.crop.width}x${i.crop.height} at ${i.crop.x},${i.crop.y}`, i.rotate && `rotate ${i.rotate}°`, i.flip && `flip ${i.flip}`, i.resize && `resize ${typeof i.resize === "object" ? JSON.stringify(i.resize) : i.resize}`, i.format && `as ${i.format}`, i.quality && `quality ${i.quality}`].filter(Boolean).join(", ") || "re-save";
+const EDIT_PS = `Add-Type -AssemblyName System.Drawing
+$j=$env:ORC_JOB | ConvertFrom-Json
+$src=[System.Drawing.Image]::FromFile($j.src); $bmp=New-Object System.Drawing.Bitmap $src; $src.Dispose()
+if($j.crop){ $r=New-Object System.Drawing.Rectangle ([int]$j.crop.x),([int]$j.crop.y),([int]$j.crop.width),([int]$j.crop.height); $r=[System.Drawing.Rectangle]::Intersect($r,(New-Object System.Drawing.Rectangle 0,0,$bmp.Width,$bmp.Height)); if($r.Width -lt 1 -or $r.Height -lt 1){ throw "the crop area is outside the image" }; $c=$bmp.Clone($r,$bmp.PixelFormat); $bmp.Dispose(); $bmp=$c }
+switch([int]$j.rotate){ 90 {$bmp.RotateFlip('Rotate90FlipNone')} 180 {$bmp.RotateFlip('Rotate180FlipNone')} 270 {$bmp.RotateFlip('Rotate270FlipNone')} }
+if($j.flip -eq 'horizontal'){ $bmp.RotateFlip('RotateNoneFlipX') } elseif($j.flip -eq 'vertical'){ $bmp.RotateFlip('RotateNoneFlipY') }
+$W=$bmp.Width; $H=$bmp.Height; $nw=$W; $nh=$H
+if($j.max){ $s=[Math]::Min(1.0, $j.max/[Math]::Max($W,$H)); $nw=[int]($W*$s); $nh=[int]($H*$s) }
+if($j.scale){ $nw=[int]($W*$j.scale); $nh=[int]($H*$j.scale) }
+if($j.width -and $j.height){ $nw=[int]$j.width; $nh=[int]$j.height } elseif($j.width){ $nw=[int]$j.width; $nh=[int]($H*$j.width/$W) } elseif($j.height){ $nh=[int]$j.height; $nw=[int]($W*$j.height/$H) }
+if($nw -ne $W -or $nh -ne $H){ $o=New-Object System.Drawing.Bitmap ([Math]::Max(1,$nw)),([Math]::Max(1,$nh)); $g=[System.Drawing.Graphics]::FromImage($o); $g.InterpolationMode='HighQualityBicubic'; $g.PixelOffsetMode='HighQuality'; $g.DrawImage($bmp,0,0,$o.Width,$o.Height); $g.Dispose(); $bmp.Dispose(); $bmp=$o }
+if($j.format -eq 'jpg'){
+  $enc=[System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object { $_.MimeType -eq 'image/jpeg' }
+  $p=New-Object System.Drawing.Imaging.EncoderParameters 1; $p.Param[0]=New-Object System.Drawing.Imaging.EncoderParameter ([System.Drawing.Imaging.Encoder]::Quality),([long]$j.quality)
+  $f=New-Object System.Drawing.Bitmap $bmp.Width,$bmp.Height; $g=[System.Drawing.Graphics]::FromImage($f); $g.Clear([System.Drawing.Color]::White); $g.DrawImage($bmp,0,0,$bmp.Width,$bmp.Height); $g.Dispose(); $f.Save($j.dst,$enc,$p); $f.Dispose()
+} else { $bmp.Save($j.dst, [System.Drawing.Imaging.ImageFormat]::($j.format.Substring(0,1).ToUpper()+$j.format.Substring(1))) }
+Write-Output ("OK|"+$bmp.Width+"x"+$bmp.Height); $bmp.Dispose()`;
+async function editImage(i, cfg, jr) {
+  const s = checkPath(i.path, cfg), d = checkPath(i.output || editedName(s, i.format), cfg);
+  if (!fs.existsSync(s)) throw new Error("not found: " + s);
+  const fmt = IMG_FMT[String(i.format || path.extname(d).slice(1)).toLowerCase()];
+  if (!fmt) throw new Error("output format must be jpg, png, bmp, gif, tiff or webp");
+  const rs = parseResize(i.resize), quality = Math.min(100, Math.max(1, Number(i.quality) || 90));
+  const rot = i.rotate ? ((Number(i.rotate) % 360) + 360) % 360 : 0; if (rot && ![90, 180, 270].includes(rot)) throw new Error("rotate must be 90, 180 or 270");
+  if (i.flip && !["horizontal", "vertical"].includes(i.flip)) throw new Error('flip must be "horizontal" or "vertical"');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "omnigpt-edit-")), out = path.join(tmp, "out." + (fmt === "tiff" ? "tif" : fmt));
+  try {
+    let size = "";
+    if (process.platform === "win32" && fmt !== "webp") {
+      const r = await ps(EDIT_PS, { ORC_JOB: JSON.stringify({ src: s, dst: out, crop: i.crop || null, rotate: rot, flip: i.flip || null, ...rs, format: fmt, quality }) }, cfg.cwd, 120000);
+      const m = /OK\|(\d+x\d+)/.exec(r.out); if (m) size = m[1];
+    }
+    if (!fs.existsSync(out)) { // ffmpeg: other formats (webp, heic) and other systems
+      const ff = await findFfmpeg(cfg.cwd);
+      if (!ff) throw new Error(`this image could not be edited with the built-in tools${process.platform === "win32" ? " (format not supported)" : ""}. Install ffmpeg: install_tool winget Gyan.FFmpeg`);
+      const vf = [];
+      if (i.crop) vf.push(`crop=${i.crop.width | 0}:${i.crop.height | 0}:${i.crop.x | 0}:${i.crop.y | 0}`);
+      if (rot === 90) vf.push("transpose=1"); else if (rot === 180) vf.push("transpose=1,transpose=1"); else if (rot === 270) vf.push("transpose=2");
+      if (i.flip === "horizontal") vf.push("hflip"); else if (i.flip === "vertical") vf.push("vflip");
+      if (rs.max) vf.push(`scale='if(gte(iw,ih),min(${rs.max},iw),-2)':'if(gte(iw,ih),-2,min(${rs.max},ih))'`);
+      if (rs.scale) vf.push(`scale=trunc(iw*${rs.scale}/2)*2:-2`);
+      if (rs.width || rs.height) vf.push(`scale=${rs.width || -2}:${rs.height || -2}`);
+      const args = ["-hide_banner", "-loglevel", "error", "-y", "-i", s, ...(vf.length ? ["-vf", vf.join(",")] : []), "-frames:v", "1", ...(fmt === "jpg" ? ["-q:v", String(Math.round(2 + ((100 - quality) * 29) / 100))] : fmt === "webp" ? ["-quality", String(quality)] : []), out];
+      const r = await execFile(ff, args, 120000);
+      if (!fs.existsSync(out)) throw new Error("ffmpeg could not edit the image: " + r.out.trim().slice(-300));
+    }
+    saveNew(d, fs.readFileSync(out), jr, d === s || !!i.overwrite);
+    return `Saved ${d}${size ? ` (${size})` : ""}, ${fmtB(fs.statSync(d).size)}: ${imageOpsText(i)}.`;
+  } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+}
+const tsec = (v) => { if (v === undefined || v === null || v === "") return null; if (typeof v === "number") return v; const p = String(v).split(":").map(Number); if (p.some(isNaN)) throw new Error("times look like 90, 1:30 or 0:01:30"); return p.reduce((a, b) => a * 60 + b, 0); };
+async function convertMedia(i, cfg, jr) {
+  const s = checkPath(i.input, cfg), d = checkPath(i.output, cfg), ext = path.extname(d).slice(1).toLowerCase();
+  if (!fs.existsSync(s)) throw new Error("not found: " + s);
+  const ff = await findFfmpeg(cfg.cwd); if (!ff) throw new Error("convert_media needs ffmpeg. Install it with install_tool (winget, Gyan.FFmpeg), then try again.");
+  const q = ({ high: 0, medium: 1, small: 2 })[i.quality || "medium"] ?? 1, start = tsec(i.start), end = tsec(i.end);
+  const args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-y"];
+  if (start !== null) args.push("-ss", String(start));
+  if (end !== null) args.push("-to", String(end));
+  args.push("-i", s);
+  const audioOut = /^(mp3|wav|m4a|aac|ogg|opus|flac|wma)$/.test(ext) || i.audio_only;
+  const scale = i.max_width ? `scale='min(${Number(i.max_width) | 0},iw)':-2` : null;
+  if (ext === "gif") args.push("-vf", `fps=${Number(i.fps) || 10},${scale || "scale='min(480,iw)':-2"}:flags=lanczos`, "-loop", "0");
+  else if (audioOut) {
+    args.push("-vn");
+    if (ext === "mp3") args.push("-c:a", "libmp3lame", "-q:a", String([2, 4, 6][q]));
+    else if (ext === "m4a" || ext === "aac") args.push("-c:a", "aac", "-b:a", ["192k", "128k", "96k"][q]);
+    else if (ext === "ogg" || ext === "opus") args.push("-c:a", "libopus", "-b:a", ["160k", "96k", "64k"][q]);
+  } else if (/^(mp4|mov|mkv|m4v)$/.test(ext)) { if (scale) args.push("-vf", scale); args.push("-c:v", "libx264", "-preset", "veryfast", "-crf", String([20, 24, 30][q]), "-pix_fmt", "yuv420p", ...(i.mute ? ["-an"] : ["-c:a", "aac", "-b:a", "128k"]), "-movflags", "+faststart"); }
+  else if (ext === "webm") { if (scale) args.push("-vf", scale); args.push("-c:v", "libvpx-vp9", "-b:v", "0", "-crf", String([28, 33, 40][q]), ...(i.mute ? ["-an"] : ["-c:a", "libopus"])); }
+  else if (/^(jpg|jpeg|png|webp)$/.test(ext)) { if (scale) args.push("-vf", scale); args.push("-frames:v", "1"); }
+  else if (scale) args.push("-vf", scale);
+  const tmp = d + ".part." + ext; args.push(tmp);
+  const r = await execFile(ff, args, 3600000);
+  if (r.code !== 0 || !fs.existsSync(tmp)) { try { fs.unlinkSync(tmp); } catch {} throw new Error("ffmpeg failed: " + r.out.trim().slice(-400)); }
+  if (fs.existsSync(d)) { if (!i.overwrite) { fs.unlinkSync(tmp); throw new Error("output exists: " + d); } jr.push({ op: "modified", path: d, backup: backup(d) }); fs.unlinkSync(d); } else jr.push({ op: "created", path: d });
+  fs.renameSync(tmp, d);
+  return `Saved ${d} (${fmtB(fs.statSync(d).size)}, from ${fmtB(fs.statSync(s).size)}).`;
+}
+// ---- OmniRoute media: image generation, speech-to-text, text-to-speech through the user's own providers
+let OR_URL = process.env.OMNIROUTE_URL || "http://127.0.0.1:20128", OR_KEY = () => "";
+export function setOmniRoute(url, keyFn) { OR_URL = String(url || OR_URL).replace(/\/$/, ""); if (keyFn) OR_KEY = keyFn; }
+const orFetch = (p, opts = {}) => fetch(OR_URL + p, { ...opts, headers: { ...(OR_KEY() ? { authorization: "Bearer " + OR_KEY() } : {}), ...(opts.headers || {}) }, signal: AbortSignal.timeout(opts.timeout || 180000) });
+const KIND = { image: /(image|dall-?e|flux|imagen|sdxl|stable-?diffusion|gpt-image|midjourney|seedream|ideogram|recraft|kolors)/i, stt: /(whisper|transcri|speech-to-text|\bstt\b|asr|parakeet)/i, tts: /(tts|text-to-speech|kokoro|eleven|speech|voice|orpheus|playai)/i };
+async function pickModels(kind) {
+  const ids = new Set();
+  try { if (kind === "image") { const r = await orFetch("/v1/images/generations", { timeout: 15000 }); if (r.ok) for (const m of (await r.json()).data || []) if (m && m.id) ids.add(m.id); } } catch {}
+  try { const r = await orFetch("/v1/models", { timeout: 15000 }); if (r.ok) for (const m of (await r.json()).data || []) { const id = String(m.id || ""), t = String(m.type || m.modality || ""); if ((kind === "image" && (t === "image" || KIND.image.test(id))) || (kind === "stt" && (/transcri|stt|asr/.test(t) || KIND.stt.test(id))) || (kind === "tts" && (/tts|speech/.test(t) && !/transcri|stt/.test(t) || (KIND.tts.test(id) && !KIND.stt.test(id))))) ids.add(id); } } catch {}
+  return [...ids];
+}
+const noModel = (what, kind) => new Error(`No ${what} model is available in OmniRoute. Add a provider that offers ${what} in the OmniRoute console (free options exist${kind === "stt" ? ", for example Whisper on Groq" : kind === "image" ? ", for example Pollinations" : ""}), or pass model as provider/model.`);
+const sniff = (b) => b[0] === 0x89 && b[1] === 0x50 ? "png" : b[0] === 0xff && b[1] === 0xd8 ? "jpg" : b.toString("ascii", 0, 4) === "RIFF" && b.toString("ascii", 8, 12) === "WEBP" ? "webp" : b.toString("ascii", 0, 3) === "GIF" ? "gif" : null;
+async function generateImage(i, cfg, jr) {
+  const prompt = String(i.prompt).trim(), models = i.model ? [String(i.model)] : await pickModels("image");
+  if (!models.length) throw noModel("image generation", "image");
+  const errs = []; let buf = null, used = null;
+  for (const m of models.slice(0, 4)) {
+    try {
+      const r = await orFetch("/v1/images/generations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ model: m, prompt, n: 1, size: i.size || "1024x1024", response_format: "b64_json" }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) { errs.push(`${m}: ${j.error?.message || "HTTP " + r.status}`); continue; }
+      const d = (j.data || [])[0] || {};
+      if (d.b64_json) buf = Buffer.from(d.b64_json, "base64");
+      else if (d.url) { const u = new URL(d.url, OR_URL); if (u.origin !== new URL(OR_URL).origin) await checkUrl(u.href); const g = await fetch(u, { signal: AbortSignal.timeout(120000) }); if (g.ok) buf = Buffer.from(await g.arrayBuffer()); }
+      if (buf && (sniff(buf) || buf.length > 1000)) { used = m; break; } errs.push(`${m}: no image in the reply`); buf = null;
+    } catch (e) { errs.push(`${m}: ${String(e.message || e).slice(0, 120)}`); }
+  }
+  if (!buf) throw new Error("No image was generated. " + errs.join("; "));
+  const kind = sniff(buf) || "png";
+  let d = i.path ? checkPath(i.path, cfg) : checkPath(path.join(cfg.cwd, "Generated images", `${stampName(prompt).slice(0, 40)} ${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.${kind}`), cfg);
+  if (path.extname(d).slice(1).toLowerCase().replace("jpeg", "jpg") !== kind) d = d.replace(/\.[^.\\/]*$/, "") + "." + kind;
+  saveNew(d, buf, jr, !!i.overwrite);
+  const text = `Generated with ${used} and saved as ${d} (${fmtB(buf.length)}).`;
+  return buf.length <= 3.5e6 ? { text, blocks: [{ type: "text", text: "The generated image:" }, { type: "image", source: { type: "base64", media_type: kind === "jpg" ? "image/jpeg" : "image/" + kind, data: buf.toString("base64") } }] } : text;
+}
+const AUDIO_OK = /\.(mp3|wav|m4a|ogg|oga|opus|flac|webm|mpga|mpeg)$/i;
+async function transcribeAudio(i, cfg, jr) {
+  const s = checkPath(i.path, cfg); if (!fs.existsSync(s)) throw new Error("not found: " + s);
+  let file = s, tmp = null;
+  try {
+    if (!AUDIO_OK.test(s) || fs.statSync(s).size > 24 * 1024 * 1024) { // video, or too large: a small mono mp3 of the sound
+      const ff = await findFfmpeg(cfg.cwd); if (!ff) throw new Error("this file needs converting first and ffmpeg is not installed: install_tool winget Gyan.FFmpeg");
+      tmp = fs.mkdtempSync(path.join(os.tmpdir(), "omnigpt-stt-")); file = path.join(tmp, "audio.mp3");
+      const r = await execFile(ff, ["-hide_banner", "-loglevel", "error", "-y", "-i", s, "-vn", "-ac", "1", "-ar", "16000", "-b:a", "48k", file], 1800000);
+      if (!fs.existsSync(file)) throw new Error("could not extract the sound: " + r.out.trim().slice(-200));
+      if (fs.statSync(file).size > 24 * 1024 * 1024) throw new Error("the recording is too long for one transcription (about 70 minutes at most); cut it into parts with convert_media first");
+    }
+    const models = i.model ? [String(i.model)] : await pickModels("stt"); if (!models.length) throw noModel("speech-to-text", "stt");
+    const errs = [];
+    for (const m of models.slice(0, 3)) {
+      const fd = new FormData(); fd.append("file", new Blob([fs.readFileSync(file)]), path.basename(file)); fd.append("model", m); fd.append("response_format", "json"); if (i.language) fd.append("language", String(i.language));
+      try {
+        const r = await orFetch("/v1/audio/transcriptions", { method: "POST", body: fd, timeout: 600000 }); const j = await r.json().catch(() => ({}));
+        if (!r.ok || typeof j.text !== "string") { errs.push(`${m}: ${j.error?.message || "HTTP " + r.status}`); continue; }
+        let out = `Transcript of ${s} (${m}):\n${j.text.trim()}`;
+        if (i.output) { const o = checkPath(i.output, cfg); saveNew(o, j.text.trim() + "\n", jr, !!i.overwrite); out = `Saved the transcript to ${o}.\n` + out; }
+        return out.length > 60000 ? out.slice(0, 60000) + "\n…[cut; the full text is in the saved file]" : out;
+      } catch (e) { errs.push(`${m}: ${String(e.message || e).slice(0, 120)}`); }
+    }
+    throw new Error("Transcription failed. " + errs.join("; "));
+  } finally { if (tmp) fs.rmSync(tmp, { recursive: true, force: true }); }
+}
+async function speak(i, cfg, jr) {
+  const text = String(i.text).trim();
+  let d = checkPath(i.path || path.join(cfg.cwd, "Audio", stampName(text.slice(0, 40)) + ".mp3"), cfg);
+  const models = i.model ? [String(i.model)] : (i.offline ? [] : await pickModels("tts")), errs = [];
+  for (const m of models.slice(0, 3)) {
+    try {
+      const r = await orFetch("/v1/audio/speech", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ model: m, input: text, voice: i.voice || "alloy", response_format: "mp3" }) });
+      if (!r.ok) { const j = await r.json().catch(() => ({})); errs.push(`${m}: ${j.error?.message || "HTTP " + r.status}`); continue; }
+      const buf = Buffer.from(await r.arrayBuffer()); if (buf.length < 200) { errs.push(`${m}: empty audio`); continue; }
+      const ct = r.headers.get("content-type") || "", ext = /wav/.test(ct) ? ".wav" : /ogg|opus/.test(ct) ? ".ogg" : ".mp3";
+      if (path.extname(d).toLowerCase() !== ext) d = d.replace(/\.[^.\\/]*$/, "") + ext;
+      saveNew(d, buf, jr, !!i.overwrite); return `Saved speech (${m}) to ${d} (${fmtB(buf.length)}).`;
+    } catch (e) { errs.push(`${m}: ${String(e.message || e).slice(0, 120)}`); }
+  }
+  if (process.platform !== "win32") throw new Error("No text-to-speech model worked" + (errs.length ? ": " + errs.join("; ") : "") + ".");
+  d = d.replace(/\.[^.\\/]*$/, "") + ".wav"; // the voice built into Windows, offline
+  if (fs.existsSync(d) && !i.overwrite) throw new Error("file exists: " + d);
+  const tmp = d + ".part.wav";
+  const r = await ps(`Add-Type -AssemblyName System.Speech; $s=New-Object System.Speech.Synthesis.SpeechSynthesizer
+if($env:ORC_V){ $v=$s.GetInstalledVoices() | Where-Object { $_.VoiceInfo.Name -like "*$($env:ORC_V)*" } | Select-Object -First 1; if($v){ $s.SelectVoice($v.VoiceInfo.Name) } }
+$s.SetOutputToWaveFile($env:ORC_D); $s.Speak($env:ORC_T); $s.Dispose(); Write-Output OK`, { ORC_T: text, ORC_D: tmp, ORC_V: i.voice && !/^(alloy|echo|fable|onyx|nova|shimmer)$/i.test(i.voice) ? String(i.voice) : "" }, cfg.cwd, 300000);
+  if (!fs.existsSync(tmp)) throw new Error("Windows speech failed: " + r.out.trim().slice(-200));
+  if (fs.existsSync(d)) { jr.push({ op: "modified", path: d, backup: backup(d) }); fs.unlinkSync(d); } else jr.push({ op: "created", path: d });
+  fs.renameSync(tmp, d);
+  return `Saved speech (Windows voice, offline${errs.length ? "; OmniRoute: " + errs.join("; ") : ""}) to ${d} (${fmtB(fs.statSync(d).size)}).`;
 }
 
 // ---------- install_tool: package names only, never a path, URL or extra arguments
@@ -651,7 +897,7 @@ export function run(name, input, cfg = loadConfig(), scope, meta) {
     catch (e) { logActivity({ t: Date.now(), chat: meta?.chat || null, turn: meta?.turn || null, tool: name, summary: String(pre.summary || "").slice(0, 600), ok: false, error: String(e.message || e).slice(0, 300) }); throw e; }
     finally { journal(meta, jr); } // a bulk action that partly failed still records what it did
   };
-  if (["run_command", "run_code", "read_file", "read_files", "list_dir", "download_file", "web_search", "web_open", "inspect_file", "find_duplicates", "view_images", "install_tool", "find_files", "search_files", "system_info", "notify", "open_path", "clipboard"].includes(name)) return go();
+  if (["run_command", "run_code", "read_file", "read_files", "list_dir", "download_file", "web_search", "web_open", "inspect_file", "find_duplicates", "view_images", "install_tool", "find_files", "search_files", "system_info", "notify", "open_path", "clipboard", "convert_media", "generate_image", "transcribe_audio", "speak"].includes(name)) return go();
   const p = chain.then(go, go); chain = p.catch(() => {}); return p;
 }
 async function runInner(name, input, cfg, jr = []) {
@@ -742,6 +988,12 @@ async function runInner(name, input, cfg, jr = []) {
       const r = await ps("Set-Clipboard -Value $env:ORC_T", { ORC_T: String(i.text ?? "") }, cfg.cwd, 15000); if (r.code !== 0) throw new Error(r.out.trim().slice(0, 200)); return "Copied to the clipboard.";
     }
     case "archive": return archiveTool(i, cfg, jr);
+    case "make_document": return makeDocument(i, cfg, jr);
+    case "edit_image": return editImage(i, cfg, jr);
+    case "convert_media": return convertMedia(i, cfg, jr);
+    case "generate_image": return generateImage(i, cfg, jr);
+    case "transcribe_audio": return transcribeAudio(i, cfg, jr);
+    case "speak": return speak(i, cfg, jr);
     case "view_images": return viewImages(i.paths.map((p) => checkPath(p, cfg)), Number(i.max_side) || 768, cfg);
     case "install_tool": {
       const m = String(i.manager), pkg = String(i.package).trim();
