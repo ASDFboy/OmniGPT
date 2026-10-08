@@ -5572,6 +5572,8 @@
     "modelsActive": "활성",
     "showModel": "모델 표시",
     "hideModel": "모델 숨기기",
+    "blacklistModel": "차단",
+    "blacklistModelTooltip": "이 모델을 차단하고 카탈로그에서 숨깁니다",
     "removeModel": "모델 삭제",
     "rateLimitProtected": "보호됨",
     "rateLimitUnprotected": "보호되지 않음",

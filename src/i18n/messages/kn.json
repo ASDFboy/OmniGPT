@@ -5572,6 +5572,8 @@
     "modelsActive": "ಸಕ್ರಿಯ",
     "showModel": "ಮಾದರಿಯನ್ನು ತೋರಿಸಿ",
     "hideModel": "ಮಾದರಿಯನ್ನು ಮರೆಮಾಡಿ",
+    "blacklistModel": "ನಿರ್ಬಂಧ",
+    "blacklistModelTooltip": "ಈ ಮಾದರಿಯನ್ನು ನಿರ್ಬಂಧಿಸಿ ಮತ್ತು ಕ್ಯಾಟಲಾಗ್‌ನಿಂದ ಮರೆಮಾಡಿ",
     "removeModel": "ಮಾದರಿಯನ್ನು ತೆಗೆದುಹಾಕಿ",
     "rateLimitProtected": "ರಕ್ಷಿತ",
     "rateLimitUnprotected": "ಅರಕ್ಷಿತ",

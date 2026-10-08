@@ -5572,6 +5572,8 @@
     "modelsActive": "etkin",
     "showModel": "Modeli göster",
     "hideModel": "Modeli gizle",
+    "blacklistModel": "Engelle",
+    "blacklistModelTooltip": "Bu modeli engelle ve katalogdan gizle",
     "removeModel": "Modeli kaldır",
     "rateLimitProtected": "Korumalı",
     "rateLimitUnprotected": "Korumasız",

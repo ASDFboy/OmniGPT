@@ -5572,6 +5572,8 @@
     "modelsActive": "Inatumika",
     "showModel": "Onyesha modeli",
     "hideModel": "Ficha modeli",
+    "blacklistModel": "Zuia",
+    "blacklistModelTooltip": "Zuia modeli hii na uifiche kwenye orodha",
     "removeModel": "Ondoa modeli",
     "rateLimitProtected": "Imelindwa",
     "rateLimitUnprotected": "Haijalindwa",

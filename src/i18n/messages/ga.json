@@ -5572,6 +5572,8 @@
     "modelsActive": "Gníomhach",
     "showModel": "Taispeáin samhail",
     "hideModel": "Folaigh samhail",
+    "blacklistModel": "Coisc",
+    "blacklistModelTooltip": "Coisc an tsamhail seo agus folaigh ón gcatalóg é",
     "removeModel": "Bain samhail",
     "rateLimitProtected": "Cosanta",
     "rateLimitUnprotected": "Neamhchosanta",

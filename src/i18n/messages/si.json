@@ -5572,6 +5572,8 @@
     "modelsActive": "සක්රිය",
     "showModel": "මාදිලිය පෙන්වන්න",
     "hideModel": "මාදිලිය සඟවන්න",
+    "blacklistModel": "අවහිර",
+    "blacklistModelTooltip": "මෙම ආකෘතිය අවහිර කර නාමාවලියෙන් සඟවන්න",
     "removeModel": "මාදිලිය ඉවත් කරන්න",
     "rateLimitProtected": "ආරක්ෂිත",
     "rateLimitUnprotected": "අනාරක්ෂිත",

@@ -5572,6 +5572,8 @@
     "modelsActive": "Активни",
     "showModel": "Прикажи модел",
     "hideModel": "Сакриј модел",
+    "blacklistModel": "Блокирај",
+    "blacklistModelTooltip": "Блокирај овај модел и сакриј га из каталога",
     "removeModel": "Уклони модел",
     "rateLimitProtected": "Заштићено",
     "rateLimitUnprotected": "Незаштићено",

@@ -5572,6 +5572,8 @@
     "modelsActive": "Aktīvs",
     "showModel": "Rādīt modeli",
     "hideModel": "Slēpt modeli",
+    "blacklistModel": "Bloķēt",
+    "blacklistModelTooltip": "Bloķēt šo modeli un paslēpt to no kataloga",
     "removeModel": "Noņemt modeli",
     "rateLimitProtected": "Aizsargāts",
     "rateLimitUnprotected": "Neaizsargāts",

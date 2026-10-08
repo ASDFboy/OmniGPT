@@ -5572,6 +5572,8 @@
     "modelsActive": "активни",
     "showModel": "Показване на модел",
     "hideModel": "Скриване на модел",
+    "blacklistModel": "Блокирай",
+    "blacklistModelTooltip": "Блокирай този модел и го скрий от каталога",
     "removeModel": "Премахване на модела",
     "rateLimitProtected": "Защитен",
     "rateLimitUnprotected": "Незащитен",

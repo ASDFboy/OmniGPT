@@ -5572,6 +5572,8 @@
     "modelsActive": "সক্রিয়",
     "showModel": "মডেল দেখান",
     "hideModel": "মডেল লুকান",
+    "blacklistModel": "ব্লক",
+    "blacklistModelTooltip": "এই মডেল ব্লক করে ক্যাটালগ থেকে লুকান",
     "removeModel": "মডেল সরান",
     "rateLimitProtected": "সুরক্ষিত",
     "rateLimitUnprotected": "অসুরক্ষিত",

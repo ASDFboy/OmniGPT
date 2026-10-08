@@ -5572,6 +5572,8 @@
     "modelsActive": "فعال",
     "showModel": "ماڈل دکھائیں",
     "hideModel": "ماڈل چھپائیں",
+    "blacklistModel": "بلاک کریں",
+    "blacklistModelTooltip": "اس ماڈل کو بلاک کر کے کیٹلاگ سے چھپائیں",
     "removeModel": "ماڈل ہٹائیں",
     "rateLimitProtected": "محفوظ",
     "rateLimitUnprotected": "غیر محفوظ",

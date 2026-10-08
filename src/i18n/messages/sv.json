@@ -5572,6 +5572,8 @@
     "modelsActive": "aktiva",
     "showModel": "Visa modell",
     "hideModel": "Dölj modell",
+    "blacklistModel": "Blockera",
+    "blacklistModelTooltip": "Blockera den här modellen och dölj den från katalogen",
     "removeModel": "Ta bort modellen",
     "rateLimitProtected": "Skyddad",
     "rateLimitUnprotected": "Oskyddad",

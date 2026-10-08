@@ -5572,6 +5572,8 @@
     "modelsActive": "សកម្ម",
     "showModel": "បង្ហាញម៉ូដែល",
     "hideModel": "លាក់ម៉ូដែល",
+    "blacklistModel": "ទប់ស្កាត់",
+    "blacklistModelTooltip": "ទប់ស្កាត់ម៉ូដែលនេះ ហើយលាក់វាពីកាតាឡុក",
     "removeModel": "លុបម៉ូដែលចេញ",
     "rateLimitProtected": "មានការការពារ",
     "rateLimitUnprotected": "គ្មានការការពារ",

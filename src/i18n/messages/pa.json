@@ -5572,6 +5572,8 @@
     "modelsActive": "ਸਰਗਰਮ",
     "showModel": "ਮਾਡਲ ਦਿਖਾਓ",
     "hideModel": "ਮਾਡਲ ਲੁਕਾਓ",
+    "blacklistModel": "ਬਲਾਕ",
+    "blacklistModelTooltip": "ਇਸ ਮਾਡਲ ਨੂੰ ਬਲਾਕ ਕਰਕੇ ਕੈਟਾਲਾਗ ਤੋਂ ਲੁਕਾਓ",
     "removeModel": "ਮਾਡਲ ਹਟਾਓ",
     "rateLimitProtected": "ਸੁਰੱਖਿਅਤ",
     "rateLimitUnprotected": "ਅਸੁਰੱਖਿਅਤ",

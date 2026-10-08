@@ -5572,6 +5572,8 @@
     "modelsActive": "Faol",
     "showModel": "Modelni ko‘rsatish",
     "hideModel": "Modelni yashirish",
+    "blacklistModel": "Bloklash",
+    "blacklistModelTooltip": "Bu modelni bloklab, katalogdan yashirish",
     "removeModel": "Modelni olib tashlash",
     "rateLimitProtected": "Himoyalangan",
     "rateLimitUnprotected": "Himoyalanmagan",

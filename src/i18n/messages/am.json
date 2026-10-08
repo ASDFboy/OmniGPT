@@ -5572,6 +5572,8 @@
     "modelsActive": "ንቁ",
     "showModel": "ሞዴሉን አሳይ",
     "hideModel": "ሞዴሉን ደብቅ",
+    "blacklistModel": "አግድ",
+    "blacklistModelTooltip": "ይህን ሞዴል አግድ እና ከካታሎግ ደብቅ",
     "removeModel": "ሞዴሉን አስወግድ",
     "rateLimitProtected": "የተጠበቀ",
     "rateLimitUnprotected": "ያልተጠበቀ",

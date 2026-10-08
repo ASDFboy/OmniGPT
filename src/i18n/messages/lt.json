@@ -5572,6 +5572,8 @@
     "modelsActive": "Aktyvus",
     "showModel": "Rodyti modelį",
     "hideModel": "Slėpti modelį",
+    "blacklistModel": "Blokuoti",
+    "blacklistModelTooltip": "Blokuoti šį modelį ir paslėpti jį iš katalogo",
     "removeModel": "Pašalinti modelį",
     "rateLimitProtected": "Apsaugotas",
     "rateLimitUnprotected": "Neapsaugotas",

@@ -5572,6 +5572,8 @@
     "modelsActive": "active",
     "showModel": "Afișează modelul",
     "hideModel": "Ascunde modelul",
+    "blacklistModel": "Blochează",
+    "blacklistModelTooltip": "Blochează acest model și ascunde-l din catalog",
     "removeModel": "Eliminați modelul",
     "rateLimitProtected": "Protejat",
     "rateLimitUnprotected": "Neprotejat",

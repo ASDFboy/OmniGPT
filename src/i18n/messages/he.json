@@ -5572,6 +5572,8 @@
     "modelsActive": "פעילים",
     "showModel": "הצג מודל",
     "hideModel": "הסתר מודל",
+    "blacklistModel": "חסימה",
+    "blacklistModelTooltip": "חסום את המודל והסתר אותו מהקטלוג",
     "removeModel": "הסר את הדגם",
     "rateLimitProtected": "מוגן",
     "rateLimitUnprotected": "לא מוגן",

@@ -5572,6 +5572,8 @@
     "modelsActive": "已啟用",
     "showModel": "顯示模型",
     "hideModel": "隱藏模型",
+    "blacklistModel": "封鎖",
+    "blacklistModelTooltip": "封鎖此模型並從目錄中隱藏",
     "removeModel": "刪除模型",
     "rateLimitProtected": "受保護",
     "rateLimitUnprotected": "無保護",

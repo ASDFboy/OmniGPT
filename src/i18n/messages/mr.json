@@ -5572,6 +5572,8 @@
     "modelsActive": "सक्रिय",
     "showModel": "मॉडेल दाखवा",
     "hideModel": "मॉडेल लपवा",
+    "blacklistModel": "ब्लॉक",
+    "blacklistModelTooltip": "हे मॉडेल ब्लॉक करून कॅटलॉगमधून लपवा",
     "removeModel": "मॉडेल काढा",
     "rateLimitProtected": "संरक्षित",
     "rateLimitUnprotected": "असंरक्षित",

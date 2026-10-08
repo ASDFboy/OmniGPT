@@ -5572,6 +5572,8 @@
     "modelsActive": "အသုံးပြုနေသည်",
     "showModel": "မော်ဒယ်ကို ပြရန်",
     "hideModel": "မော်ဒယ်ကို ဝှက်ရန်",
+    "blacklistModel": "ပိတ်",
+    "blacklistModelTooltip": "ဤမော်ဒယ်ကို ပိတ်ပြီး ကတ်တလောက်မှ ဖျောက်ပါ",
     "removeModel": "မော်ဒယ်ကို ဖယ်ရှားရန်",
     "rateLimitProtected": "ကာကွယ်ထားသည်",
     "rateLimitUnprotected": "ကာကွယ်မထားပါ",
