@@ -312,21 +312,23 @@ const renewToken=()=>tokenP||(tokenP=fetch("/",{cache:"no-store"}).then(r=>r.ok?
 const F=async(u,o={})=>{const r=await F0(u,o);if(r.status!==403||!(await renewToken()))return r;return F0(typeof u==="string"?u.replace(/([?&]t=)[0-9a-f]+/,"$1"+TOKEN):u,o)};
 // BRAIN-START
 // A small layered diagram of the agents taking part in this conversation. Only agents that are used or planned are shown.
-// Rows: you, models, parallel workers, checks and tools, answer. Signals travel along the links that were actually used.
+// Rows: you, memories and skills, models, parallel workers, checks and tools, answer. Signals travel along the links that were actually used.
 // Normal activity uses the theme's text colour; green means a check passed or something worked; red means an error or a failed check.
 const Brain=(()=>{
   const cv=document.getElementById("brain"), cx=cv.getContext("2d");
   const LABEL={user:"you",output:"answer",guard:"safety check",tools:"pc tools",sandbox:"code sandbox",browser:"web browser"};
-  const ROWOF={user:0,guard:3,tools:3,sandbox:3,browser:3,output:4}, ORDER={guard:0,tools:1,sandbox:2,browser:3};
-  const hubs={}; let seq=0, dirty=true;
-  function hub(key){
-    if(hubs[key])return hubs[key];
+  const ROWOF={user:0,guard:4,tools:4,sandbox:4,browser:4,output:5}, ORDER={guard:0,tools:1,sandbox:2,browser:3};
+  const hubs={}, LB={}; let seq=0, dirty=true; // LB: labels of memory and skill nodes (their keys are ids)
+  const ctxKey=k=>/^(mem|skill):/.test(k), toolKey=k=>/^t:/.test(k);
+  function hub(key,label){
+    if(hubs[key]){if(label&&hubs[key].label!==label){hubs[key].label=LB[key]=label}return hubs[key]}
+    if(label)LB[key]=label;
     const wk=/^W(\d)$/.exec(key);
-    const name=LABEL[key]||(wk?"worker "+wk[1]:String(key).split("/").pop().replace(/-\d{4}.*$/,"").replace(/^gemini-/,"gemini ").replace(/-/g," "));
-    return hubs[key]={key,label:name,row:ROWOF[key]!==undefined?ROWOF[key]:wk?2:1,ord:ORDER[key]!==undefined?ORDER[key]:wk?+wk[1]:100+seq++,vis:key==="user",fade:key==="user"?1:0,x:0,y:0,tx:0,ty:0,placed:false,busy:0,act:0,mark:null,glow:0,gc:0};
+    const name=LB[key]||LABEL[key]||(toolKey(key)?key.slice(2).replace(/_/g," "):ctxKey(key)?key.replace(/^\w+:/,""):wk?"worker "+wk[1]:String(key).split("/").pop().replace(/-\d{4}.*$/,"").replace(/^gemini-/,"gemini ").replace(/-/g," "));
+    return hubs[key]={key,label:name,row:ROWOF[key]!==undefined?ROWOF[key]:ctxKey(key)?1:toolKey(key)?4:wk?3:2,ord:ORDER[key]!==undefined?ORDER[key]:wk?+wk[1]:100+seq++,vis:key==="user",fade:key==="user"?1:0,x:0,y:0,tx:0,ty:0,placed:false,busy:0,act:0,mark:null,glow:0,gc:0};
   }
   hub("user");
-  const touch=k=>{const h=hub(k);if(!h.vis){h.vis=true;dirty=true}return h};
+  const touch=(k,label)=>{const h=hub(k,label);if(!h.vis){h.vis=true;dirty=true}return h};
   const links={}, pulses=[];
   const GREEN=[[22,150,80],[70,230,130]], RED=[[210,40,40],[255,80,80]];
   let ink=[255,255,255], dark=false, inkAt=0;
@@ -345,7 +347,7 @@ const Brain=(()=>{
     const vis=Object.values(hubs).filter(h=>h.vis);
     const rows=[];
     const per=Math.max(1,Math.min(3,Math.floor((W-20)/96))); // labels need about 96 px each, so a narrow pane gets fewer per row
-    for(let r=0;r<=4;r++){const L=vis.filter(h=>h.row===r).sort((a,b)=>a.ord-b.ord);for(let i=0;i<L.length;i+=per)rows.push(L.slice(i,i+per))}
+    for(let r=0;r<=5;r++){const L=vis.filter(h=>h.row===r).sort((a,b)=>a.ord-b.ord);for(let i=0;i<L.length;i+=per)rows.push(L.slice(i,i+per))}
     const gap=Math.max(70,Math.min(84,(H-90)/Math.max(1,rows.length-1))), total=(rows.length-1)*gap, top=Math.max(34,(H-total)/2-18);
     rows.forEach((L,ri)=>{const step=Math.min(100,(W-20)/Math.max(1,L.length)),w=(L.length-1)*step;L.forEach((h,i)=>{h.tx=W/2-w/2+i*step;h.ty=top+ri*gap;if(!h.placed){h.x=h.tx;h.y=h.ty-14;h.placed=true}})});
   }
@@ -399,17 +401,22 @@ const Brain=(()=>{
   }
   function frame(t){requestAnimationFrame(frame);if(!cv.offsetParent||t-last<32)return;const dt=Math.min(.1,(t-last)/1000);last=t;draw(t/1000,dt)}
   requestAnimationFrame(frame);
+  const fed=new Set(), pending=new Set(); // memories and skills shown this turn, and the ones waiting for the next model to start
   return{
     last:"user",
+    turn(){fed.clear();pending.clear();this.last="user"},
+    // a memory or skill that was given to the agents: it lights up and feeds the next model that starts
+    ctx(key,label){try{touch(key,label);if(!fed.has(key)){fed.add(key);pending.add(key);msg("user",key,0)}}catch(e){}},
+    feed(model){try{for(const k of pending)msg(k,model,0);pending.clear()}catch(e){}},
     msg(a,b){try{msg(a,b,0)}catch(e){}},
     ok(k){try{mark(k,1)}catch(e){}},
     fail(k){try{mark(k,2)}catch(e){}},
     busy(k,on){try{const h=touch(k);h.busy=on?1:0;if(on)h.act=1}catch(e){}},
     plan(keys){try{keys.filter(Boolean).forEach(touch)}catch(e){}},
     register(){},
-    snapshot(){try{return{n:Object.values(hubs).filter(h=>h.vis&&h.key!=="user").sort((a,b)=>a.ord-b.ord).map(h=>h.key),l:Object.values(links).map(l=>[l.a,l.b])}}catch(e){return null}},
-    restore(g){try{if(!g||!Array.isArray(g.n))return;g.n.forEach(touch);(g.l||[]).forEach(([a,b])=>{if(hubs[a]&&hubs[b])links[a+">"+b]={a,b,t:0,keep:true}});dirty=true}catch(e){}},
-    reset(){pulses.length=0;for(const k in links)delete links[k];for(const k in hubs){const h=hubs[k];h.busy=0;h.mark=null;h.glow=0;if(k!=="user"){h.vis=false;h.fade=0;h.placed=false}}dirty=true;this.last="user"}
+    snapshot(){try{const n=Object.values(hubs).filter(h=>h.vis&&h.key!=="user").sort((a,b)=>a.ord-b.ord).map(h=>h.key);return{n,l:Object.values(links).map(l=>[l.a,l.b]),lb:Object.fromEntries(n.filter(k=>LB[k]).map(k=>[k,LB[k]]))}}catch(e){return null}},
+    restore(g){try{if(!g||!Array.isArray(g.n))return;g.n.forEach(k=>touch(k,g.lb&&g.lb[k]));(g.l||[]).forEach(([a,b])=>{if(hubs[a]&&hubs[b])links[a+">"+b]={a,b,t:0,keep:true}});dirty=true}catch(e){}},
+    reset(){pulses.length=0;fed.clear();pending.clear();for(const k in links)delete links[k];for(const k in hubs){const h=hubs[k];h.busy=0;h.mark=null;h.glow=0;if(k!=="user"){h.vis=false;h.fade=0;h.placed=false}}dirty=true;this.last="user"}
   };
 })();
 // BRAIN-END
@@ -498,7 +505,7 @@ function healthHtml(){
 function stream(a,ui,noThink,out){
   const t0=Date.now();
   const nb=!a.noBrain;
-  if(nb){Brain.busy(a.model,true);if(Brain.last!==a.model)Brain.msg(Brain.last,a.model);Brain.last=a.model}
+  if(nb){Brain.busy(a.model,true);if(Brain.last!==a.model)Brain.msg(Brain.last,a.model);Brain.feed(a.model);Brain.last=a.model}
   const idle={ctl:new AbortController(),tm:0,first:0,kick(){clearTimeout(this.tm);this.tm=setTimeout(()=>this.ctl.abort(new DOMException("model stalled (no data for 60s)","TimeoutError")),60000)}};
   return streamCore(a,ui,noThink,out,idle).then(
     r=>{note(a.model,(idle.first||Date.now())-t0>25000?0.5:-0.5);if(nb){Brain.busy(a.model,false);Brain.ok(a.model)}return r},
@@ -747,7 +754,7 @@ const blockedResult=(why)=>({text:why+" Do not retry this; explain to the user a
 let highStreak=0; // high-risk actions in a row that the agent was asked to redo
 async function toolFlow(u,userReq,intent,lead,cfg,T,scope){
   if(u.name==="list_project_chats"||u.name==="read_project_chat"){ // in-app, read-only: no approval needed
-    const c=toolCard(u.name,u.input,T); c.show(u.name==="read_project_chat"?"Read project chat "+(u.input?.id||""):"List project chats"); c.status("done");
+    const c=toolCard(u.name,u.input,T); c.show(u.name==="read_project_chat"?"Read project chat "+(u.input?.id||""):"List project chats"); c.status("done");Brain.msg(lead,"t:"+u.name);Brain.ok("t:"+u.name);
     return{text:projToolRun(u),err:false};
   }
   const card=toolCard(u.name,u.input,T);
@@ -762,9 +769,9 @@ async function toolFlow(u,userReq,intent,lead,cfg,T,scope){
     return r.ok?{text:`<tool_output untrusted="true">\n${String(r.output).slice(0,9000)}\n</tool_output>`,err:false}:{text:"Error: "+r.error,err:true};
   }
   if(pre.class==="web"&&(u.name==="web_search"||!/[?#]/.test(String(u.input&&u.input.url)))&&String((u.input&&(u.input.url||u.input.query))||"").length<300){
-    card.status("running…");Brain.msg(lead,"browser");
+    card.status("running…");Brain.msg(lead,"t:"+u.name);
     const r=await api("/api/run",{name:u.name,input:u.input,scope,folder:CHAT_DIR});
-    card.status(r.ok?"done":"failed");card.result(r.ok?r.output:r.error,!r.ok);r.ok?Brain.ok("browser"):Brain.fail("browser");
+    card.status(r.ok?"done":"failed");card.result(r.ok?r.output:r.error,!r.ok);r.ok?Brain.ok("t:"+u.name):Brain.fail("t:"+u.name);
     return r.ok?{text:`<web_content untrusted="true">\n${String(r.output).slice(0,9000)}\n</web_content>`,err:false}:{text:"Error: "+r.error,err:true};
   }
   const rv=pre.inside===true?{verdict:"attached folder",risk:"low"}:cfg.approval==="bypass"?{verdict:"unchecked",risk:"low"}:await review(pre,u.name,u.input,userReq+(pre.inside==="command"?"\n\n[The user attached the folder "+CHAT_DIR+" and allowed any action inside it and its subfolders. A command that stays inside it is low risk. A command that changes or deletes anything outside it, or touches OmniRoute's data folder, is high risk.]":""),intent,lead,T);
@@ -782,9 +789,9 @@ async function toolFlow(u,userReq,intent,lead,cfg,T,scope){
   else if(rv.verdict==="safe"&&(pre.class==="read"||(cfg.approval==="auto"&&rv.risk==="low"&&pre.class!=="delete"))) go=true;
   else go=await card.ask(rv.verdict==="unsafe"?"Run anyway (reviewer objected)":rv.verdict==="unreviewed"?"Approve (not reviewed)":"Approve");
   if(!go){card.status("denied");return{text:"The user denied this action.",err:true}}
-  card.status("running…");Brain.msg(lead,"tools");
+  card.status("running…");Brain.msg(lead,"t:"+u.name);
   const r=await api("/api/run",{name:u.name,input:u.input,scope,folder:CHAT_DIR});
-  card.status(r.ok?"done":"failed"); card.result(r.ok?r.output:r.error,!r.ok); r.ok?Brain.ok("tools"):Brain.fail("tools"); r.ok?TURN.ok++:TURN.fail++;
+  card.status(r.ok?"done":"failed"); card.result(r.ok?r.output:r.error,!r.ok); r.ok?Brain.ok("t:"+u.name):Brain.fail("t:"+u.name); r.ok?TURN.ok++:TURN.fail++;
   if(r.ok&&/^(write_file|write_files|edit_file|copy_file|move_file|move_files|download_file)$/.test(u.name))(String(r.output).match(/[A-Za-z]:\\[^\n"<>|*?]*?\.[A-Za-z0-9]{1,8}(?=$|[\s(,]|\.(?:\s|$))/g)||[]).forEach(p=>{(TURN.written||(TURN.written=[])).push(p);knowFile(p)});
   return r.ok?{text:`<tool_output untrusted="true">\n${r.output.slice(0,9000)}\n</tool_output>`,err:false}:{text:"Error: "+r.error,err:true};
 }
@@ -1007,7 +1014,7 @@ async function auto(q,ctx){
   if(CHAT_DIR){tools=true;parallel=false} // work in one folder is tightly coupled: one agent, no lanes
   if((TURN.attached||CHAT_DIR)&&!$("#pc").checked){
     const L=[...(TURN.images?TIERS.vision:[]),...TIERS.fast,...TIERS.strong].filter((m,i,a)=>a.indexOf(m)===i);
-    const n=turn("Plan");n.end();n.text(cx+": reading the attached files with "+L[0]+" (PC access is off, so nothing can be changed)");Brain.plan([L[0],"tools"]);
+    const n=turn("Plan");n.end();n.text(cx+": reading the attached files with "+L[0]+" (PC access is off, so nothing can be changed)");Brain.plan([L[0]]);
     return agent(q,ctx,L,{system:()=>FILES_RO_SYS+(web?"\n\n"+WEB_SYS:"")+projCtx(),tools:[...TOOLS.filter(t=>/^(inspect_file|read_file|read_files|list_dir)$/.test(t.name)),...WEB_TOOLS]});
   }
   if(TASK)TASK.decisions.push("Lane: "+cx+(tools?", uses the PC":"")+(web?", needs the web":"")+(compute?", calculation":"")+(parallel?", has parallel parts":""));
@@ -1017,7 +1024,7 @@ async function auto(q,ctx){
   const solo=()=>{
     const pcOn=tools&&$("#pc").checked, leadsC=[...(TURN.images?TIERS.vision:[]),...TIERS.fast,...TIERS.strong].filter((m,i,a)=>a.indexOf(m)===i);
     const n=turn("Plan");n.end();n.text(cx+": "+(web?"web research":"calculation")+", lead "+leadsC[0]+(web?"; searches and reads pages":"")+(sbx?"; scripts run in the sandbox":""));
-    Brain.plan([leadsC[0],...(web?["browser"]:[]),...(sbx?["sandbox"]:[]),...(pcOn?["guard","tools"]:[])]);
+    Brain.plan([leadsC[0],...(sbx?["sandbox"]:[]),...(pcOn?["guard"]:[])]);
     const RC=TOOLS.find(t=>t.name==="run_code");
     return agent(q,ctx,leadsC,{system:cfg=>(pcOn?agentSystem(cfg)+"\n\n":"")+(web?WEB_SYS+"\n\n":"")+(sbx?COMPUTE_SYS:"")+projCtx(),tools:pcOn?[...TOOLS,...(curProject?PROJ_TOOLS:[])]:[...(web?WEB_TOOLS:[]),...(sbx?[RC]:[]),...(curProject?PROJ_TOOLS:[])]});
   };
@@ -1036,7 +1043,7 @@ async function auto(q,ctx){
   }
   if(web||sbx)return solo();
   if(pc){
-    const n=turn("Plan");n.end();n.text(cx+": agent, lead "+leads[0]);Brain.plan([leads[0],"guard","tools"]);
+    const n=turn("Plan");n.end();n.text(cx+": agent, lead "+leads[0]);Brain.plan([leads[0],"guard"]);
     return agent(q,ctx,leads);
   }
   return textPipeline(q,ctx,cx,plan);
@@ -1121,7 +1128,7 @@ async function send(){
   const u=document.createElement("div");u.className="msg";u.innerHTML=`<div class="user">${esc(shown)}</div>`;col.appendChild(u);linkPaths(u);syncConvo();
   if(omni.on){omniBegin(q);return}
   if(/^\s*(no\b|wrong|incorrect|that'?s (wrong|not right|incorrect)|(it )?(didn'?t|doesn'?t) work)/i.test(q))memFeedback(LAST_MEM,false); // a correction counts against the memories used last time
-  CUR_Q=q;TURN={ok:0,fail:0,written:[],t0:Date.now(),attached:A.length>0,att:A.map(a=>String(a.path).toLowerCase()),images:A.some(a=>a.image)};TASK={request:q,plan:"",criteria:[],tests:"",decisions:[]};MEM_USED=[];trace=mkTrace();scroll();Brain.last="user";
+  CUR_Q=q;TURN={ok:0,fail:0,written:[],t0:Date.now(),attached:A.length>0,att:A.map(a=>String(a.path).toLowerCase()),images:A.some(a=>a.image)};TASK={request:q,plan:"",criteria:[],tests:"",decisions:[]};MEM_USED=[];trace=mkTrace();scroll();Brain.turn();
   saveChat(typed,[...history,{role:"user",content:q}]); // the question is on disk even if the window closes mid-answer
   busy=true;ctrl=new AbortController();sendBtn.innerHTML=ico("stop");sendBtn.classList.add("stop");curProject=projectOf();
   const ctx=fitCtx([...history,{role:"user",content:q}]);
@@ -1472,6 +1479,7 @@ function taskCtx(){
   if(TASK.decisions.length)p.push("Decisions so far:\n"+TASK.decisions.map((d,i)=>"D"+(i+1)+". "+d).join("\n"));
   return p.length?"\n\nTASK RECORD (shared by every agent on this request):\n"+p.join("\n"):"";
 }
+const brainLabel=s=>{s=String(s||"").replace(/\s+/g," ").trim();return s.length>18?s.slice(0,17).trimEnd()+"…":s};
 // Only relevant memories are given to the agents: a few profile facts plus the ones that match the request.
 function userCtx(q){
   const S=SET(),qt=tok(q||""); let out=(S.mode==="unfiltered"?UNFILTERED_NOTE:"")+"\n\nToday's date is "+new Date().toDateString()+". Your training data may be older than this, so check the web for anything recent. Do not use emoji.";
@@ -1481,12 +1489,14 @@ function userCtx(q){
     const prof=M.filter(m=>m.kind==="user"||m.kind==="preference").slice(0,5);
     const rel=M.filter(m=>!prof.includes(m)&&sc(m)>=1).sort((a,b)=>sc(b)-sc(a)).slice(0,5);
     const pick=[...prof,...rel]; MEM_USED=pick.map(m=>m.id);
+    pick.forEach(m=>Brain.ctx("mem:"+m.id,"memory: "+brainLabel(m.text)));
     if(pick.length)out+="\n\nWhat you remember about the user from earlier conversations (use it naturally, never recite it, ignore what does not apply):\n"+pick.map(m=>"- "+m.text).join("\n");
   }
   const K=SKL().filter(k=>k.on!==false);
   if(S.skills&&K.length){
     const used=K.filter(k=>overlap(tok(k.name+" "+k.description),qt)>=2||new RegExp("(^|\\s)/"+k.slug+"(\\s|$)","i").test(q||"")).slice(0,3);
     const rest=K.filter(k=>!used.includes(k)).slice(0,12);
+    used.forEach(k=>Brain.ctx("skill:"+(k.slug||k.name),"skill: "+brainLabel(k.name)));
     if(used.length)out+="\n\nSkills that apply to this request (follow their instructions):\n"+used.map(k=>`## ${k.name}\n${k.instructions}`).join("\n\n");
     if(rest.length)out+="\n\nOther skills the user has set up, for reference only. Never run one of these unless the user asks for it by name in this message:"+rest.map(k=>k.name+" ("+k.description+")").join("; ");
   }
@@ -1587,7 +1597,7 @@ async function omniBegin(q){
   try{
     if(SET().refine&&!omni.notes.length){trace=mkTrace();const b=await refine(q);trace.finish();trace=null;if(b&&!/^ASK:/i.test(b))omni.goal=briefed(omni.goal,b)}
     while(!omni.stop){
-      omni.cycle++;omStat();trace=mkTrace();Brain.last="user";
+      omni.cycle++;omStat();trace=mkTrace();Brain.turn();
       const forever=$("#omforever").checked, leads=[...TIERS.fast,...(!forever&&SET().omniStrong&&omni.fails>=2?TIERS.strong:[])];
       const guide=omni.steer.splice(0).join("\n\n");
       const msg=`GOAL:\n${omni.goal}\n\n`+(omni.notes.length?`Progress so far (oldest first):\n${omni.notes.map((n,i)=>`${i+1}. ${n}`).join("\n")}\n\n`:"")+(guide?`New guidance from the user (it overrides earlier plans):\n${guide}\n\n`:"")+omniAsk()+(omni.stall?"\n\nWarning: your recent steps repeated themselves. Do something clearly different; if you are stuck, research fresh ideas on the web first.":"");
