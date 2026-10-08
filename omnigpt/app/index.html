@@ -221,9 +221,13 @@ dialog.set[open]{display:flex}
 .fprev iframe{display:block;width:100%;height:420px;border:0}
 .fprev audio,.fprev video{display:block;width:100%;max-height:400px}
 .fprev pre{margin:0;padding:10px 12px;font:12px/1.5 var(--mono);white-space:pre-wrap;word-break:break-word;color:var(--fg)}
+.undo{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:12.5px}.undo details{font-size:12.5px}.undo pre{white-space:pre-wrap;font-size:12px;max-height:260px;overflow:auto}
+#csearch{margin:6px 2px 2px;padding:6px 10px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--fg);font:inherit;font-size:13px;outline:none}
+.ci small{display:block;color:var(--mut);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.act-row{display:grid;grid-template-columns:88px 110px 1fr;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:12.5px}.act-row .bad{color:#d14545}.act-row pre{margin:0;white-space:pre-wrap;font-size:12px}
 #toast{position:fixed;right:18px;bottom:18px;z-index:60;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px 10px 14px;font-size:13px;display:flex;align-items:center;gap:12px;box-shadow:0 10px 28px rgba(0,0,0,.18);max-width:360px}
 #toast a{color:var(--fg);font-weight:600;text-underline-offset:3px}
-#toast button{background:none;border:0;color:var(--mut);font-size:12px;padding:2px 4px}
+#toast button{background:none;border:0;color:var(--mut);font-size:12px;padding:2px 4px}#toast button.inst{color:var(--fg);font-weight:600;font-size:13px;text-decoration:underline;text-underline-offset:3px}
 #toast button:hover{color:var(--fg)}
 .swatches{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;justify-content:flex-end;flex-shrink:0}
 .swatches button{width:22px;height:22px;border-radius:50%;border:1px solid var(--line);padding:0;background:var(--sw);cursor:pointer}
@@ -242,6 +246,7 @@ body.nograph #brainpane{display:none!important}
 <aside id="side">
   <button class="new" id="new"><i data-i="plus"></i>New chat</button>
   <div class="row2"><button class="ghost sm" id="newf"><i data-i="folder"></i>Folder</button><button class="ghost sm" id="newp"><i data-i="project"></i>Project</button></div>
+  <input id="csearch" type="search" placeholder="Search chats" spellcheck="false">
   <div id="chats"></div>
   <button class="ghost" id="console"><i data-i="console"></i>OmniRoute console</button>
   <button class="ghost" id="sched"><i data-i="clock"></i>Scheduled tasks</button>
@@ -250,7 +255,7 @@ body.nograph #brainpane{display:none!important}
 <main>
 <header>
   <button class="ib" id="tog" title="Sidebar (Ctrl+B)"><i data-i="menu"></i></button>
-  <span class="brand" id="brand">OmniGPT</span><span class="omstat" id="omstat"></span><span class="omstat" id="bpstat"></span>
+  <span class="brand" id="brand">OmniGPT</span><span class="omstat" id="omstat"></span><span class="omstat" id="bpstat"></span><span class="omstat" id="usage"></span>
   <label class="sw" id="omwrap"><input type="checkbox" id="omforever"><span></span>Run indefinitely</label>
   <span class="grow"></span>
   <datalist id="models"></datalist>
@@ -273,7 +278,7 @@ body.nograph #brainpane{display:none!important}
 </main>
 <dialog id="dlg" class="set">
   <nav id="s-nav"><div class="s-title">Settings</div>
-    <button data-p="general">General</button><button data-p="models">Models</button><button data-p="memory">Memory</button><button data-p="skills">Skills</button><button data-p="connection">Connection</button><button data-p="agents">Agents and safety</button><button data-p="data">Data</button><button data-p="about">About</button></nav>
+    <button data-p="general">General</button><button data-p="models">Models</button><button data-p="memory">Memory</button><button data-p="skills">Skills</button><button data-p="connection">Connection</button><button data-p="agents">Agents and safety</button><button data-p="activity">Activity</button><button data-p="data">Data</button><button data-p="about">About</button></nav>
   <section id="s-body"></section>
   <button class="ib s-close" id="s-x" title="Close"><i data-i="close"></i></button>
 </dialog>
@@ -555,7 +560,8 @@ async function streamCore({model,system,messages,tools,timeout,maxTokens},ui,noT
   let r=await F("/api/messages",{method:"POST",body:body(think),signal});
   if(!r.ok&&think&&r.status===400) r=await F("/api/messages",{method:"POST",body:body(false),signal});
   if(!r.ok){let t=await r.text();try{t=JSON.parse(t).error?.message||t}catch{}throw new Error(`${r.status} ${t}`.slice(0,400))}
-  const rd=r.body.getReader(), dec=new TextDecoder(); let buf="", blocks={}, text="", stop="";
+  const rd=r.body.getReader(), dec=new TextDecoder(); let buf="", blocks={}, text="", stop="", inTok=0, outTok=0;
+  try{
   while(true){
     const {done,value}=await rd.read(); if(done)break; idle.first=idle.first||Date.now(); idle.kick();
     buf+=dec.decode(value,{stream:true});
@@ -563,16 +569,17 @@ async function streamCore({model,system,messages,tools,timeout,maxTokens},ui,noT
       const chunk=buf.slice(0,i); buf=buf.slice(i+2);
       const line=chunk.split("\n").find(l=>l.startsWith("data:")); if(!line)continue;
       let e; try{e=JSON.parse(line.slice(5))}catch{continue}
-      if(e.type==="message_start") ui.route(e.message?.model);
+      if(e.type==="message_start"){ui.route(e.message?.model);inTok=e.message?.usage?.input_tokens||0}
       else if(e.type==="content_block_start"){const b=e.content_block; blocks[e.index]={type:b.type,id:b.id,name:b.name,json:"",text:""}; if(b.type==="tool_use") blocks[e.index].el=ui.tool(b.name);}
       else if(e.type==="content_block_delta"){const d=e.delta,b=blocks[e.index]||(blocks[e.index]={type:"text",json:"",text:""});
         if(d.type==="thinking_delta") ui.think(d.thinking);
         else if(d.type==="text_delta"){text+=d.text;b.text+=d.text;ui.text(text)}
         else if(d.type==="input_json_delta"){b.json+=d.partial_json; if(b.el) b.el.textContent=b.name+"("+b.json+")"}}
-      else if(e.type==="message_delta"){if(e.usage)ui.usage(e.usage);if(e.delta?.stop_reason)stop=e.delta.stop_reason}
+      else if(e.type==="message_delta"){if(e.usage){ui.usage(e.usage);outTok=e.usage.output_tokens||outTok;if(e.usage.input_tokens)inTok=e.usage.input_tokens}if(e.delta?.stop_reason)stop=e.delta.stop_reason}
       else if(e.type==="error") throw new Error(e.error?.message||"stream error");
     }
   }
+  }finally{addUsage(model,inTok||Math.round(JSON.stringify(messages||[]).length/4),outTok||Math.round(text.length/4))} // providers that report no usage are estimated
   if(out){out.stop=stop;out.content=Object.keys(blocks).sort((a,b)=>a-b).map(k=>blocks[k]).flatMap(b=>{
     if(b.type==="text")return b.text.trim()?[{type:"text",text:b.text}]:[];
     if(b.type==="tool_use"){let input={};try{input=JSON.parse(b.json||"{}")}catch{input={_unparsed:b.json}}return[{type:"tool_use",id:b.id,name:b.name,input}]}
@@ -782,33 +789,42 @@ Risk: "low" for ordinary work, "medium" for something worth a glance (several fi
 }
 const blockedResult=(why)=>({text:why+" Do not retry this; explain to the user and ask how to proceed.",err:true});
 let highStreak=0; // high-risk actions in a row that the agent was asked to redo
+// Even with every check bypassed, an action that could do real damage asks first once the agent has read web content
+// in this request: a web page can carry instructions meant to trick the agent.
+function riskyAfterWeb(u,pre){
+  const i=u.input||{}, n=v=>Array.isArray(v)?v.length:0;
+  if(pre.class==="delete")return true;
+  if(u.name==="move_files"&&n(i.moves)>10||u.name==="write_files"&&n(i.files)>10)return true;
+  return u.name==="run_command"&&/\b(remove-item|rm|del|erase|rd|rmdir|ri|move-item|mv|move|ren|rename-item|format|clear-content|set-content|out-file)\b/i.test(String(i.command||""));
+}
 async function toolFlow(u,userReq,intent,lead,cfg,T,scope){
   if(u.name==="list_project_chats"||u.name==="read_project_chat"){ // in-app, read-only: no approval needed
     const c=toolCard(u.name,u.input,T); c.show(u.name==="read_project_chat"?"Read project chat "+(u.input?.id||""):"List project chats"); c.status("done");Brain.msg(lead,"t:"+u.name);Brain.ok("t:"+u.name);
     return{text:projToolRun(u),err:false};
   }
   const card=toolCard(u.name,u.input,T);
-  const pre=await api("/api/precheck",{name:u.name,input:u.input,scope,folder:CHAT_DIR});
+  const pre=await api("/api/precheck",{name:u.name,input:u.input,scope,folder:CHAT_DIR,turn:TURN&&TURN.id,chat:chatId});
   if(!pre.ok){Brain.fail("guard");card.status("blocked");card.show("Blocked by safety rules: "+pre.error);return blockedResult("Blocked by safety rules: "+pre.error+".")}
   card.show(pre.summary);
   if(pre.class==="sandbox"){
     card.status("running in sandbox…"); Brain.msg(lead,"sandbox");
-    const r=await api("/api/run",{name:u.name,input:u.input,scope,folder:CHAT_DIR});
+    const r=await api("/api/run",{name:u.name,input:u.input,scope,folder:CHAT_DIR,turn:TURN&&TURN.id,chat:chatId});
     const bad=!r.ok||/^(The sandbox could not run|The program was stopped)/.test(r.output||"")||/exit code [^0]/.test(r.output||"");
     card.status(bad?"failed":"done"); card.result(r.ok?r.output:r.error,bad); bad?Brain.fail("sandbox"):Brain.ok("sandbox"); bad?TURN.fail++:TURN.ok++;
     return r.ok?{text:`<tool_output untrusted="true">\n${String(r.output).slice(0,9000)}\n</tool_output>`,err:false}:{text:"Error: "+r.error,err:true};
   }
   if(pre.class==="web"&&(u.name==="web_search"||!/[?#]/.test(String(u.input&&u.input.url)))&&String((u.input&&(u.input.url||u.input.query))||"").length<300){
     card.status("running…");Brain.msg(lead,"t:"+u.name);
-    const r=await api("/api/run",{name:u.name,input:u.input,scope,folder:CHAT_DIR});
-    card.status(r.ok?"done":"failed");card.result(r.ok?r.output:r.error,!r.ok);r.ok?Brain.ok("t:"+u.name):Brain.fail("t:"+u.name);
+    const r=await api("/api/run",{name:u.name,input:u.input,scope,folder:CHAT_DIR,turn:TURN&&TURN.id,chat:chatId});
+    card.status(r.ok?"done":"failed");card.result(r.ok?r.output:r.error,!r.ok);r.ok?Brain.ok("t:"+u.name):Brain.fail("t:"+u.name);if(r.ok&&TURN)TURN.untrusted=true;
     return r.ok?{text:`<web_content untrusted="true">\n${String(r.output).slice(0,9000)}\n</web_content>`,err:false}:{text:"Error: "+r.error,err:true};
   }
   const rv=pre.inside===true?{verdict:"attached folder",risk:"low"}:cfg.approval==="bypass"?{verdict:"unchecked",risk:"low"}:await review(pre,u.name,u.input,userReq+(pre.inside==="command"?"\n\n[The user attached the folder "+CHAT_DIR+" and allowed any action inside it and its subfolders. A command that stays inside it is low risk. A command that changes or deletes anything outside it, or touches OmniRoute's data folder, is high risk.]":""),intent,lead,T);
   card.status(pre.class+" · "+rv.verdict);
   let go;
   const high=rv.verdict==="unsafe"||rv.risk==="high";
-  if(cfg.approval==="bypass"||pre.inside===true||(pre.inside==="command"&&!high))go=true;
+  if(cfg.approval==="bypass"&&TURN&&TURN.untrusted&&riskyAfterWeb(u,pre))go=await card.ask("Approve (web content was read in this request)");
+  else if(cfg.approval==="bypass"||pre.inside===true||(pre.inside==="command"&&!high))go=true;
   else if(cfg.approval==="highonly"&&rv.verdict!=="unreviewed"){
     if(!high){go=true;highStreak=0}
     else if(++highStreak<=3){ // the agent writes a different command instead of asking the user
@@ -820,17 +836,56 @@ async function toolFlow(u,userReq,intent,lead,cfg,T,scope){
   else go=await card.ask(rv.verdict==="unsafe"?"Run anyway (reviewer objected)":rv.verdict==="unreviewed"?"Approve (not reviewed)":"Approve");
   if(!go){card.status("denied");return{text:"The user denied this action.",err:true}}
   card.status("running…");Brain.msg(lead,"t:"+u.name);
-  const r=await api("/api/run",{name:u.name,input:u.input,scope,folder:CHAT_DIR});
+  const r=await api("/api/run",{name:u.name,input:u.input,scope,folder:CHAT_DIR,turn:TURN&&TURN.id,chat:chatId});
   card.status(r.ok?"done":"failed"); card.result(r.ok?r.output:r.error,!r.ok); r.ok?Brain.ok("t:"+u.name):Brain.fail("t:"+u.name); r.ok?TURN.ok++:TURN.fail++;
+  if(r.ok&&u.name==="download_file")TURN.untrusted=true;
   if(r.ok&&/^(write_file|write_files|edit_file|copy_file|move_file|move_files|download_file)$/.test(u.name))(String(r.output).match(/[A-Za-z]:\\[^\n"<>|*?]*?\.[A-Za-z0-9]{1,8}(?=$|[\s(,]|\.(?:\s|$))/g)||[]).forEach(p=>{(TURN.written||(TURN.written=[])).push(p);knowFile(p)});
   return r.ok?{text:`<tool_output untrusted="true">\n${r.output.slice(0,9000)}\n</tool_output>`,err:false}:{text:"Error: "+r.error,err:true};
 }
 // Steps per task: -1 = auto (40, or no limit when approval is "bypass"), 0 = no limit, otherwise that number
 const stepLimit=cfg=>{const s=Number(SET().steps);return s===0||(s<0&&cfg&&cfg.approval==="bypass")?Infinity:s>0?s:40};
+// ---- undo: every change from one answer can be reversed with one click (commands excepted)
+async function addUndo(turnId){
+  try{
+    const i=await api("/api/undo/info",{turn:turnId});if(!i.ok||!i.changes)return;
+    const fin=[...col.querySelectorAll(".turn.final")].pop();if(!fin)return;
+    const b=document.createElement("div");b.className="undo";
+    b.innerHTML=`<button class="btn" data-undo="${esc(turnId)}">Undo ${i.changes} change${i.changes>1?"s":""}</button>`+(i.commands?`<span class="mut">${i.commands} command${i.commands>1?"s":""} cannot be undone</span>`:"");
+    fin.appendChild(b);
+  }catch{}
+}
+col.addEventListener("click",async e=>{
+  const b=e.target.closest("[data-undo]");if(!b||busy)return;
+  if(!b.dataset.sure){b.dataset.sure="1";const t=b.textContent;b.textContent="Click again to undo";setTimeout(()=>{if(b.isConnected&&b.dataset.sure){delete b.dataset.sure;b.textContent=t}},4000);return}
+  b.disabled=true;b.textContent="Undoing…";
+  const r=await api("/api/undo",{turn:b.dataset.undo,folder:CHAT_DIR}).catch(e=>({ok:false,error:String(e)}));
+  const box=b.parentNode;
+  box.innerHTML=r.ok?`<details><summary>Undone: ${r.done} change${r.done===1?"":"s"}${r.skipped?", "+r.skipped+" skipped":""}</summary><pre>${esc(r.report)}</pre></details>`:`<span class="mut">Undo failed: ${esc(r.error||"unknown error")}</span>`;
+  if(chatId)saveChat("");
+});
+// ---- usage
+let USAGE={calls:0,in:0,out:0,cost:0,unpriced:0}, PRICES={};
+F("/api/pricing").then(r=>r.json()).then(j=>{if(j.ok)PRICES=j.pricing||{}}).catch(()=>{});
+const fmtTok=n=>n>=1e6?(n/1e6).toFixed(1)+"M":n>=1e3?(n/1e3).toFixed(1)+"k":String(n);
+function priceOf(model){
+  const m=String(model||""), i=m.indexOf("/"), prov=i>0?m.slice(0,i):"", id=i>0?m.slice(i+1):m;
+  const p=(PRICES[prov]&&PRICES[prov][id])||Object.values(PRICES).map(x=>x&&x[m]).find(Boolean);
+  return p&&(Number(p.input)||Number(p.output))?{in:Number(p.input)||0,out:Number(p.output)||0}:null;
+}
+function addUsage(model,inT,outT){
+  USAGE.calls++;USAGE.in+=inT;USAGE.out+=outT;if(TURN)TURN.tok=(TURN.tok||0)+inT+outT;
+  const p=priceOf(model);if(p)USAGE.cost+=(inT*p.in+outT*p.out)/1e6;else USAGE.unpriced++;
+  showUsage();
+}
+function showUsage(){const el=$("#usage");if(!el)return;if(!USAGE.calls){el.textContent="";el.title="";return}
+  el.textContent=USAGE.calls+" call"+(USAGE.calls>1?"s":"")+" · "+fmtTok(USAGE.in+USAGE.out)+" tokens"+(USAGE.cost>0?" · $"+(USAGE.cost<.01?USAGE.cost.toFixed(4):USAGE.cost.toFixed(2))+(USAGE.unpriced?"+":""):"");
+  el.title="This conversation: "+USAGE.calls+" model calls, "+USAGE.in.toLocaleString()+" input and "+USAGE.out.toLocaleString()+" output tokens"+(USAGE.cost>0?", about $"+USAGE.cost.toFixed(4):"")+(USAGE.unpriced?". "+USAGE.unpriced+" calls had no price from OmniRoute (free or unknown).":".")}
+const budgetHit=()=>{const b=Number(SET().budget)||0;return b>0&&TURN&&TURN.tok>b};
 // o: {T: lane for a parallel worker, system, tools, scope:{writes:[abs paths]}, maxSteps}
 async function agent(q,ctx,leads,o={}){
   const T=o.T, cfg=await effCfg(), sys=typeof o.system==="function"?o.system(cfg):(o.system||agentSystem(cfg)), tools=o.tools||[...TOOLS,...(curProject?PROJ_TOOLS:[])], max=o.maxSteps||stepLimit(cfg);
   let msgs=[...ctx], actions=[], final="", stopSent=0;
+  const seen=new Map(); let failRun=0, warned=false; // runaway guard: the same action again and again, or nothing but failures
   for(let step=0;step<=max;step++){ // the extra step is for the wrap-up summary once the limit is reached
     const out={};
     const mkA=m=>({model:m,system:sys,messages:msgs,tools});
@@ -844,13 +899,19 @@ async function agent(q,ctx,leads,o={}){
       }
       break}
     if(step===max){const n=turn("Plan","",T);n.end();n.text("Stopped after "+max+" steps.");final=(r.text?r.text+"\n\n":"")+"(Stopped after "+max+" steps. Say \"continue\" to keep going, or raise \"Steps per task\" in Settings.)";break}
+    const stuck=uses.map(u=>{const s=u.name+JSON.stringify(u.input||{});seen.set(s,(seen.get(s)||0)+1);return seen.get(s)}).some(c=>c>=5)||failRun>=10;
+    const over=budgetHit();
+    if(stuck||over){const why=over?"it used up the token budget for one request ("+fmtTok(TURN.tok)+" tokens)":failRun>=10?"its last "+failRun+" actions all failed":"it kept repeating the same action";
+      const n=turn("Plan","",T);n.end();n.text("Stopped: "+why+".");final=(r.text?r.text+"\n\n":"")+"(Stopped because "+why+". Say \"continue\" to try again"+(over?", or raise \"Token budget per request\" in Settings":"")+".)";break}
     msgs.push({role:"assistant",content:out.content});
     const results=[];
     for(const u of uses){
       const res=await toolFlow(u,q,r.text,r.model,cfg,T,o.scope);
       actions.push(u.name+(res.err?" (not done)":""));
       results.push({type:"tool_result",tool_use_id:u.id,content:res.text,is_error:res.err});
+      failRun=res.err?failRun+1:0;
     }
+    if(!warned&&([...seen.values()].some(c=>c>=3)||failRun>=6)){warned=true;results.push({type:"text",text:"You are repeating the same action or your actions keep failing. Stop and think: look at what is actually there, change your approach, or explain to the user what is blocking you. Repeating it again will stop this task."})}
     const guide=o.steer&&o.steer(); if(guide)results.push({type:"text",text:"The user sent new guidance. Follow it; it overrides earlier plans:\n"+guide});
     if(o.stopping&&o.stopping()){
       if(++stopSent>3){final=r.text||"(stopped)";break}
@@ -1158,7 +1219,7 @@ async function send(){
   const u=document.createElement("div");u.className="msg";u.innerHTML=`<div class="user">${esc(shown)}</div>`;col.appendChild(u);linkPaths(u);syncConvo();
   if(omni.on){omniBegin(q);return}
   if(/^\s*(no\b|wrong|incorrect|that'?s (wrong|not right|incorrect)|(it )?(didn'?t|doesn'?t) work)/i.test(q))memFeedback(LAST_MEM,false); // a correction counts against the memories used last time
-  CUR_Q=q;TURN={ok:0,fail:0,written:[],t0:Date.now(),attached:A.length>0,att:A.map(a=>String(a.path).toLowerCase()),images:A.some(a=>a.image)};TASK={request:q,plan:"",criteria:[],tests:"",decisions:[]};MEM_USED=[];trace=mkTrace();scroll();Brain.turn();
+  CUR_Q=q;TURN={id:uid(),untrusted:false,tok:0,ok:0,fail:0,written:[],t0:Date.now(),attached:A.length>0,att:A.map(a=>String(a.path).toLowerCase()),images:A.some(a=>a.image)};TASK={request:q,plan:"",criteria:[],tests:"",decisions:[]};MEM_USED=[];trace=mkTrace();scroll();Brain.turn();
   saveChat(typed,[...history,{role:"user",content:q}]); // the question is on disk even if the window closes mid-answer
   busy=true;ctrl=new AbortController();sendBtn.innerHTML=ico("stop");sendBtn.classList.add("stop");curProject=projectOf();
   const ctx=fitCtx([...history,{role:"user",content:q}]);
@@ -1175,7 +1236,7 @@ async function send(){
       const ui=turn("Answer","final"); ui.text(String(final).replace(/\n\n\[Actions this turn:[^\]]*\]$/,"")); ui.end();
     }
     try{await finishFiles(final,q)}catch(e){}
-    history=[...ctx,{role:"assistant",content:final||"(no answer)"}];done=true;Brain.msg(Brain.last,"output");Brain.ok("output");Brain.files(TURN.files);learn(q,String(final||""),TURN.ok>0&&TURN.fail===0).catch(()=>{});memFeedback(MEM_USED,true);LAST_MEM=[...MEM_USED];
+    history=[...ctx,{role:"assistant",content:final||"(no answer)"}];done=true;Brain.msg(Brain.last,"output");Brain.ok("output");Brain.files(TURN.files);await addUndo(TURN.id);learn(q,String(final||""),TURN.ok>0&&TURN.fail===0).catch(()=>{});memFeedback(MEM_USED,true);LAST_MEM=[...MEM_USED];
   }catch(e){if(e&&e.name!=="AbortError"){memFeedback(MEM_USED,false);Brain.fail(Brain.last);const n=turn("Error","final");n.end();n.error(e.message||String(e))}}
   if(!done)history=[...ctx,{role:"assistant",content:"(stopped before finishing)"}];
   busy=false;ctrl=null;sendBtn.innerHTML=ico("send");sendBtn.classList.remove("stop");syncSend();if(trace){trace.finish();trace=null}scroll();saveChat(typed);
@@ -1362,7 +1423,7 @@ function saveChat(q,hist){
   if(!history_.length)return;
   const chats=DB.chats(); if(!chatId)chatId=Date.now()+"";
   const old=chats.find(c=>c.id===chatId);
-  const rec={id:chatId,title:old?.title||pendingTitle||q.slice(0,40),html:col.innerHTML,history:history_,graph:Brain.snapshot(),dir:CHAT_DIR,mode:SET().mode||"default",ts:Date.now(),
+  const rec={id:chatId,title:old?.title||pendingTitle||q.slice(0,40),html:col.innerHTML,history:history_,graph:Brain.snapshot(),usage:USAGE,dir:CHAT_DIR,mode:SET().mode||"default",ts:Date.now(),
     folder:old?old.folder:(sel?.kind==="folder"?sel.id:null),project:old?old.project:(sel?.kind==="project"?sel.id:null)};
   const list=[rec,...chats.filter(c=>c.id!==chatId)].slice(0,500);
   LS.set("orc.chats",list);flushKV();
@@ -1376,6 +1437,14 @@ function grp(kind,g,inner){
 }
 function renderChats(){
   const chats=[...DB.chats()].sort((a,b)=>b.ts-a.ts), F=DB.folders(), P=DB.projects();
+  const sq=($("#csearch")?.value||"").trim().toLowerCase();
+  if(sq){ // search: every word must appear in the title or the conversation
+    const words=sq.split(/\s+/), hits=[];
+    for(const c of chats){const body=(c.history||[]).map(m=>typeof m.content==="string"?m.content:JSON.stringify(m.content)).join("\n"),all=(c.title+"\n"+body).toLowerCase();
+      if(!words.every(w=>all.includes(w)))continue;const at=body.toLowerCase().indexOf(words[0]);hits.push({c,snip:at<0?"":body.slice(Math.max(0,at-30),at+70).replace(/\s+/g," ")})}
+    $("#chats").innerHTML=hits.length?hits.slice(0,100).map(({c,snip})=>`<div class="ci ${c.id===chatId?"on":""}" data-id="${c.id}"><span>${esc(c.title)}${snip?`<small>…${esc(snip)}…</small>`:""}</span></div>`).join(""):'<div class="mut" style="padding:6px 10px">No matching chats</div>';
+    return;
+  }
   const folderHtml=f=>grp("folder",f,chats.filter(c=>c.folder===f.id).map(chatRow).join(""));
   let h="";
   for(const p of P)h+=grp("project",p,F.filter(f=>f.project===p.id).map(folderHtml).join("")+chats.filter(c=>c.project===p.id&&!c.folder).map(chatRow).join(""));
@@ -1397,7 +1466,7 @@ function openChat(id){
   const c=DB.chats().find(c=>c.id===id); if(!c)return;
   omni.goal="";omni.notes=[];omni.steer=[];chatId=id;history=c.history;col.innerHTML=c.html;hydrate(col);CHAT_DIR=c.dir||null;renderChips();if(c.mode&&MODES[c.mode]&&c.mode!==SET().mode)setSet("mode",c.mode); // a conversation keeps the mode it was using
   sel=c.folder?{kind:"folder",id:c.folder}:c.project?{kind:"project",id:c.project}:null;
-  renderChats();scroll();syncConvo();Brain.reset();Brain.restore(c.graph);
+  renderChats();scroll();syncConvo();Brain.reset();Brain.restore(c.graph);USAGE={calls:0,in:0,out:0,cost:0,unpriced:0,...(c.usage||{})};showUsage();
 }
 $("#chats").onclick=e=>{
   if(busy)return;
@@ -1405,7 +1474,16 @@ $("#chats").onclick=e=>{
   if(g){const k=g.dataset.kind+g.dataset.id,S=collapsed();S.has(k)?S.delete(k):S.add(k);LS.set("orc.collapsed",[...S]);sel={kind:g.dataset.kind,id:g.dataset.id};renderChats();return}
   const ci=e.target.closest(".ci"); if(ci)openChat(ci.dataset.id); else{sel=null;renderChats()}
 };
-function newChat(){if(busy)return;omni.goal="";omni.notes=[];omni.steer=[];CHAT_DIR=null;chatId=null;history=[];attachments=[];renderChips();empty();syncConvo();Brain.reset();renderChats()}
+$("#csearch").addEventListener("input",()=>renderChats());
+$("#csearch").addEventListener("keydown",e=>{if(e.key==="Escape"){e.target.value="";renderChats()}});
+function exportChat(id){
+  const c=DB.chats().find(c=>c.id===id);if(!c)return;
+  const txt=m=>typeof m.content==="string"?m.content:(m.content||[]).map(b=>b.type==="text"?b.text:b.type==="image"?"[image]":"").join("\n");
+  const md="# "+c.title+"\n\n_Exported from OmniGPT on "+new Date().toLocaleString()+"_\n\n"+(c.history||[]).map(m=>(m.role==="user"?"## You\n\n":"## OmniGPT\n\n")+txt(m).trim()).join("\n\n")+"\n";
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([md],{type:"text/markdown"}));a.download=(c.title.replace(/[<>:"/\\|?*\x00-\x1f]+/g," ").trim().slice(0,80)||"chat")+".md";
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+}
+function newChat(){if(busy)return;omni.goal="";omni.notes=[];omni.steer=[];CHAT_DIR=null;chatId=null;history=[];attachments=[];renderChips();empty();syncConvo();Brain.reset();USAGE={calls:0,in:0,out:0,cost:0,unpriced:0};showUsage();renderChats()}
 $("#new").onclick=newChat;
 $("#newf").onclick=async()=>{const n=await ask({title:"New folder",value:"",ok:"Create"});if(n&&n.trim()){const f={id:uid(),name:n.trim(),project:sel?.kind==="project"?sel.id:null};upd("orc.folders",L=>[...L,f])}};
 $("#newp").onclick=async()=>{const n=await ask({title:"New project",value:"",ok:"Create"});if(n&&n.trim())upd("orc.projects",L=>[...L,{id:uid(),name:n.trim()}])};
@@ -1420,7 +1498,7 @@ document.addEventListener("click",e=>{if(!cm.contains(e.target))cm.style.display
 $("#chats").addEventListener("contextmenu",e=>{
   e.preventDefault(); if(busy)return;
   const ci=e.target.closest(".ci"), g=e.target.closest(".grp"), P=DB.projects(), F=DB.folders();
-  if(ci){const id=ci.dataset.id;showMenu(e.clientX,e.clientY,[{t:"Rename",f:()=>rename("orc.chats",id,"Chat name")},"-",{t:"Move to: unfiled",f:()=>moveChat(id,null,null)},...P.map(p=>({t:"Move to project: "+p.name,f:()=>moveChat(id,null,p.id)})),...F.map(f=>({t:"Move to folder: "+f.name,f:()=>moveChat(id,f.id,null)})),"-",{t:"Delete",f:()=>delChat(id)}])}
+  if(ci){const id=ci.dataset.id;showMenu(e.clientX,e.clientY,[{t:"Rename",f:()=>rename("orc.chats",id,"Chat name")},{t:"Export as Markdown",f:()=>exportChat(id)},"-",{t:"Move to: unfiled",f:()=>moveChat(id,null,null)},...P.map(p=>({t:"Move to project: "+p.name,f:()=>moveChat(id,null,p.id)})),...F.map(f=>({t:"Move to folder: "+f.name,f:()=>moveChat(id,f.id,null)})),"-",{t:"Delete",f:()=>delChat(id)}])}
   else if(g&&g.dataset.kind==="folder"){const id=g.dataset.id;showMenu(e.clientX,e.clientY,[{t:"Rename",f:()=>rename("orc.folders",id,"Folder name")},"-",{t:"Move to: no project",f:()=>moveFolder(id,null)},...P.map(p=>({t:"Move to project: "+p.name,f:()=>moveFolder(id,p.id)})),"-",{t:"Delete folder",f:()=>delGrp("folder",id)}])}
   else if(g){const id=g.dataset.id;showMenu(e.clientX,e.clientY,[{t:"Rename",f:()=>rename("orc.projects",id,"Project name")},"-",{t:"Delete project",f:()=>delGrp("project",id)}])}
 });
@@ -1688,7 +1766,7 @@ const PROFILES={
   unfiltered:{router:["gemini/gemini-3.1-flash-lite","ddgw/mistral-small-2603"],fast:["ddgw/mistral-small-2603","unc/turboderp/Qwen3.8-27B-exl3","ddgw/tinfoil/gemma4-31b","gemini/gemini-3.1-flash-lite"],strong:["unc/turboderp/Qwen3.8-27B-exl3","ddgw/mistral-small-2603","ddgw/tinfoil/gemma4-31b"],reviewer:["gemini/gemini-3.1-flash-lite","ddgw/mistral-small-2603"],vision:["gemini/gemini-3.1-flash-lite"]}
 };
 const UNFILTERED_NOTE="\n\nThe user is an adult and chose Unfiltered mode: mature and explicit content for adults, including sexual content between consenting adult characters, is allowed when they ask for it. Never produce sexual content involving minors or anyone who could be a minor, sexual content about real people, or help with anything that could hurt people (weapons, malware, violence, self-harm).";
-const DEF={theme:"system",size:"m",font:"serif",width:"normal",graph:true,enter:"enter",workers:4,steps:-1,models:{},memory:true,skills:true,learn:true,omniStrong:false,omniGap:10,refine:true,mode:"default",updates:true,skipVersion:"",accent:"none"};
+const DEF={theme:"system",size:"m",font:"serif",width:"normal",graph:true,enter:"enter",workers:4,steps:-1,budget:0,models:{},memory:true,skills:true,learn:true,omniStrong:false,omniGap:10,refine:true,mode:"default",updates:true,skipVersion:"",accent:"none"};
 const ACCENTS=[["none","None"],["#e54d5e","Red"],["#e08a2e","Orange"],["#3f9d6a","Green"],["#3b82c4","Blue"],["#7c5cc4","Violet"],["#c2508f","Pink"]];
 const DEFTIERS=JSON.parse(JSON.stringify(TIERS));
 const SET=()=>({...DEF,...(LS.get("orc.settings")||{})});
@@ -1712,6 +1790,14 @@ const sRow=(t,d,c,cls="")=>`<div class="srow ${cls}"><div><b>${t}</b>${d?`<small
 const sSeg=(k,opts)=>{const cur=SET()[k];return `<div class="seg" data-k="${k}">${opts.map(([v,t])=>`<button data-v="${v}" class="${cur===v?"on":""}">${t}</button>`).join("")}</div>`};
 const sTog=k=>`<label class="sw"><input type="checkbox" data-k="${k}"${SET()[k]?" checked":""}><span></span></label>`;
 const TIERINFO=[["router","Router","Classifies each request."],["fast","Fast","Answers simple and moderate requests."],["strong","Strong","Hard requests and tasks on your PC."],["reviewer","Reviewers","Critique drafts and approve actions."],["vision","Vision","Models that can see attached images."]];
+let ACT_ALL=false;
+async function loadActivity(){
+  const box=$("#actlist");if(!box)return;
+  let items=[];try{items=(await (await F("/api/activity")).json()).items||[]}catch{}
+  const READS=/^(read_file|read_files|list_dir|inspect_file|web_search|web_open|list_project_chats|read_project_chat)$/;
+  const L=items.filter(x=>ACT_ALL||!READS.test(x.tool)),names=new Map(DB.chats().map(c=>[c.id,c.title]));
+  box.innerHTML=L.length?L.map(x=>`<div class="act-row"><span class="mut">${esc(new Date(x.t).toLocaleString([], {month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}))}</span><span><b>${esc(String(x.tool).replace(/_/g," "))}</b>${x.ok?"":' <span class="bad">failed</span>'}${x.chat&&names.has(x.chat)?`<br><a href="#" data-actchat="${esc(x.chat)}">${esc(names.get(x.chat).slice(0,30))}</a>`:""}</span><pre>${esc(String(x.summary||"").slice(0,400))}${x.error?"\n"+esc(x.error):""}</pre></div>`).join(""):'<p class="mut">Nothing yet.</p>';
+}
 const PANES={
   general:()=>`<h4>General</h4>`+
     sRow("Theme","Match the system or choose one.",sSeg("theme",[["system","System"],["light","Light"],["dark","Dark"]]))+
@@ -1745,6 +1831,8 @@ const PANES={
         `<div class="arow"><button class="btn" id="k-cancel">Cancel</button><button class="btn pri" id="k-save">Save</button></div>`}
     const K=SKL();return `<h4>Skills</h4>`+sRow("Use skills","Apply a skill when a request matches it.",sTog("skills"))+sRow("New skill","",`<button class="btn" id="k-new">Create</button>`)+
       (K.length?K.map(k=>`<div class="srow"><div><b>${esc(k.name)}${k.auto?'<span class="tag">learned</span>':""}</b><small>${esc(k.description)}</small></div><div class="tbtn"><label class="sw"><input type="checkbox" data-kon="${k.id}"${k.on!==false?" checked":""}><span></span></label><button class="btn" data-kedit="${k.id}">Edit</button><button class="btn" data-kdel="${k.id}">Delete</button></div></div>`).join(""):'<p class="mut" style="margin-top:14px">No skills yet.</p>')},
+  activity:()=>{setTimeout(loadActivity);return `<h4>Activity</h4><p class="mut">Every action agents took on your PC, newest first: files changed, moved and deleted, commands and downloads.</p>`+
+    sRow("Show reads and web lookups","Also list files read and pages opened.",`<label class="sw"><input type="checkbox" id="act-all"${ACT_ALL?" checked":""}><span></span></label>`)+`<div id="actlist"><p class="mut">Loading…</p></div>`},
   agents:()=>`<h4>Agents and safety</h4>`+
     sRow("Approval","Whether actions on your PC wait for you.",`<select data-c="approval"><option value="ask"${CFG.approval==="ask"?" selected":""}>Ask before changes</option><option value="auto"${CFG.approval==="auto"?" selected":""}>Auto-run low-risk actions</option><option value="highonly"${CFG.approval==="highonly"?" selected":""}>Only stop high-risk actions</option><option value="bypass"${CFG.approval==="bypass"?" selected":""}>Bypass all checks</option></select>`)+
     sRow("Working folder","Where commands run and relative paths start.",`<input data-c="cwd" value="${esc(CFG.cwd)}" spellcheck="false">`)+
@@ -1752,6 +1840,7 @@ const PANES={
     sRow("Allowed folders","Agents may only touch these. One per line.",`<textarea data-c="roots" spellcheck="false">${esc((CFG.roots||[]).join("\n"))}</textarea>`,"col2")+
     sRow("Refine prompts","An agent rewrites each request into a precise brief before work starts.",sTog("refine"))+
     sRow("Steps per task","How many actions (reading, moving, writing files…) an agent may take before it stops and reports. Big jobs such as organizing a folder need more.",`<select data-k="steps">${[[-1,"Auto (40, no limit when bypassing)"],[15,"15"],[25,"25"],[40,"40"],[60,"60"],[100,"100"],[200,"200"],[0,"No limit"]].map(([n,l])=>`<option value="${n}"${Number(SET().steps)===n?" selected":""}>${l}</option>`).join("")}</select>`)+
+    sRow("Token budget per request","A request stops once it has used this many tokens across all models. Protects against runaway costs.",`<select data-k="budget">${[[0,"No budget"],[100000,"100k"],[250000,"250k"],[500000,"500k"],[1000000,"1M"],[2000000,"2M"],[5000000,"5M"]].map(([n,l])=>`<option value="${n}"${Number(SET().budget)===n?" selected":""}>${l}</option>`).join("")}</select>`)+
     sRow("Parallel agents","The most workers that can run at once.",`<select data-k="workers">${[2,3,4,5,6].map(n=>`<option${SET().workers==n?" selected":""}>${n}</option>`).join("")}</select>`)+
     sRow("OMNI pause between steps","Seconds OMNI waits between steps, which keeps free quotas from running out.",`<select data-k="omniGap">${[5,10,30,60,120].map(n=>`<option${SET().omniGap==n?" selected":""}>${n}</option>`).join("")}</select>`)+
     sRow("OMNI may use the strong model","Only after the fast models have failed twice in a row. Off keeps OMNI on the free tier.",sTog("omniStrong")),
@@ -1787,8 +1876,16 @@ $("#console").onclick=()=>{
 function showUpdate(u,manual){
   if(!u||!u.newer||(!manual&&(SET().skipVersion===u.latest||!SET().updates))||$("#toast"))return;
   const t=document.createElement("div");t.id="toast";
-  t.innerHTML=`<span>OmniGPT ${esc(u.latest)} is available.</span><a href="${esc(u.url)}" target="_blank" rel="noopener">View release</a><button title="Hide until the next version">Dismiss</button>`;
-  t.querySelector("button").onclick=()=>{setSet("skipVersion",u.latest);t.remove()};
+  t.innerHTML=`<span>OmniGPT ${esc(u.latest)} is available.</span>${u.installable?'<button class="inst" title="Download, check and install it, then reopen OmniGPT">Install now</button>':""}<a href="${esc(u.url)}" target="_blank" rel="noopener">View release</a><button class="dis" title="Hide until the next version">Dismiss</button>`;
+  t.querySelector(".dis").onclick=()=>{setSet("skipVersion",u.latest);t.remove()};
+  const ib=t.querySelector(".inst");
+  if(ib)ib.onclick=async()=>{
+    if(busy){flash("Wait for the current answer to finish, then install the update.");return}
+    t.innerHTML=`<span>Downloading OmniGPT ${esc(u.latest)}…</span>`;
+    const r=await api("/api/update/install",{}).catch(e=>({ok:false,error:String(e)}));
+    if(r.ok){t.innerHTML=`<span>Installing OmniGPT ${esc(r.version)}. The window will close and reopen in a moment.</span>`;flushKV()}
+    else{t.innerHTML=`<span>Update failed: ${esc(r.error||"unknown error")}</span><a href="${esc(u.url)}" target="_blank" rel="noopener">Get it manually</a><button class="dis">Close</button>`;t.querySelector(".dis").onclick=()=>t.remove()}
+  };
   document.body.appendChild(t);
 }
 async function checkForUpdate(){if(!SET().updates)return;try{const r=await (await F("/api/update")).json();if(r.ok)showUpdate(r,false)}catch{}}
@@ -1796,6 +1893,8 @@ $("#s-nav").onclick=e=>{const p=e.target.dataset.p;if(p){SK_EDIT=null;showPane(p
 F("/api/config").then(r=>r.json()).then(c=>{CFG=c;bpStat()}).catch(()=>{});
 $("#gear").onclick=async()=>{try{CFG=await (await F("/api/config")).json()}catch{}showPane(curPane);$("#dlg").showModal()};
 $("#s-x").onclick=()=>$("#dlg").close();
+$("#s-body").addEventListener("change",e=>{if(e.target.id==="act-all"){ACT_ALL=e.target.checked;loadActivity()}});
+$("#s-body").addEventListener("click",e=>{const a=e.target.closest("[data-actchat]");if(a){e.preventDefault();$("#dlg").close();if(!busy)openChat(a.dataset.actchat)}});
 $("#s-body").addEventListener("click",async e=>{
   const sb=e.target.closest(".seg button");
   if(sb){const k=sb.parentNode.dataset.k;setSet(k,sb.dataset.v);sb.parentNode.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b===sb));return}

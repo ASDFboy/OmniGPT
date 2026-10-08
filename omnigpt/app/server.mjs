@@ -8,7 +8,7 @@ import os from "node:os";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { Readable } from "node:stream";
-import { loadConfig, saveConfig, precheck, run, resolveScope, runSandboxRaw, sandboxInfo, checkPath, grantFolder, ungrantFolder, folderConfig, insideFolder } from "./tools.mjs";
+import { loadConfig, saveConfig, precheck, run, resolveScope, runSandboxRaw, sandboxInfo, checkPath, grantFolder, ungrantFolder, folderConfig, insideFolder, undoTurn, undoInfo, readActivity } from "./tools.mjs";
 import { inspect, MIME, RUNNABLE } from "./files.mjs";
 import { pipeline } from "node:stream/promises";
 
@@ -31,11 +31,57 @@ async function checkUpdate(force) {
   let best = null;
   for (const rel of await r.json()) {
     const m = /^omnigpt-v(\d+\.\d+\.\d+)$/.exec(rel.tag_name || ""); if (!m || rel.draft || rel.prerelease) continue;
-    if (!best || newer(m[1], best.version)) best = { version: m[1], url: rel.html_url };
+    if (!best || newer(m[1], best.version)) {
+      const asset = (n) => (rel.assets || []).find((a) => a.name === n)?.browser_download_url || null;
+      best = { version: m[1], url: rel.html_url, exe: asset("OmniGPT-Setup.exe"), sha: asset("OmniGPT-Setup.exe.sha256") };
+    }
   }
-  const data = { current: VERSION, latest: best ? best.version : VERSION, newer: !!best && newer(best.version, VERSION), url: best ? best.url : `https://github.com/${REPO}/releases` };
+  const data = { current: VERSION, latest: best ? best.version : VERSION, newer: !!best && newer(best.version, VERSION), url: best ? best.url : `https://github.com/${REPO}/releases`, installable: !!(best && best.exe && best.sha) };
+  Object.defineProperty(data, "assets", { value: best ? { exe: best.exe, sha: best.sha } : null, enumerable: false }); // used by the installer download, not sent to the page
   updateCache = { at: Date.now(), data }; return data;
 }
+// One-click update: download the newest installer from the GitHub release, check it against the release's SHA-256 file,
+// then start it outside this process tree (closing the window stops this backend) so it can replace the app and reopen it.
+let installing = false;
+async function installUpdate() {
+  if (installing) throw new Error("An update is already being installed.");
+  installing = true;
+  try {
+    const u = await checkUpdate(true);
+    if (!u.newer) throw new Error("OmniGPT is already up to date.");
+    if (!u.installable || !u.assets) throw new Error("This release has no installer to download. Use the release page instead.");
+    const okHost = (s) => { const h = new URL(s).hostname; return h === "github.com" || h.endsWith(".githubusercontent.com"); };
+    if (!okHost(u.assets.exe) || !okHost(u.assets.sha)) throw new Error("Unexpected download location.");
+    const shaText = await (await fetch(u.assets.sha, { signal: AbortSignal.timeout(30000) })).text();
+    const want = (/\b[0-9a-f]{64}\b/i.exec(shaText) || [])[0];
+    if (!want) throw new Error("The release's checksum file could not be read.");
+    const r = await fetch(u.assets.exe, { signal: AbortSignal.timeout(600000) });
+    if (!r.ok) throw new Error("Download failed: HTTP " + r.status);
+    const dir = path.join(os.tmpdir(), "OmniGPT-update"); fs.mkdirSync(dir, { recursive: true });
+    const exe = path.join(dir, "OmniGPT-Setup-" + u.latest.replace(/[^0-9.]/g, "") + ".exe"), part = exe + ".part";
+    const h = crypto.createHash("sha256"); let n = 0;
+    await pipeline(Readable.fromWeb(r.body), async function* (src) { for await (const c of src) { n += c.length; if (n > 300 * 1024 * 1024) throw new Error("installer is unexpectedly large"); h.update(c); yield c; } }, fs.createWriteStream(part));
+    const got = h.digest("hex");
+    if (got.toLowerCase() !== want.toLowerCase()) { try { fs.unlinkSync(part); } catch {} throw new Error("The download did not match the release checksum, so it was not run."); }
+    fs.renameSync(part, exe);
+    // "start" gives the installer its own process tree, so it survives this backend being stopped when the window closes
+    spawn("cmd.exe", ["/d", "/c", 'start "" "%ORC_EXE%" /S /launch'], { env: { ...process.env, ORC_EXE: exe }, detached: true, windowsHide: true, stdio: "ignore" }).unref();
+    return { version: u.latest };
+  } finally { installing = false; }
+}
+
+// Model prices from OmniRoute (per 1M tokens), used to show what a conversation cost. Empty when OmniRoute does not share them.
+let priceCache = { at: 0, data: {} };
+async function pricing() {
+  if (Date.now() - priceCache.at < 3600e3) return priceCache.data;
+  let data = {};
+  try {
+    const r = await fetch(OR + "/api/pricing", { headers: key() ? { authorization: "Bearer " + key() } : {}, signal: AbortSignal.timeout(8000) });
+    if (r.ok) { const j = await r.json(); if (j && typeof j === "object" && !Array.isArray(j)) data = j; }
+  } catch {}
+  priceCache = { at: Date.now(), data }; return data;
+}
+
 // A cancelled request must never take the whole app down.
 process.on("uncaughtException", (e) => console.error("uncaught:", e.message));
 process.on("unhandledRejection", (e) => console.error("unhandled:", e?.message || e));
@@ -192,7 +238,7 @@ http.createServer(async (req, res) => {
       return json(res, 200, kvAll());
     }
     if (req.url === "/api/status") return json(res, 200, { omniroute: await orUp(), key: !!key(), keyFromEnv: !!process.env.OMNIROUTE_API_KEY, sandbox: sandboxInfo(), version: VERSION, omniroute_url: OR });
-    if (req.url.startsWith("/api/update")) { try { return json(res, 200, { ok: true, ...(await checkUpdate(req.url.includes("force"))) }); } catch (e) { return json(res, 200, { ok: false, current: VERSION, error: String(e.message || e) }); } }
+    if (req.url.startsWith("/api/update") && req.url !== "/api/update/install") { try { return json(res, 200, { ok: true, ...(await checkUpdate(req.url.includes("force"))) }); } catch (e) { return json(res, 200, { ok: false, current: VERSION, error: String(e.message || e) }); } }
     if (req.method === "POST" && req.url === "/api/apikey") { // saved for this Windows user only; never sent back to the page
       const k = String(JSON.parse(await readBody(req)).key || "").trim();
       if (k.length > 500 || /[\r\n\s]/.test(k)) return json(res, 200, { ok: false, error: "That does not look like an API key." });
@@ -218,16 +264,27 @@ http.createServer(async (req, res) => {
       try { return json(res, 200, { ok: true, path: grantFolder(out) }); } catch (e) { return json(res, 200, { ok: false, error: String(e.message || e) }); }
     }
     if (req.method === "POST" && req.url === "/api/ungrant") return json(res, 200, { ok: true, granted: ungrantFolder(JSON.parse(await readBody(req)).path) });
+    if (req.method === "POST" && req.url === "/api/undo") {
+      try { const b = JSON.parse(await readBody(req)); return json(res, 200, await undoTurn(b.turn, folderConfig(loadConfig(), b.folder))); }
+      catch (e) { return json(res, 200, { ok: false, error: String(e.message || e) }); }
+    }
+    if (req.method === "POST" && req.url === "/api/undo/info") return json(res, 200, { ok: true, ...undoInfo(JSON.parse(await readBody(req)).turn) });
+    if (req.url === "/api/activity") return json(res, 200, { ok: true, items: readActivity(400) });
+    if (req.url === "/api/pricing") return json(res, 200, { ok: true, pricing: await pricing() });
+    if (req.method === "POST" && req.url === "/api/update/install") {
+      try { return json(res, 200, { ok: true, ...(await installUpdate()) }); }
+      catch (e) { return json(res, 200, { ok: false, error: String(e.message || e) }); }
+    }
     if (req.method === "POST" && req.url === "/api/resolve") {
       try { const b = JSON.parse(await readBody(req)); return json(res, 200, { ok: true, lists: resolveScope(b.lists, folderConfig(loadConfig(), b.folder)) }); }
       catch (e) { return json(res, 200, { ok: false, error: String(e.message || e) }); }
     }
     if (req.method === "POST" && (req.url === "/api/precheck" || req.url === "/api/run")) {
-      const { name, input, scope, folder } = JSON.parse(await readBody(req));
+      const { name, input, scope, folder, turn, chat } = JSON.parse(await readBody(req));
       try {
         const cfg = folderConfig(loadConfig(), folder);
         if (req.url === "/api/precheck") return json(res, 200, { ok: true, ...(await precheck(name, input, cfg, scope)), inside: insideFolder(name, input, cfg) });
-        return json(res, 200, { ok: true, output: await run(name, input, cfg, scope) });
+        return json(res, 200, { ok: true, output: await run(name, input, cfg, scope, { turn, chat }) });
       } catch (e) {
         return json(res, 200, { ok: false, error: String(e.message || e) });
       }

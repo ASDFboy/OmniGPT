@@ -1,6 +1,6 @@
 // OmniGPT installer: one exe with the built program inside (payload.zip resource). Installs for the current user only
 // (no administrator rights), adds Start menu and optional desktop shortcuts, and registers an uninstaller in
-// Settings > Apps. Run with /S to install silently. Written for the C# 5 compiler that ships with Windows.
+// Settings > Apps. Run with /S to install silently (add /launch to reopen OmniGPT afterwards). Written for the C# 5 compiler that ships with Windows.
 using System;
 using System.Diagnostics;
 using System.Drawing;
@@ -23,7 +23,8 @@ static class Setup
         bool silent = Array.Exists(args, a => a.Equals("/S", StringComparison.OrdinalIgnoreCase));
         if (silent)
         {
-            try { Install(true, false, null); return 0; }
+            bool relaunch = Array.Exists(args, a => a.Equals("/launch", StringComparison.OrdinalIgnoreCase)); // set by the in-app updater
+            try { Install(true, relaunch, null); return 0; }
             catch (Exception e)
             {   // a windowed program has no console: leave the reason where it can be read
                 try { File.WriteAllText(Path.Combine(Path.GetTempPath(), "OmniGPT-Setup.log"), e.ToString()); } catch (Exception) { }

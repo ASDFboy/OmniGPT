@@ -29,6 +29,9 @@ catch (e) { check("file reader", false, String(e.stdout).split("\n").filter((l) 
 // 1b3. settings and chats keep saving after a backend restart
 try { execFileSync(process.execPath, [path.join(here, "settings-test.mjs")], { stdio: "pipe" }); check("settings survive a backend restart", true); }
 catch (e) { check("settings survive a backend restart", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 400)); }
+// 1b4. undo reverses what an agent changed (on Windows including the Recycle Bin)
+try { execFileSync(process.execPath, [path.join(here, "undo-test.mjs")], { stdio: "pipe" }); check("undo reverses agent changes", true); }
+catch (e) { check("undo reverses agent changes", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 400)); }
 // 1c. inspect_file follows the same folder rules as every other tool
 { let ok = true; try { await tools.precheck("inspect_file", { path: "C:/Windows/win.ini" }); ok = false; } catch {} try { await tools.precheck("inspect_file", { path: path.join(os.homedir(), ".ssh", "id_rsa") }); ok = false; } catch {} check("inspect_file stays inside the allowed folders", ok); }
 

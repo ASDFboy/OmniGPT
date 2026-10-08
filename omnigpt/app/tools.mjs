@@ -139,7 +139,7 @@ function real(p) { // realpath of the deepest existing ancestor + the remainder,
   try { cur = fs.realpathSync.native(cur); } catch {}
   return path.join(cur, ...rest);
 }
-const under = (p, root) => { const a = lc(p), r = lc(root).replace(/[\\/]+$/, ""); return a === r || a.startsWith(r + "\\"); };
+const under = (p, root) => { const a = lc(p), r = lc(root).replace(/[\\/]+$/, ""); return a === r || a.startsWith(r + path.sep); }; // path.sep is "\\" on Windows
 const DENY_DIRS = () => [
   omnirouteDataDir(), CFG_DIR, path.join(HOME, "AppData"), path.join(HOME, ".claude"), path.join(HOME, ".ssh"), path.join(HOME, ".aws"),
   path.join(HOME, ".gnupg"), path.join(HOME, ".azure"), path.join(HOME, ".kube"),
@@ -155,7 +155,7 @@ export function checkPath(p, cfg) {
   if (!cfg.roots.map(real).some((r) => under(abs, r))) throw new Error(`Path is outside the allowed folders: ${abs}`);
   const bad = DENY_DIRS().find((d) => under(abs, d));
   if (bad) throw new Error(`Protected location: ${abs}`);
-  if (abs.split("\\").some((s) => DENY_SEG.has(lc(s)))) throw new Error(`Protected location: ${abs}`);
+  if (abs.split(path.sep).some((s) => DENY_SEG.has(lc(s)))) throw new Error(`Protected location: ${abs}`);
   if (DENY_FILE.test(path.basename(abs))) throw new Error(`Credential-style file name is blocked: ${path.basename(abs)}`);
   return abs;
 }
@@ -260,7 +260,8 @@ const cap = (s, n = 12000) => (s.length > n ? s.slice(0, n / 2) + `\n…[${s.len
 function backup(p) {
   if (!fs.existsSync(p) || !fs.statSync(p).isFile()) return;
   fs.mkdirSync(BACKUPS, { recursive: true });
-  fs.copyFileSync(p, path.join(BACKUPS, `${new Date().toISOString().replace(/[:.]/g, "-")}__${path.basename(p)}`));
+  const b = path.join(BACKUPS, `${new Date().toISOString().replace(/[:.]/g, "-")}__${Math.random().toString(36).slice(2, 6)}__${path.basename(p)}`);
+  fs.copyFileSync(p, b); return b;
 }
 function ps(script, env, cwd, timeoutMs) {
   return new Promise((ok) => {
@@ -274,18 +275,102 @@ function ps(script, env, cwd, timeoutMs) {
   });
 }
 
+// ---------- undo journal and activity log
+// Every change an agent makes is recorded per answer ("turn") so it can be undone: files created, files overwritten (with
+// their backup), moves, and items sent to the Recycle Bin. Commands are recorded too, but cannot be reversed.
+const UNDO = path.join(CFG_DIR, "undo.json"), ACT = path.join(CFG_DIR, "activity.jsonl");
+const readJ = () => { try { return JSON.parse(fs.readFileSync(UNDO, "utf8")); } catch { return {}; } };
+const writeJ = (j) => { const keep = Object.entries(j).sort((a, b) => b[1].t - a[1].t).slice(0, 40); fs.mkdirSync(CFG_DIR, { recursive: true }); fs.writeFileSync(UNDO, JSON.stringify(Object.fromEntries(keep))); };
+function journal(meta, entries) {
+  if (!meta || !meta.turn || !entries.length) return;
+  const j = readJ(), k = String(meta.turn).slice(0, 40), t = j[k] || { t: Date.now(), chat: meta.chat || null, entries: [], undone: false };
+  t.entries.push(...entries); t.t = Date.now(); t.undone = false; j[k] = t; writeJ(j);
+}
+function logActivity(e) {
+  try {
+    fs.mkdirSync(CFG_DIR, { recursive: true });
+    if (fs.existsSync(ACT) && fs.statSync(ACT).size > 1.5e6) { const L = fs.readFileSync(ACT, "utf8").split("\n").filter(Boolean); fs.writeFileSync(ACT, L.slice(-2000).join("\n") + "\n"); }
+    fs.appendFileSync(ACT, JSON.stringify(e) + "\n");
+  } catch {}
+}
+export function readActivity(n = 300) {
+  try { return fs.readFileSync(ACT, "utf8").split("\n").filter(Boolean).slice(-n).reverse().map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean); } catch { return []; }
+}
+export function undoInfo(turn) {
+  const t = readJ()[String(turn)]; if (!t) return { changes: 0, commands: 0, undone: false };
+  return { changes: t.entries.filter((e) => e.op !== "command").length, commands: t.entries.filter((e) => e.op === "command").length, undone: !!t.undone };
+}
+// Put a Recycle Bin item back where it came from: the most recently deleted item with that name from that folder.
+const RESTORE_PS = `$t=$env:ORC_P; $dir=[IO.Path]::GetDirectoryName($t); $nm=[IO.Path]::GetFileName($t)
+$base=[IO.Path]::GetFileNameWithoutExtension($nm); $ext=[IO.Path]::GetExtension($nm)
+$rb=(New-Object -ComObject Shell.Application).Namespace(10); $best=$null; $bd=[datetime]::MinValue
+foreach($i in $rb.Items()){
+  $from=[string]$i.ExtendedProperty("System.Recycle.DeletedFrom"); if($from.TrimEnd('\\') -ne $dir.TrimEnd('\\')){continue}
+  $shown=[string]$i.Name; $iext=[IO.Path]::GetExtension([string]$i.Path)
+  if(-not ($shown -eq $nm -or (($shown -eq $base -or [IO.Path]::GetFileNameWithoutExtension($shown) -eq $base) -and $iext -eq $ext))){continue}
+  $d=$i.ExtendedProperty("System.Recycle.DateDeleted"); if($d -and $d -gt $bd){$bd=$d;$best=$i}elseif(-not $best){$best=$i}
+}
+if(-not $best){Write-Output "NOTFOUND"; exit 3}
+if(Test-Path -LiteralPath $t){Write-Output "EXISTS"; exit 4}
+Move-Item -LiteralPath ([string]$best.Path) -Destination $t; Write-Output "OK"`;
+const recycle = (p, cwd) => ps(`Add-Type -AssemblyName Microsoft.VisualBasic; $p=$env:ORC_P; if(Test-Path -LiteralPath $p -PathType Container){[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory($p,'OnlyErrorDialogs','SendToRecycleBin')}else{[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile($p,'OnlyErrorDialogs','SendToRecycleBin')}`, { ORC_P: p }, cwd, 30000);
+export async function undoTurn(turn, cfg = loadConfig()) {
+  const j = readJ(), t = j[String(turn)];
+  if (!t || !t.entries.length) return { ok: false, error: "Nothing to undo for this answer." };
+  if (t.undone) return { ok: false, error: "These changes were already undone." };
+  const out = []; let done = 0, skipped = 0;
+  const ok = (s) => { done++; out.push("Undone: " + s); }, skip = (s) => { skipped++; out.push("Skipped: " + s); };
+  for (const e of [...t.entries].reverse()) {
+    try {
+      if (e.op === "command") { skip("command cannot be reversed: " + e.text); continue; }
+      if (e.op === "created") {
+        const p = checkPath(e.path, cfg);
+        if (!fs.existsSync(p)) { skip(`${p} is already gone`); continue; }
+        if (e.dir) { try { fs.rmdirSync(p); ok(`removed folder ${p}`); } catch { skip(`kept folder ${p} (it is not empty)`); } continue; }
+        const r = await recycle(p, cfg.cwd); r.code === 0 ? ok(`moved new file ${p} to the Recycle Bin`) : skip(`${p}: ${r.out.trim().slice(0, 200)}`); continue;
+      }
+      if (e.op === "modified") {
+        const p = checkPath(e.path, cfg);
+        if (!e.backup || !fs.existsSync(e.backup)) { skip(`no backup left for ${p}`); continue; }
+        backup(p); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.copyFileSync(e.backup, p); ok(`restored the earlier version of ${p}`); continue;
+      }
+      if (e.op === "moved") {
+        const a = checkPath(e.from, cfg), b = checkPath(e.to, cfg);
+        if (!fs.existsSync(b)) { skip(`${b} is no longer there`); continue; }
+        if (fs.existsSync(a)) { skip(`${a} already exists again, so ${b} was left where it is`); continue; }
+        fs.mkdirSync(path.dirname(a), { recursive: true }); try { fs.renameSync(b, a); } catch { await fsp.cp(b, a, { recursive: true }); await fsp.rm(b, { recursive: true }); }
+        ok(`moved ${b} back to ${a}`); continue;
+      }
+      if (e.op === "deleted") {
+        const p = checkPath(e.path, cfg);
+        const r = await ps(RESTORE_PS, { ORC_P: p }, cfg.cwd, 60000);
+        /OK\s*$/.test(r.out) ? ok(`restored ${p} from the Recycle Bin`) : skip(`${p}: ${/NOTFOUND/.test(r.out) ? "not in the Recycle Bin any more" : /EXISTS/.test(r.out) ? "a file with that name exists again" : r.out.trim().slice(0, 200)}`);
+      }
+    } catch (err) { skip(String(err.message || err)); }
+  }
+  t.undone = true; j[String(turn)] = t; writeJ(j);
+  logActivity({ t: Date.now(), chat: t.chat, turn, tool: "undo", summary: `Undo: ${done} undone, ${skipped} skipped`, ok: true });
+  return { ok: true, done, skipped, report: out.join("\n") };
+}
+
 // File changes run one at a time so parallel workers can never interleave writes.
 let chain = Promise.resolve();
-export function run(name, input, cfg = loadConfig(), scope) {
-  const go = async () => { await precheck(name, input, cfg, scope); return runInner(name, input, cfg); };
+export function run(name, input, cfg = loadConfig(), scope, meta) {
+  const go = async () => {
+    const pre = await precheck(name, input, cfg, scope), jr = [];
+    try { const r = await runInner(name, input, cfg, jr); logActivity({ t: Date.now(), chat: meta?.chat || null, turn: meta?.turn || null, tool: name, summary: String(pre.summary || "").slice(0, 600), ok: true }); return r; }
+    catch (e) { logActivity({ t: Date.now(), chat: meta?.chat || null, turn: meta?.turn || null, tool: name, summary: String(pre.summary || "").slice(0, 600), ok: false, error: String(e.message || e).slice(0, 300) }); throw e; }
+    finally { journal(meta, jr); } // a bulk action that partly failed still records what it did
+  };
   if (["run_command", "run_code", "read_file", "read_files", "list_dir", "download_file", "web_search", "web_open", "inspect_file"].includes(name)) return go();
   const p = chain.then(go, go); chain = p.catch(() => {}); return p;
 }
-async function runInner(name, input, cfg) {
+async function runInner(name, input, cfg, jr = []) {
   await precheck(name, input, cfg); // re-validate: never trust an earlier check
   const i = input || {};
   switch (name) {
     case "run_command": {
+      jr.push({ op: "command", text: String(i.command || "").slice(0, 300) });
       const secs = Math.min(Math.max(Number(i.timeout_sec) || 60, 1), 300);
       const r = await ps(i.command, {}, cfg.cwd, secs * 1000);
       return `${r.timedOut ? `[timed out after ${secs}s and was stopped]\n` : ""}${r.out || "(no output)"}\n[exit code ${r.code}]`;
@@ -313,23 +398,24 @@ async function runInner(name, input, cfg) {
       walk(root, 1);
       return rows.join("\n") || "(empty)" + (rows.length >= 300 ? "\n…[first 300 entries]" : "");
     }
-    case "write_file": { const p = checkPath(i.path, cfg); backup(p); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, String(i.content ?? "")); return `Wrote ${p}`; }
+    case "write_file": { const p = checkPath(i.path, cfg), b = backup(p); jr.push(b ? { op: "modified", path: p, backup: b } : { op: "created", path: p }); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, String(i.content ?? "")); return `Wrote ${p}`; }
     case "edit_file": {
       const p = checkPath(i.path, cfg), txt = fs.readFileSync(p, "utf8"), o = String(i.old_string ?? "");
       if (!o) throw new Error("old_string is required");
       const n = txt.split(o).length - 1;
       if (n === 0) throw new Error("old_string not found");
       if (n > 1 && !i.replace_all) throw new Error(`old_string matches ${n} places; make it unique or set replace_all`);
-      backup(p); fs.writeFileSync(p, txt.split(o).join(String(i.new_string ?? ""))); return `Edited ${p} (${n} replacement${n > 1 ? "s" : ""})`;
+      jr.push({ op: "modified", path: p, backup: backup(p) }); fs.writeFileSync(p, txt.split(o).join(String(i.new_string ?? ""))); return `Edited ${p} (${n} replacement${n > 1 ? "s" : ""})`;
     }
-    case "make_dir": { const p = checkPath(i.path, cfg); fs.mkdirSync(p, { recursive: true }); return `Created ${p}`; }
-    case "copy_file": { const a = checkPath(i.source, cfg), b = checkPath(i.destination, cfg); if (fs.existsSync(b)) throw new Error("destination already exists"); fs.mkdirSync(path.dirname(b), { recursive: true }); await fsp.cp(a, b, { recursive: true }); return `Copied to ${b}`; }
-    case "move_file": { const a = checkPath(i.source, cfg), b = checkPath(i.destination, cfg); if (fs.existsSync(b)) throw new Error("destination already exists"); fs.mkdirSync(path.dirname(b), { recursive: true }); try { fs.renameSync(a, b); } catch { await fsp.cp(a, b, { recursive: true }); await fsp.rm(a, { recursive: true }); } return `Moved to ${b}`; }
+    case "make_dir": { const p = checkPath(i.path, cfg); if (!fs.existsSync(p)) jr.push({ op: "created", path: p, dir: true }); fs.mkdirSync(p, { recursive: true }); return `Created ${p}`; }
+    case "copy_file": { const a = checkPath(i.source, cfg), b = checkPath(i.destination, cfg); if (fs.existsSync(b)) throw new Error("destination already exists"); fs.mkdirSync(path.dirname(b), { recursive: true }); await fsp.cp(a, b, { recursive: true }); jr.push({ op: "created", path: b }); return `Copied to ${b}`; }
+    case "move_file": { const a = checkPath(i.source, cfg), b = checkPath(i.destination, cfg); if (fs.existsSync(b)) throw new Error("destination already exists"); fs.mkdirSync(path.dirname(b), { recursive: true }); try { fs.renameSync(a, b); } catch { await fsp.cp(a, b, { recursive: true }); await fsp.rm(a, { recursive: true }); } jr.push({ op: "moved", from: a, to: b }); return `Moved to ${b}`; }
     case "delete_file": {
       const p = checkPath(i.path, cfg); if (!fs.existsSync(p)) throw new Error("not found");
       const dir = fs.statSync(p).isDirectory();
       const r = await ps(`Add-Type -AssemblyName Microsoft.VisualBasic; $p=$env:ORC_P; if(${dir ? "$true" : "$false"}){[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory($p,'OnlyErrorDialogs','SendToRecycleBin')}else{[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile($p,'OnlyErrorDialogs','SendToRecycleBin')}`, { ORC_P: p }, cfg.cwd, 30000);
       if (r.code !== 0) throw new Error(r.out);
+      jr.push({ op: "deleted", path: p, dir });
       return `Moved to Recycle Bin: ${p}`;
     }
     case "run_code": return formatSandbox(await runSandboxRaw(langOf(i), i.code, i.timeout_sec));
@@ -338,7 +424,7 @@ async function runInner(name, input, cfg) {
       const out = []; let failed = 0;
       for (const item of single[2]) {
         const label = typeof item === "string" ? item : item.path || item.source;
-        try { const r = await runInner(single[0], single[1](item), cfg); out.push(name === "read_files" ? `=== ${label} ===\n${r}` : `OK    ${label}`); }
+        try { const r = await runInner(single[0], single[1](item), cfg, jr); out.push(name === "read_files" ? `=== ${label} ===\n${r}` : `OK    ${label}`); }
         catch (e) { failed++; out.push(`ERROR ${label}: ${e.message}`); }
       }
       return out.join("\n") + (failed ? `\n[${failed} of ${single[2].length} failed]` : "");
@@ -361,7 +447,7 @@ async function runInner(name, input, cfg) {
       const tmp = p + ".part";
       try {
         await pipeline(Readable.fromWeb(res.body), async function* (src) { for await (const c of src) { n += c.length; if (n > LIMIT) throw new Error("download exceeds 200 MB limit"); yield c; } }, fs.createWriteStream(tmp));
-        fs.renameSync(tmp, p);
+        fs.renameSync(tmp, p); jr.push({ op: "created", path: p });
       } catch (e) { try { fs.unlinkSync(tmp); } catch {} throw e; }
       return `Downloaded ${n} bytes to ${p}. The file was NOT opened or executed.`;
     }
