@@ -73,12 +73,6 @@ request.
 |---|---|---|---|
 | `browser` | `action`: `open` url, `read`, `screenshot`, `click` (text or CSS selector), `type` (selector + text), `press` key, `scroll`, `back`, `tabs`, `close` | A separate Microsoft Edge window with its own profile, driven through the DevTools protocol | Own profile: never the user's main browser, cookies or passwords. Only http(s). Typing into password fields asks first. The window is visible so the user can watch |
 
-### Screen control (computer use)
-| Tool | Arguments | How | Safety |
-|---|---|---|---|
-| `screen` | `action`: `screenshot`, `click` x,y (left/right/double), `type` text, `key` combo (ctrl+s, alt+tab), `scroll`, `move` | Windows input APIs (SendInput) through PowerShell; screenshots scaled down for the model | Every request that uses it asks once ("Allow screen control for this request?") in every approval mode, including bypass. A visible banner shows while it is allowed; Stop ends it. Coordinates are in screenshot pixels |
-| `windows` | `action`: `list`, `focus` title, `launch` app name, `minimize`, `close` title | PowerShell window and process APIs; `launch` uses Start-menu app names, never paths | Same permission as `screen`; `close` asks first |
-
 ## Tier 2 (built now)
 
 ### Background jobs
@@ -121,6 +115,13 @@ own helper count and checklist.
 | Tool | What and how | Safety |
 |---|---|---|
 | `connect_account` + account tools | Sign in once with free official methods: GitHub through the GitHub CLI (`gh auth login`), Google (Gmail, Calendar, Drive) and Microsoft (Outlook, OneDrive, Calendar) through their OAuth device sign-in, Discord and Slack through webhooks the user creates. Then tools such as `email_search`, `email_read`, `email_draft`, `calendar_list`, `calendar_add`, `github` | Tokens stored for the Windows user only, never shown to the model; sending email or posting always asks |
+
+### Screen control (computer use): planned, not built yet
+None of these tools exist in the app yet; this is the design.
+| Tool | Arguments | How | Safety |
+|---|---|---|---|
+| `screen` | `action`: `screenshot`, `click` x,y (left/right/double), `type` text, `key` combo (ctrl+s, alt+tab), `scroll`, `move` | Windows input APIs (SendInput) through PowerShell; screenshots scaled down for the model | Every request that uses it asks once ("Allow screen control for this request?") in every approval mode, including bypass. A visible banner shows while it is allowed; Stop ends it. Coordinates are in screenshot pixels |
+| `windows` | `action`: `list`, `focus` title, `launch` app name, `minimize`, `close` title | PowerShell window and process APIs; `launch` uses Start-menu app names, never paths | Same permission as `screen`; `close` asks first |
 
 ## Tier 3 (later or on request)
 
