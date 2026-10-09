@@ -77,17 +77,26 @@ async function models(){try{const r=await (await F("/api/models")).json();$("#mo
 
 // ---- model health: failures, stalls and slow starts count against a model. The penalty halves every
 // 90 minutes (forgiveness), and a penalised model is still retried now and then (15%) so a recovered one comes back.
-const HLIFE=90*60e3;
+// Quality per kind of task (files, web, writing, code, chat), with the same half-life: a verified answer that was kept
+// counts for the models that wrote it; a correction, an Undo, failed actions and empty replies count against them.
+const HLIFE=90*60e3, KINDS={files:"Files",web:"Web",writing:"Writing",code:"Code",chat:"Chat"};
 function note(m,w){if(!m)return;const H=LS.get("orc.health")||{};const h=H[m]||(H[m]={ev:[]});h.ev.push({t:Date.now(),w});h.ev=h.ev.slice(-40);LS.set("orc.health",H)}
-function pen(m,H=LS.get("orc.health")||{}){const h=H[m];if(!h)return 0;const now=Date.now();return Math.max(0,h.ev.reduce((s,e)=>s+e.w*Math.pow(.5,(now-e.t)/HLIFE),0))}
-function rank(list){
-  const H=LS.get("orc.health")||{};
-  return list.map((m,i)=>{const p=pen(m,H);return{m,i,eff:p>.6&&Math.random()>.15?p:0}}).sort((a,b)=>a.eff-b.eff||a.i-b.i).map(x=>x.m);
+function noteKind(m,k,v){if(!m||!KINDS[k]||!v)return;const H=LS.get("orc.health")||{};const h=H[m]||(H[m]={ev:[]});const K=h.k||(h.k={});K[k]=[...(K[k]||[]),{t:Date.now(),v:Math.round(v*100)/100}].slice(-30);LS.set("orc.health",H)}
+const decay=(L,now=Date.now())=>(L||[]).reduce((s,e)=>s+e.v*Math.pow(.5,(now-e.t)/HLIFE),0);
+function pen(m,H=LS.get("orc.health")||{}){const h=H[m];if(!h)return 0;const now=Date.now();return Math.max(0,(h.ev||[]).reduce((s,e)=>s+e.w*Math.pow(.5,(now-e.t)/HLIFE),0))}
+const kscore=(m,k,H=LS.get("orc.health")||{})=>{const h=H[m];return h&&h.k?decay(h.k[k]):0};
+// kind (a key of KINDS): a model that did well on that kind of task moves up, one that was corrected moves down.
+// A good score never lifts a strong-only model above the fast ones: the strong tier stays the fallback.
+function rank(list,kind){
+  const H=LS.get("orc.health")||{}, strongOnly=m=>TIERS.strong.includes(m)&&!TIERS.fast.includes(m);
+  return list.map((m,i)=>{const b=pen(m,H)-(KINDS[kind]?kscore(m,kind,H):0);return{m,i,eff:Math.abs(b)>.6&&!(b<0&&strongOnly(m))&&Math.random()>.15?b:0}}).sort((a,b)=>a.eff-b.eff||a.i-b.i).map(x=>x.m);
 }
 function healthHtml(){
-  const H=LS.get("orc.health")||{}, now=Date.now();
-  const rows=Object.keys(H).map(m=>({m,p:pen(m,H),last:Math.max(...H[m].ev.filter(e=>e.w>0).map(e=>e.t),0)})).sort((a,b)=>b.p-a.p);
-  return rows.length?`<table class="stbl"><thead><tr><th>Model</th><th>Penalty</th><th>Last problem</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.m)}</td><td>${r.p.toFixed(2)}</td><td>${r.last?Math.round((now-r.last)/60000)+" min ago":"none"}</td></tr>`).join("")}</tbody></table>`:'<p class="mut">No problems recorded.</p>';
+  const H=LS.get("orc.health")||{}, now=Date.now(), ks=Object.keys(KINDS).filter(k=>Object.values(H).some(h=>h.k&&(h.k[k]||[]).length));
+  const rows=Object.keys(H).map(m=>({m,p:pen(m,H),last:Math.max(...(H[m].ev||[]).filter(e=>e.w>0).map(e=>e.t),0)})).sort((a,b)=>b.p-a.p);
+  const sc=L=>{if(!L||!L.length)return "–";const v=decay(L,now);return Math.abs(v)<.05?"0":(v>0?"+":"−")+Math.abs(v).toFixed(1)};
+  return rows.length?`<table class="stbl"><thead><tr><th>Model</th><th>Penalty</th>${ks.map(k=>`<th>${KINDS[k]}</th>`).join("")}<th>Last problem</th></tr></thead><tbody>${rows.map(r=>`<tr><td style="overflow-wrap:anywhere">${esc(r.m)}</td><td>${r.p.toFixed(2)}</td>${ks.map(k=>`<td data-ks="${k}">${sc((H[r.m].k||{})[k])}</td>`).join("")}<td>${r.last?Math.round((now-r.last)/60000)+" min ago":"none"}</td></tr>`).join("")}</tbody></table>`
+    +(ks.length?'<p class="mut">Scores per kind of task: + means answers of that kind worked and were kept; − means they were corrected, undone, had failed actions or came back empty. Models that score well are tried first for that kind of task.</p>':""):'<p class="mut">No problems recorded.</p>';
 }
 
 // ---- streaming (returns text; fills out.content / out.stop for tool use)
@@ -214,8 +223,8 @@ async function answerWith(models,label,mk,cls,out,T,q){
 }
 async function runAny(models,label,mk,cls,out,T){
   let last;
-  const order=rank(models);
-  for(let k=0;k<order.length;k++){ const m=order[k]; try{ return {text:await run(label,mk(m),cls,out,T),model:m}; }catch(e){ if(e&&e.name==="AbortError")throw e; last=e; if(k<order.length-1&&e.ui&&/final/.test(cls||""))e.ui.el.remove(); } } // a failed attempt with a fallback coming leaves no error box in the thread
+  const order=rank(models,T?null:TURN.kind); // per-kind scores order the main agent's models; parallel workers keep their spread
+  for(let k=0;k<order.length;k++){ const m=order[k]; try{ const text=await run(label,mk(m),cls,out,T); usedModel(m,text,out); return {text,model:m}; }catch(e){ if(e&&e.name==="AbortError")throw e; last=e; if(k<order.length-1&&e.ui&&/final/.test(cls||""))e.ui.el.remove(); } } // a failed attempt with a fallback coming leaves no error box in the thread
   throw last;
 }
 
@@ -569,8 +578,8 @@ async function addUndo(turnId){
   try{
     const i=await api("/api/undo/info",{turn:turnId});if(!i.ok||!i.changes)return;
     const fin=[...col.querySelectorAll(".turn.final")].pop();if(!fin)return;
-    const b=document.createElement("div");b.className="undo";
-    b.innerHTML=`<button class="btn" data-undo="${esc(turnId)}">Undo ${i.changes} change${i.changes>1?"s":""}</button>`+(i.commands?`<span class="mut">${i.commands} command${i.commands>1?"s":""} cannot be undone</span>`:"");
+    const b=document.createElement("div"), T=TURN&&TURN.id===turnId?TURN:{};b.className="undo"; // who wrote this answer, kept on the button for learning from an Undo (also in a reopened chat)
+    b.innerHTML=`<button class="btn" data-undo="${esc(turnId)}" data-kind="${esc(T.kind||"")}" data-ms="${esc(JSON.stringify(shares(T.models)))}" data-r="${esc((T.recipes||[]).join(","))}">Undo ${i.changes} change${i.changes>1?"s":""}</button>`+(i.commands?`<span class="mut">${i.commands} command${i.commands>1?"s":""} cannot be undone</span>`:"");
     fin.appendChild(b);
   }catch{}
 }
@@ -579,7 +588,7 @@ col.addEventListener("click",async e=>{
   if(!b.dataset.sure){b.dataset.sure="1";const t=b.textContent;b.textContent="Click again to undo";setTimeout(()=>{if(b.isConnected&&b.dataset.sure){delete b.dataset.sure;b.textContent=t}},4000);return}
   b.disabled=true;b.textContent="Undoing…";
   const r=await api("/api/undo",{turn:b.dataset.undo,folder:CHAT_DIR}).catch(e=>({ok:false,error:String(e)}));
-  const box=b.parentNode;
+  const box=b.parentNode; if(r.ok)undoFeedback({...b.dataset});
   box.innerHTML=r.ok?`<details><summary>Undone: ${r.done} change${r.done===1?"":"s"}${r.skipped?", "+r.skipped+" skipped":""}</summary><pre>${esc(r.report)}</pre></details>`:`<span class="mut">Undo failed: ${esc(r.error||"unknown error")}</span>`;
   if(chatId)saveChat("");
 });
@@ -655,7 +664,7 @@ async function agent(q,ctx,leads,o={}){
     for(const u of uses){
       // a model can name a tool it was not given (for example a read-only helper calling write_file): never run it
       const res=offered.has(u.name)?await toolFlow(u,q,r.text,r.model,cfg,T,o.scope):{text:"Error: the tool "+u.name+" is not available here. Use only the tools you were given.",err:true};
-      actions.push(u.name+(res.err?" (not done)":""));
+      actions.push(u.name+(res.err?" (not done)":""));if(!res.err)recStep(u);
       results.push({type:"tool_result",tool_use_id:u.id,content:res.blocks?[{type:"text",text:res.text},...res.blocks]:res.text,is_error:res.err});
       failRun=res.err?failRun+1:0;
     }
@@ -852,6 +861,7 @@ async function auto(q,ctx){
   if(/\b(images?|pictures?|photos?|pics?|videos?|gifs?|screenshots?|look(s|ed)? like|visual(ly)?)\b/i.test(q))TURN.images=true; // vision-capable models first
   if(TURN.attached){tools=true;parallel=false}
   if(CHAT_DIR){tools=true;parallel=false} // work in one folder is tightly coupled: one agent, no lanes
+  TURN.kind=taskKind(q,{tools,web,compute}); // per-kind model scores (rank, endTurn)
   if((TURN.attached||CHAT_DIR)&&!$("#pc").checked){
     const L=[...(TURN.images?TIERS.vision:[]),...TIERS.fast,...TIERS.strong].filter((m,i,a)=>a.indexOf(m)===i);
     const n=turn("Plan");n.end();n.text(cx+": reading the attached files with "+L[0]+" (PC access is off, so nothing can be changed)");Brain.plan([L[0]]);
@@ -967,7 +977,7 @@ async function send(){
   attachments=[];renderChips();input.value="";input.style.height="auto";
   const u=document.createElement("div");u.className="msg";u.innerHTML=`<div class="user">${esc(shown)}</div>`;col.appendChild(u);linkPaths(u);syncConvo();
   if(omni.on){omniBegin(q);return}
-  if(/^\s*(no\b|wrong|incorrect|that'?s (wrong|not right|incorrect)|(it )?(didn'?t|doesn'?t) work)/i.test(q))memFeedback(LAST_MEM,false); // a correction counts against the memories used last time
+  turnFeedback(q); // a correction counts against the memories, models and recipes used last time; anything else keeps the last answer as good
   CUR_Q=q;DELEGATES=0;TURN={id:uid(),untrusted:false,tok:0,ok:0,fail:0,written:[],t0:Date.now(),attached:A.length>0,att:A.map(a=>String(a.path).toLowerCase()),images:A.some(a=>a.image)};TASK={request:q,plan:"",criteria:[],tests:"",decisions:[]};MEM_USED=[];trace=mkTrace();scroll();Brain.turn();
   saveChat(typed,[...history,{role:"user",content:q}]); // the question is on disk even if the window closes mid-answer
   busy=true;ctrl=new AbortController();sendBtn.innerHTML=ico("stop");sendBtn.classList.add("stop");curProject=projectOf();
@@ -986,7 +996,7 @@ async function send(){
       const ui=turn("Answer","final"); ui.text(String(final).replace(/\n\n\[Actions this turn:[^\]]*\]$/,"")); ui.end();
     }
     try{await finishFiles(final,q)}catch(e){}
-    history=[...ctx,{role:"assistant",content:final||"(no answer)"}];done=true;Brain.msg(Brain.last,"output");Brain.ok("output");Brain.files(TURN.files);await addUndo(TURN.id);learn(q,String(final||""),TURN.ok>0&&TURN.fail===0).catch(()=>{});memFeedback(MEM_USED,true);LAST_MEM=[...MEM_USED];
+    history=[...ctx,{role:"assistant",content:final||"(no answer)"}];done=true;Brain.msg(Brain.last,"output");Brain.ok("output");Brain.files(TURN.files);await addUndo(TURN.id);learn(q,String(final||""),TURN.ok>0&&TURN.fail===0).catch(()=>{});endTurn(final);
   }catch(e){if(e&&e.name!=="AbortError"){memFeedback(MEM_USED,false);Brain.fail(Brain.last);const n=turn("Error","final");n.end();n.error(e.message||String(e))}}
   if(!done)history=[...ctx,{role:"assistant",content:"(stopped before finishing)"}];
   busy=false;ctrl=null;sendBtn.innerHTML=ico("send");sendBtn.classList.remove("stop");syncSend();if(trace){trace.finish();trace=null}scroll();saveChat(typed);
@@ -1350,17 +1360,89 @@ function userCtx(q){
     pick.forEach(m=>Brain.ctx("mem:"+m.id,"memory: "+brainLabel(m.text)));
     if(pick.length)out+="\n\nWhat you remember about the user from earlier conversations (use it naturally, never recite it, ignore what does not apply):\n"+pick.map(m=>"- "+m.text).join("\n");
   }
-  const K=SKL().filter(k=>k.on!==false);
-  if(S.skills&&K.length){
-    const used=K.filter(k=>overlap(tok(k.name+" "+k.description),qt)>=2||new RegExp("(^|\\s)/"+k.slug+"(\\s|$)","i").test(q||"")).slice(0,3);
+  if(S.skills)out+=skillCtx(q);
+  Brain.ready();
+  return out;
+}
+// Which skills and recipes fit a request. Word overlap for now; kept in one place so a better scorer can replace it.
+function matchLearned(q,items,text,min=2,n=3){const qt=tok(q||"");return items.map(x=>({x,s:overlap(tok(text(x)),qt)})).filter(o=>o.s>=min).sort((a,b)=>b.s-a.s).slice(0,n).map(o=>o.x)}
+// Skills that apply (typed as /name, or matching words), the others by name only, and recipes from similar requests that worked
+function skillCtx(q){
+  const K=SKL().filter(k=>k.on!==false); let out="";
+  if(K.length){
+    const used=[...K.filter(k=>new RegExp("(^|\\s)/"+k.slug+"(\\s|$)","i").test(q||"")),...matchLearned(q,K,k=>k.name+" "+k.description)].filter((k,i,a)=>a.indexOf(k)===i).slice(0,3);
     const rest=K.filter(k=>!used.includes(k)).slice(0,12);
     used.forEach(k=>Brain.ctx("skill:"+(k.slug||k.name),"skill: "+brainLabel(k.name)));
     if(used.length)out+="\n\nSkills that apply to this request (follow their instructions):\n"+used.map(k=>`## ${k.name}\n${k.instructions}`).join("\n\n");
     if(rest.length)out+="\n\nOther skills the user has set up, for reference only. Never run one of these unless the user asks for it by name in this message:"+rest.map(k=>k.name+" ("+k.description+")").join("; ");
   }
-  Brain.ready();
+  const R=matchLearned(q,RCP(),r=>r.task,2,2);
+  if(R.length){
+    if(TURN&&TURN.id)TURN.recipes=[...new Set([...(TURN.recipes||[]),...R.map(r=>r.id)])];
+    R.forEach(r=>Brain.ctx("recipe:"+r.id,"recipe: "+brainLabel(r.task)));
+    out+="\n\nA similar request worked before like this (a hint, not an order: look at what is actually there and adapt):\n"+R.map(r=>`- "${r.task}": ${r.steps}`).join("\n");
+  }
   return out;
 }
+// ---- learning from results. Per kind of task, the models that wrote an answer gain when it verifiably worked and was kept
+// (the next message is not a correction), and lose on a correction, an Undo, failed actions or an empty reply.
+// A request whose actions all worked leaves a recipe: its tool steps as names and shapes, never contents, paths or secrets.
+const taskKind=(q,r)=>{const s=CUR_Q||q;return r.tools||TURN.attached||CHAT_DIR?"files":r.compute?"code":r.web?"web":/\b(code|script|function|program|regex|algorithm|debug|bug|compile|snippet|sql|python|javascript|typescript)\b/i.test(s)?"code":/\b(write|rewrite|draft|essay|letter|e-?mail|story|poem|summar\w*|translat\w*|blog|article|proofread|paraphrase|caption|speech)\b/i.test(s)?"writing":"chat"};
+function usedModel(m,text,out){if(!TURN||!TURN.id)return;const empty=!String(text||"").trim()&&!(out&&(out.content||[]).some(b=>b.type==="tool_use")),B=empty?TURN.empty||(TURN.empty={}):TURN.models||(TURN.models={});B[m]=(B[m]||0)+1}
+const shares=M=>{const n=Object.values(M||{}).reduce((a,b)=>a+b,0);return n?Object.fromEntries(Object.entries(M).map(([m,c])=>[m,Math.round(c/n*100)/100])):{}};
+const credit=(ms,k,v)=>{for(const m in ms||{})noteKind(m,k,v*ms[m])};
+let PEND=null; const JUDGED=new Set(); // PEND: the last answer, judged by the next message; JUDGED: answers already counted as failed
+const CORRECTION=/^\s*(no\b(?![\s,]+(problem|worries|need|thanks))|nope\b|wrong|incorrect|that'?s (wrong|incorrect|not (right|it|what i))|not what i (asked|wanted|meant)|(it |that )?(didn'?t|doesn'?t|does not|did not) work|still (wrong|broken|not working|doesn'?t)|you (forgot|missed|broke))/i;
+function endTurn(final){
+  memFeedback(MEM_USED,true);LAST_MEM=[...MEM_USED];
+  if(!TURN||!TURN.id)return;
+  const k=TURN.kind||"chat", ms=shares(TURN.models);
+  for(const m in TURN.empty||{})noteKind(m,k,-Math.min(2,TURN.empty[m]));
+  if(TURN.fail){credit(ms,k,-Math.min(1.5,.3*TURN.fail));recipeBad(TURN.recipes)}
+  PEND={turn:TURN.id,chat:chatId,kind:k,ms,good:TURN.ok>0&&TURN.fail===0&&!/\((Stopped|No answer)/.test(String(final||"")),used:TURN.recipes||[]};
+}
+function turnFeedback(q){
+  const P=PEND, corr=CORRECTION.test(q)&&(!P||P.chat===chatId); PEND=null;
+  if(corr)memFeedback(LAST_MEM,false);
+  if(P&&corr&&!JUDGED.has(P.turn)){JUDGED.add(P.turn);credit(P.ms,P.kind,-1.5);recipeBad(P.used,P.turn)}
+  else if(P&&!corr&&P.good)credit(P.ms,P.kind,1);
+}
+function undoFeedback(d){
+  const t=d.undo; if(!t||JUDGED.has(t))return; JUDGED.add(t);
+  if(PEND&&PEND.turn===t)PEND=null;
+  let ms={};try{ms=JSON.parse(d.ms||"{}")}catch{}
+  credit(ms,KINDS[d.kind]?d.kind:"chat",-1.5);recipeBad(String(d.r||"").split(",").filter(Boolean),t);
+}
+const RCP=()=>LS.get("orc.recipes")||[], RCP_MAX=30, NOSTEP=/^(todo|remember|recall|forget|notify|list_tasks|list_connections)$/;
+function recStep(u){if(TURN&&TURN.id&&!NOSTEP.test(u.name)&&(TURN.seq||(TURN.seq=[])).length<60)TURN.seq.push(shapeOf(u))}
+// a path becomes the kind of folder it is in plus its file type, e.g. "Downloads/*.pdf"
+const folderKind=p=>{const s=String(p).replace(/\//g,"\\").toLowerCase(),x=(s.match(/[^\\]\.([a-z0-9]{1,6})$/)||[])[1],e=x?"/*."+x:"";if(CHAT_DIR&&s.startsWith(CHAT_DIR.toLowerCase()))return "attached folder"+e;if(!/^([a-z]:)?\\/.test(s))return "working folder"+e;if(/\\omniroute workspace(\\|$)/.test(s))return "workspace"+e;const m=s.match(/\\(downloads|documents|desktop|pictures|music|videos|onedrive)(\\|$)/);return (m?m[1][0].toUpperCase()+m[1].slice(1):"other folder")+e};
+// one tool call without its data: argument names, list sizes, folder kinds and a few plain options
+function shapeOf(u){
+  const a=Object.entries(u.input&&typeof u.input==="object"?u.input:{}).slice(0,8).map(([k,v])=>Array.isArray(v)?v.length+" "+k:typeof v==="string"&&/^(path|source|destination|cwd|folder|dir|output|input)$/.test(k)?k+": "+folderKind(v):/^(format|language|lang|type|method|action|kind|tools|sort|recursive)$/.test(k)&&/^[\w.+-]{1,12}$/.test(String(v))?k+": "+String(v).toLowerCase():k);
+  return u.name+" {"+a.join(", ")+"}";
+}
+const stepsText=S=>{const o=[];for(const s of S){const l=o[o.length-1];if(l&&l.s===s)l.n++;else o.push({s,n:1})}return o.slice(0,12).map(x=>x.s+(x.n>1?" ×"+x.n:"")).join(" → ")+(o.length>12?" → … ("+(o.length-12)+" more)":"")};
+// the request as a recipe remembers it: paths become folder kinds, file names their type, links their site
+const reqText=q=>String(q||"").split(/\n\n(?:Attached files|Attached folder|\[Clarified brief)/)[0].split(/\s+/).map(w=>/^\W*https?:\/\//i.test(w)?(w.match(/https?:\/\/([^\/\s?#]+)/i)||[])[1]||"":/^\W*[a-z]:[\\/]/i.test(w)?folderKind(w.replace(/^\W+|["'),.;:!?]+$/g,"")):/\\/.test(w)?"":
+  w.replace(/^([("'`]*)[^"'<>|*]*[^"'<>|*.\/]\.([a-z][a-z0-9]{1,4})(\W*)$/i,(m,a,x,b)=>a+"*."+x.toLowerCase()+b)).join(" ").replace(/\s+/g," ").trim().slice(0,160);
+function saveRecipe(q,answer,verified){
+  const S=TURN&&TURN.id&&TURN.seq||[];
+  if(!verified||!S.length||/\((Stopped|No answer)/.test(String(answer||"")))return;
+  const steps=stepsText(S), task=reqText(q), kind=TURN.kind||"chat";
+  if(task.length<8||SECRET.test(task+" "+steps))return;
+  const sig=steps.replace(/\b\d+ /g,"n ").replace(/ ×\d+/g,""), L=RCP().map(r=>({...r})), o=L.find(r=>r.sig===sig&&r.kind===kind);
+  if(o)Object.assign(o,{ok:o.ok+1,ts:Date.now(),turn:TURN.id,task,steps});
+  else L.unshift({id:uid(),task,kind,steps,sig,ok:1,bad:0,ts:Date.now(),turn:TURN.id});
+  LS.set("orc.recipes",L.sort((a,b)=>b.ts-a.ts).slice(0,RCP_MAX));
+}
+// a recipe that was offered for a request that then failed, or that came from an answer that was corrected or undone
+function recipeBad(used,turn){
+  const L=RCP();if(!L.length)return;
+  LS.set("orc.recipes",L.map(r=>turn&&r.turn===turn?{...r,ok:Math.max(0,r.ok-1),bad:r.bad+1,turn:null}:(used||[]).includes(r.id)?{...r,bad:r.bad+1}:r).filter(r=>r.bad<r.ok));
+}
+const recipesHtml=()=>{const R=RCP();return `<h4 style="margin-top:24px">Recipes</h4><p class="mut">The steps of requests whose actions all worked, learned automatically (tool names only, never file contents). A similar request gets them as a hint; one that fails later is dropped.</p>`+
+  (R.length?R.map(r=>`<div class="srow"><div><b>${esc(r.task)}</b><small>${esc(r.steps)} · ${esc(KINDS[r.kind]||r.kind)} · worked ${r.ok} time${r.ok===1?"":"s"} · ${new Date(r.ts).toLocaleDateString()}</small></div><button class="btn" data-rdel="${esc(r.id)}">Remove</button></div>`).join("")+sRow("Remove all recipes","",`<button class="btn" id="r-clear">Remove all</button>`):'<p class="mut">No recipes yet.</p>')};
 // Memories that keep showing up in failed or corrected turns are dropped.
 function memFeedback(ids,good){
   if(!ids||!ids.length)return;
@@ -1370,15 +1452,18 @@ function memFeedback(ids,good){
 const flash=msg=>{const n=$("#note");if(typeof dueQ!=="undefined"&&dueQ.length)return;n.textContent=msg;setTimeout(()=>{if(n.textContent===msg)n.textContent=""},6000)};
 const LEARN_SYS=`You maintain a long-term memory and a skill library for a personal assistant used by ONE person. After each exchange, decide what (if anything) is worth keeping. Reply with ONLY JSON: {"memories":[{"text":"...","kind":"user|preference|project|fact"}],"forget":["memory id"],"update":[{"id":"memory id","text":"the corrected memory"}],"skill":null|{"name":"2-4 words","description":"one sentence: when to use it","instructions":"short numbered steps or rules, under 120 words"}}.
 Memories are durable facts that will matter in future conversations: who the user is, their work and projects, their setup and tools, how they like answers written, corrections they gave, standing goals. One short sentence each, in the third person ("Prefers ..."). Do NOT store: one-off questions, the content of the answer, anything temporary, anything already in the existing memories (use "update" to correct or extend an existing memory instead of adding a near-duplicate, and "forget" to remove ids that are outdated or contradicted), and NEVER passwords, API keys, tokens, card or ID numbers or other secrets. Only store what the user actually said about themselves; never infer anything from file paths, user names, or tool output. Most exchanges deserve no memory: return an empty list.
-A skill is a reusable procedure. Propose one only when BOTH are true: VERIFIED SUCCESS below is yes (the result was actually checked: code ran, or tests or actions succeeded), AND at least one of the earlier requests is clearly the same kind of task, so it is recurring. A single one-off task is never a skill. The other case is when the user states a standing procedure to follow every time. Otherwise null. Never duplicate an existing skill.`;
+A skill is a reusable procedure. Propose one only when BOTH are true: VERIFIED SUCCESS below is yes (the result was actually checked: code ran, or tests or actions succeeded), AND at least one of the earlier requests is clearly the same kind of task, so it is recurring. A single one-off task is never a skill. The other case is when the user states a standing procedure to follow every time. Otherwise null. Never duplicate an existing skill. When TOOL STEPS THAT WORKED is given, a new skill's instructions follow those steps (tool names and order), without file names, paths or file contents.`;
 const SECRET=/(pass(word|wd)|api[_ -]?key|secret|token|bearer|\bsk-[\w-]{8,}|private key|\b\d{9,}\b)/i;
 async function learn(q,answer,verified){
-  const S=SET(); if(!S.learn||!S.memory)return;
+  const S=SET(); if(!S.learn)return;
+  saveRecipe(q,answer,verified); // before any await: this request's TURN is still current
+  if(!S.memory)return;
+  const steps=verified&&TURN.seq&&TURN.seq.length?stepsText(TURN.seq):"";
   const cue=/\b(remember|forget|keep in mind|from now on|always|never|my name|i am|i'm|i prefer|i like|i use)\b/i.test(q);
   if(q.length<12&&!cue)return;
   const M=MEM(),K=SKL();
   const recent=DB.chats().slice(0,12).map(c=>(c.history||[]).find(m=>m.role==="user")?.content).filter(Boolean).map(s=>"- "+String(s).replace(/\s+/g," ").slice(0,160));
-  const msg=`Existing memories:\n${M.map(m=>`[${m.id}] ${m.text}`).join("\n")||"(none)"}\n\nExisting skills:\n${K.map(k=>`- ${k.name}: ${k.description}`).join("\n")||"(none)"}\n\nEarlier requests from this user (newest first):\n${recent.join("\n")||"(none)"}\n\nThis exchange:\nUSER: ${q.slice(0,2500)}\nASSISTANT: ${String(answer).slice(0,1500)}`+(cue?"\n\nThe user may have asked you to remember or forget something: honour it.":"")+"\n\nVERIFIED SUCCESS: "+(verified?"yes":"no");
+  const msg=`Existing memories:\n${M.map(m=>`[${m.id}] ${m.text}`).join("\n")||"(none)"}\n\nExisting skills:\n${K.map(k=>`- ${k.name}: ${k.description}`).join("\n")||"(none)"}\n\nEarlier requests from this user (newest first):\n${recent.join("\n")||"(none)"}\n\nThis exchange:\nUSER: ${q.slice(0,2500)}\nASSISTANT: ${String(answer).slice(0,1500)}`+(cue?"\n\nThe user may have asked you to remember or forget something: honour it.":"")+"\n\nVERIFIED SUCCESS: "+(verified?"yes":"no")+(steps?"\nTOOL STEPS THAT WORKED: "+steps:"");
   for(const m of rank(TIERS.fast)){
     try{
       const j=jx(await stream({model:m,system:LEARN_SYS,timeout:45000,noBrain:true,messages:[{role:"user",content:msg}]},QUIET,true));
@@ -1589,10 +1674,10 @@ const PANES={
     `<div id="acc-fields">${accFields(ACC_T)}</div><div class="arow"><span class="mut acc-res" id="acc-res"></span><button class="btn pri" id="acc-save">Save</button></div>`},
   models:()=>{const m=SET().models||{};return `<h4>Models</h4><p class="mut">One model id per line, tried in order. An empty list uses the default. These lists apply in Default mode; Turbo, Free and Unfiltered use their own models.</p>`+
     TIERINFO.map(([k,t,d])=>sRow(t,d,`<textarea data-m="${k}" spellcheck="false" placeholder="${esc(DEFTIERS[k].join("\n"))}">${esc((m[k]||[]).join("\n"))}</textarea>`,"col2")).join("")+
-    sRow("Reliability","Models that fail or stall are tried later; the penalty fades over time.",`<button class="btn" id="s-reset">Reset</button>`)+healthHtml()},
+    sRow("Reliability","Models that fail or stall are tried later, and each kind of task prefers the models whose answers worked for it. Both fade over time.",`<button class="btn" id="s-reset">Reset</button>`)+healthHtml()},
   memory:()=>{const M=MEM();return `<h4>Memory</h4>`+
     sRow("Use memory","Give every conversation what OmniGPT knows about you.",sTog("memory"))+
-    sRow("Learn automatically","Save important details and corrections from your conversations.",sTog("learn"))+
+    sRow("Learn automatically","Save important details and corrections from your conversations, and the steps of requests that worked (see Skills).",sTog("learn"))+
     sRow("Add a memory","",`<div class="addrow"><input id="m-new" placeholder="Something to remember" spellcheck="false"><button class="btn" id="m-add">Add</button></div>`)+
     (M.length?M.map(m=>`<div class="srow"><div><b>${esc(m.text)}</b><small>${esc(m.kind)} · ${new Date(m.ts).toLocaleDateString()}</small></div><button class="btn" data-mdel="${m.id}">Delete</button></div>`).join("")+sRow("Clear all","",`<button class="btn" id="m-clear">Clear</button>`):'<p class="mut" style="margin-top:14px">Nothing saved yet.</p>')},
   skills:()=>{
@@ -1602,7 +1687,7 @@ const PANES={
         sRow("Instructions","What to do, step by step.",`<textarea id="k-ins" spellcheck="false">${esc(k.instructions)}</textarea>`,"col2")+
         `<div class="arow"><button class="btn" id="k-cancel">Cancel</button><button class="btn pri" id="k-save">Save</button></div>`}
     const K=SKL();return `<h4>Skills</h4>`+sRow("Use skills","Apply a skill when a request matches it.",sTog("skills"))+sRow("New skill","",`<button class="btn" id="k-new">Create</button>`)+
-      (K.length?K.map(k=>`<div class="srow"><div><b>${esc(k.name)}${k.auto?'<span class="tag">learned</span>':""}</b><small>${esc(k.description)}</small></div><div class="tbtn"><label class="sw"><input type="checkbox" data-kon="${k.id}"${k.on!==false?" checked":""}><span></span></label><button class="btn" data-kedit="${k.id}">Edit</button><button class="btn" data-kdel="${k.id}">Delete</button></div></div>`).join(""):'<p class="mut" style="margin-top:14px">No skills yet.</p>')},
+      (K.length?K.map(k=>`<div class="srow"><div><b>${esc(k.name)}${k.auto?'<span class="tag">learned</span>':""}</b><small>${esc(k.description)}</small></div><div class="tbtn"><label class="sw"><input type="checkbox" data-kon="${k.id}"${k.on!==false?" checked":""}><span></span></label><button class="btn" data-kedit="${k.id}">Edit</button><button class="btn" data-kdel="${k.id}">Delete</button></div></div>`).join(""):'<p class="mut" style="margin-top:14px">No skills yet.</p>')+recipesHtml()},
   activity:()=>{setTimeout(loadActivity);return `<h4>Activity</h4><p class="mut">Every action agents took on your PC, newest first: files changed, moved and deleted, commands and downloads.</p>`+
     sRow("Show reads and web lookups","Also list files read and pages opened.",`<label class="sw"><input type="checkbox" id="act-all"${ACT_ALL?" checked":""}><span></span></label>`)+`<div id="actlist"><p class="mut">Loading…</p></div>`},
   agents:()=>`<h4>Agents and safety</h4>`+
@@ -1677,6 +1762,7 @@ $("#s-body").addEventListener("click",async e=>{
   if(d.mdel){LS.set("orc.memories",MEM().filter(m=>m.id!==d.mdel));showPane("memory");return}
   if(d.kdel){LS.set("orc.skills",SKL().filter(k=>k.id!==d.kdel));showPane("skills");return}
   if(d.kedit){SK_EDIT=d.kedit;showPane("skills");return}
+  if(d.rdel||id==="r-clear"){if(d.rdel||await ask({title:"Remove all recipes?",text:"OmniGPT forgets the steps it learned from requests that worked.",ok:"Remove"})){LS.set("orc.recipes",d.rdel?RCP().filter(r=>r.id!==d.rdel):[]);showPane("skills")}return}
   if(d.ctest){accRes(d.ctest,"Checking…");const r=await api("/api/connections/test",{id:d.ctest}).catch(()=>({ok:false,error:"OmniGPT did not answer"}));accRes(d.ctest,r.ok?r.message:r.error,!r.ok);return}
   if(d.cdel){if(await ask({title:"Remove this account?",text:"OmniGPT forgets the saved link or key, and agents can no longer use it.",ok:"Remove"})){await api("/api/connections/delete",{id:d.cdel});loadAccounts()}return}
   if(id==="gh-login"){accRes("github","Opening…");const r=await api("/api/connections/github-login",{}).catch(()=>({ok:false,error:"OmniGPT did not answer"}));accRes("github",r.ok?r.message:r.error,!r.ok);return}
