@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import { Readable } from "node:stream";
 import { loadConfig, saveConfig, precheck, run, resolveScope, runSandboxRaw, sandboxInfo, checkPath, grantFolder, ungrantFolder, folderConfig, insideFolder, undoTurn, undoInfo, readActivity, setOmniRoute, listJobs, stopJob, stopAllJobs } from "./tools.mjs";
 import { inspect, MIME, RUNNABLE } from "./files.mjs";
+import { publicList, saveConnection, deleteConnection, testConnection, ghStatus, ghLogin } from "./connections.mjs";
 import { pipeline } from "node:stream/promises";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -278,6 +279,17 @@ http.createServer(async (req, res) => {
     if (req.url === "/api/jobs") return json(res, 200, { ok: true, jobs: listJobs() }); // the user's own view: lists and stops jobs without approval
     if (req.method === "POST" && req.url === "/api/jobs/stop") { try { return json(res, 200, { ok: true, text: await stopJob(JSON.parse(await readBody(req)).id) }); } catch (e) { return json(res, 200, { ok: false, error: String(e.message || e) }); } }
     if (req.url === "/api/activity") return json(res, 200, { ok: true, items: readActivity(400) });
+    // ---------- Settings > Accounts: the page sends links and keys here once; it only ever gets names, hosts and masked hints back
+    if (req.method === "GET" && req.url === "/api/connections") return json(res, 200, { ok: true, connections: publicList(), github: await ghStatus() });
+    if (req.method === "POST" && req.url.startsWith("/api/connections/")) {
+      try {
+        const b = JSON.parse((await readBody(req, 64000)) || "{}");
+        if (req.url === "/api/connections/save") return json(res, 200, { ok: true, connection: await saveConnection(b) });
+        if (req.url === "/api/connections/delete") { deleteConnection(b.id); return json(res, 200, { ok: true }); }
+        if (req.url === "/api/connections/test") return json(res, 200, { ok: true, message: await testConnection(b.id) });
+        if (req.url === "/api/connections/github-login") return json(res, 200, { ok: true, message: await ghLogin() });
+      } catch (e) { return json(res, 200, { ok: false, error: String(e.message || e) }); }
+    }
     if (req.url === "/api/pricing") return json(res, 200, { ok: true, pricing: await pricing() });
     if (req.method === "POST" && req.url === "/api/update/install") {
       try { return json(res, 200, { ok: true, ...(await installUpdate()) }); }
