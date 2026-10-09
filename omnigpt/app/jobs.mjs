@@ -63,6 +63,7 @@ export async function readJob({ id, all, wait, until }) {
   const fresh = () => j.out.slice(Math.max(0, j.read - j.dropped));
   const end = Date.now() + secs * 1000;
   while (Date.now() < end && j.code === undefined && (re ? !re.test(fresh()) : !fresh())) await new Promise((r) => setTimeout(r, 200));
+  for (let k = 0; secs && k < 4 && j.code === undefined; k++) await new Promise((r) => setTimeout(r, 100)); // output often comes just before the end: catch the rest
   const text = all ? j.out : fresh();
   j.read = j.dropped + j.out.length;
   const max = 12000, shown = text.length > max ? `…[${text.length - max} earlier characters not shown]\n` + text.slice(-max) : text;
