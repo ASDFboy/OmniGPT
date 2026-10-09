@@ -9,15 +9,17 @@ import dns from "node:dns/promises";
 import net from "node:net";
 import { spawn } from "node:child_process";
 import { Readable } from "node:stream";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 import { pipeline } from "node:stream/promises";
 import { webOpen, webSearch } from "./web.mjs";
 import { inspect, xlsxSheets } from "./files.mjs";
 import { zipBuild, zipRead } from "./zip.mjs";
 import { browserAction } from "./browser.mjs";
-import { startJob, stopJob, readJob, PASS_CODE } from "./jobs.mjs";
+import { startJob, stopJob, readJob } from "./jobs.mjs";
+// ps(): a new powershell.exe per call (run_command, install_tool, speak); psq(): the shared worker for the app's own short scripts
+import { ps, psq, cleanEnv } from "./psworker.mjs";
 import { chartSvg, chartSpec, seriesFromCsv } from "./charts.mjs";
-import { htmlToPng } from "./render.mjs";
+import { htmlToPng, printToPdf } from "./render.mjs";
 import { OCR_PS, OCR_EXT, pageList, parseOcr, PDF_ACTIONS, qpdfRange, stem, qpdfFailed, newFiles } from "./pdfocr.mjs";
 export { listJobs, stopAllJobs, stopJob } from "./jobs.mjs";
 import { parseMarkdown, toHtml, toDocx, toXlsx, toPptx, sheetsFromText, slidesFromText } from "./docs.mjs";
@@ -490,7 +492,7 @@ const TOOLS_TO_FIND = ["python", "py", "node", "npm", "git", "gh", "ffmpeg", "wi
 async function systemInfo(cfg) {
   const L = [`System: ${os.type()} ${os.release()} (${os.arch()})`, `CPU: ${os.cpus()[0]?.model || "?"} (${os.cpus().length} threads)`, `Memory: ${fmtB(os.totalmem())} total, ${fmtB(os.freemem())} free`, `User folder: ${HOME}`, `Working folder: ${cfg.cwd}`];
   if (process.platform === "win32") {
-    const r = await ps(`$o=Get-CimInstance Win32_OperatingSystem; "Windows: $($o.Caption) $($o.Version)"
+    const r = await psq(`$o=Get-CimInstance Win32_OperatingSystem; "Windows: $($o.Caption) $($o.Version)"
 Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Used -ne $null } | ForEach-Object { "Drive $($_.Name): $([math]::Round($_.Free/1GB,1)) GB free of $([math]::Round(($_.Used+$_.Free)/1GB,1)) GB" }
 Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Screen]::AllScreens | ForEach-Object { "Display: $($_.Bounds.Width)x$($_.Bounds.Height)$(if($_.Primary){' (main)'})" }
 foreach($c in ($env:ORC_C -split ',')){ $g=Get-Command $c -ErrorAction SilentlyContinue | Select-Object -First 1; if($g){ "Installed: $c ($($g.Source))" } else { "Not installed: $c" } }`, { ORC_C: TOOLS_TO_FIND.join(",") }, cfg.cwd, 30000);
@@ -507,7 +509,7 @@ $t=$x.GetElementsByTagName("text"); [void]$t.Item(0).AppendChild($x.CreateTextNo
 [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe').Show([Windows.UI.Notifications.ToastNotification]::new($x))`;
 async function find7z(cwd) {
   if (process.platform !== "win32") return null;
-  const r = await ps("$g=Get-Command 7z -ErrorAction SilentlyContinue; if($g){$g.Source}elseif(Test-Path \"$env:ProgramFiles\\7-Zip\\7z.exe\"){\"$env:ProgramFiles\\7-Zip\\7z.exe\"}", {}, cwd, 15000);
+  const r = await psq("$g=Get-Command 7z -ErrorAction SilentlyContinue; if($g){$g.Source}elseif(Test-Path \"$env:ProgramFiles\\7-Zip\\7z.exe\"){\"$env:ProgramFiles\\7-Zip\\7z.exe\"}", {}, cwd, 15000);
   const f = r.out.trim().split(/\r?\n/).pop(); return f && fs.existsSync(f) ? f : null;
 }
 const ZIP_EXT = /\.(zip|docx|xlsx|pptx|odt|ods|odp|epub|jar|apk|cbz|xpi|vsix|nupkg|whl)$/i;
@@ -647,7 +649,7 @@ async function ocrTool(i, cfg, jr) {
   if (process.platform !== "win32") throw new Error("the ocr tool uses the OCR engine built into Windows");
   const p = checkPath(i.path, cfg); if (!fs.existsSync(p)) throw new Error("not found: " + p);
   const pages = pageList(i.pages);
-  const r = await ps(OCR_PS, { ORC_P: p, ORC_LANG: String(i.language || ""), ORC_PAGES: pages === "all" ? "all" : pages.join(",") }, cfg.cwd, 300000);
+  const r = await psq(OCR_PS, { ORC_P: p, ORC_LANG: String(i.language || ""), ORC_PAGES: pages === "all" ? "all" : pages.join(",") }, cfg.cwd, 300000);
   if (r.timedOut) throw new Error("OCR took longer than 5 minutes and was stopped; ask for fewer pages");
   const o = parseOcr(r.out);
   const text = o.parts.map((x) => (o.pages ? `--- Page ${x.page} ---\n` : "") + (x.text || "(no text found)")).join("\n\n");
@@ -658,7 +660,7 @@ let qpdfPath = null;
 async function findQpdf(cwd) {
   if (qpdfPath && fs.existsSync(qpdfPath)) return qpdfPath;
   if (process.platform === "win32") {
-    const r = await ps("(Get-Command qpdf -ErrorAction SilentlyContinue).Source; Get-ChildItem \"$env:ProgramFiles\\qpdf*\\bin\\qpdf.exe\",\"$env:LOCALAPPDATA\\Microsoft\\WinGet\\Packages\\QPDF*\\*\\bin\\qpdf.exe\" -ErrorAction SilentlyContinue | Sort-Object FullName -Descending | ForEach-Object FullName", {}, cwd, 20000);
+    const r = await psq("(Get-Command qpdf -ErrorAction SilentlyContinue).Source; Get-ChildItem \"$env:ProgramFiles\\qpdf*\\bin\\qpdf.exe\",\"$env:LOCALAPPDATA\\Microsoft\\WinGet\\Packages\\QPDF*\\*\\bin\\qpdf.exe\" -ErrorAction SilentlyContinue | Sort-Object FullName -Descending | ForEach-Object FullName", {}, cwd, 20000);
     qpdfPath = r.out.split(/\r?\n/).map((l) => l.trim()).find((f) => f && fs.existsSync(f)) || null;
   } else for (const d of String(process.env.PATH || "").split(":")) if (d && fs.existsSync(path.join(d, "qpdf"))) { qpdfPath = path.join(d, "qpdf"); break; }
   return qpdfPath;
@@ -695,18 +697,12 @@ function findBrowser() {
   for (const base of pf) for (const rel of ["Microsoft\\Edge\\Application\\msedge.exe", "Google\\Chrome\\Application\\chrome.exe"]) { const f = path.join(base, rel); if (fs.existsSync(f)) return f; }
   return null;
 }
-// prints an HTML file to PDF with Edge (or Chrome) in the background, using a throwaway profile
-async function htmlToPdf(html, out) {
+// prints an HTML page to PDF with Edge (or Chrome) in the background (the browser render.mjs keeps open for a few minutes)
+async function htmlToPdf(html) {
   const b = findBrowser(); if (!b) throw new Error("Microsoft Edge was not found, so the PDF could not be printed. Make an .html or .docx instead, or install Edge.");
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "omnigpt-pdf-")), src = path.join(tmp, "doc.html"), pdf = path.join(tmp, "doc.pdf");
-  try {
-    fs.writeFileSync(src, html);
-    const args = ["--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check", "--disable-extensions", "--disable-background-networking", "--disable-component-update", "--disable-sync", `--user-data-dir=${path.join(tmp, "profile")}`, "--no-pdf-header-footer", `--print-to-pdf=${pdf}`, pathToFileURL(src).href];
-    if (process.platform !== "win32" && process.getuid && process.getuid() === 0) args.unshift("--no-sandbox");
-    const r = await execFile(b, args, 90000);
-    if (!fs.existsSync(pdf) || fs.statSync(pdf).size < 100) throw new Error("the browser did not produce a PDF: " + r.out.trim().slice(-200));
-    return fs.readFileSync(pdf);
-  } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+  const pdf = await printToPdf(b, html).catch((e) => { throw new Error("the browser did not produce a PDF: " + String(e.message || e).slice(0, 200)); });
+  if (pdf.length < 100 || pdf.toString("latin1", 0, 5) !== "%PDF-") throw new Error("the browser did not produce a PDF");
+  return pdf;
 }
 // renders an SVG to PNG with Edge (or Chrome) in the background, at twice the size for sharp text
 async function svgToPng(svg, w, h) {
@@ -777,7 +773,7 @@ async function editImage(i, cfg, jr) {
   try {
     let size = "";
     if (process.platform === "win32" && fmt !== "webp") {
-      const r = await ps(EDIT_PS, { ORC_JOB: JSON.stringify({ src: s, dst: out, crop: i.crop || null, rotate: rot, flip: i.flip || null, ...rs, format: fmt, quality }) }, cfg.cwd, 120000);
+      const r = await psq(EDIT_PS, { ORC_JOB: JSON.stringify({ src: s, dst: out, crop: i.crop || null, rotate: rot, flip: i.flip || null, ...rs, format: fmt, quality }) }, cfg.cwd, 120000);
       const m = /OK\|(\d+x\d+)/.exec(r.out); if (m) size = m[1];
     }
     if (!fs.existsSync(out)) { // ffmpeg: other formats (webp, heic) and other systems
@@ -927,7 +923,7 @@ const RAW_OK = { ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".jfif": "image/jp
 let ffmpegPath;
 async function findFfmpeg(cwd) {
   if (ffmpegPath) return ffmpegPath; // found once; a later install is picked up on the next call (null is not cached)
-  if (process.platform === "win32") { const r = await ps("(Get-Command ffmpeg -ErrorAction SilentlyContinue).Source", {}, cwd, 15000); const f = r.out.trim().split(/\r?\n/).pop(); if (f && fs.existsSync(f)) ffmpegPath = f; }
+  if (process.platform === "win32") { const r = await psq("(Get-Command ffmpeg -ErrorAction SilentlyContinue).Source", {}, cwd, 15000); const f = r.out.trim().split(/\r?\n/).pop(); if (f && fs.existsSync(f)) ffmpegPath = f; }
   else { for (const d of String(process.env.PATH || "").split(":")) if (d && fs.existsSync(path.join(d, "ffmpeg"))) { ffmpegPath = path.join(d, "ffmpeg"); break; } }
   return ffmpegPath || null;
 }
@@ -968,7 +964,7 @@ async function viewImages(paths, maxSide, cfg) {
       jobs.push({ src: p, dst: path.join(tmp, `i${n}.jpg`), item });
     }
     if (jobs.length && process.platform === "win32") {
-      const r = await ps(SHRINK_PS, { ORC_MAX: String(max), ORC_JOBS: JSON.stringify(jobs.map(({ src, dst }) => ({ src, dst }))) }, cfg.cwd, 120000);
+      const r = await psq(SHRINK_PS, { ORC_MAX: String(max), ORC_JOBS: JSON.stringify(jobs.map(({ src, dst }) => ({ src, dst }))) }, cfg.cwd, 120000);
       for (const line of r.out.split(/\r?\n/)) { const [st, dst, info] = line.split("|"); const j = jobs.find((x) => x.dst === dst); if (!j) continue; if (st === "OK" && fs.existsSync(dst)) { j.item.frames.push({ file: dst, mime: "image/jpeg" }); j.item.note = (info || "") + (/\.gif$/i.test(j.src) ? ", first frame of the GIF" : ""); } else j.item.err = info; }
     }
     for (const j of jobs) {
@@ -1033,20 +1029,6 @@ function backup(p) {
   const b = path.join(BACKUPS, `${new Date().toISOString().replace(/[:.]/g, "-")}__${Math.random().toString(36).slice(2, 6)}__${path.basename(p)}`);
   fs.copyFileSync(p, b); return b;
 }
-// the environment for programs the agents start: anything that looks like a secret is left out
-const cleanEnv = (env = {}) => Object.fromEntries(Object.entries({ ...process.env, ...env }).filter(([k]) => !/key|token|secret|passw|omniroute|api/i.test(k) || k in env));
-function ps(script, env, cwd, timeoutMs) {
-  return new Promise((ok) => {
-    const clean = cleanEnv(env);
-    const refresh = "$env:Path=[Environment]::GetEnvironmentVariable('Path','Machine')+';'+[Environment]::GetEnvironmentVariable('Path','User')+';'+$env:Path\n"; // programs installed during this session are found
-    const c = spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "[Console]::OutputEncoding=[Text.Encoding]::UTF8\n" + refresh + script + PASS_CODE], { cwd, env: clean, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
-    let out = "", timedOut = false;
-    c.stdout.on("data", (d) => (out += d)); c.stderr.on("data", (d) => (out += d));
-    const t = setTimeout(() => { timedOut = true; spawn("taskkill", ["/pid", String(c.pid), "/t", "/f"], { windowsHide: true }); }, timeoutMs);
-    c.on("close", (code) => { clearTimeout(t); ok({ code, out: cap(out), timedOut }); });
-    c.on("error", (e) => { clearTimeout(t); ok({ code: -1, out: String(e), timedOut: false }); });
-  });
-}
 
 // ---------- undo journal and activity log
 // Every change an agent makes is recorded per answer ("turn") so it can be undone: files created, files overwritten (with
@@ -1086,7 +1068,7 @@ foreach($i in $rb.Items()){
 if(-not $best){Write-Output "NOTFOUND"; exit 3}
 if(Test-Path -LiteralPath $t){Write-Output "EXISTS"; exit 4}
 Move-Item -LiteralPath ([string]$best.Path) -Destination $t; Write-Output "OK"`;
-const recycle = (p, cwd) => ps(`Add-Type -AssemblyName Microsoft.VisualBasic; $p=$env:ORC_P; if(Test-Path -LiteralPath $p -PathType Container){[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory($p,'OnlyErrorDialogs','SendToRecycleBin')}else{[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile($p,'OnlyErrorDialogs','SendToRecycleBin')}`, { ORC_P: p }, cwd, 30000);
+const recycle = (p, cwd) => psq(`Add-Type -AssemblyName Microsoft.VisualBasic; $p=$env:ORC_P; if(Test-Path -LiteralPath $p -PathType Container){[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory($p,'OnlyErrorDialogs','SendToRecycleBin')}else{[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile($p,'OnlyErrorDialogs','SendToRecycleBin')}`, { ORC_P: p }, cwd, 30000);
 export async function undoTurn(turn, cfg = loadConfig()) {
   const j = readJ(), t = j[String(turn)];
   if (!t || !t.entries.length) return { ok: false, error: "Nothing to undo for this answer." };
@@ -1116,7 +1098,7 @@ export async function undoTurn(turn, cfg = loadConfig()) {
       }
       if (e.op === "deleted") {
         const p = checkPath(e.path, cfg);
-        const r = await ps(RESTORE_PS, { ORC_P: p }, cfg.cwd, 60000);
+        const r = await psq(RESTORE_PS, { ORC_P: p }, cfg.cwd, 60000);
         /OK\s*$/.test(r.out) ? ok(`restored ${p} from the Recycle Bin`) : skip(`${p}: ${/NOTFOUND/.test(r.out) ? "not in the Recycle Bin any more" : /EXISTS/.test(r.out) ? "a file with that name exists again" : r.out.trim().slice(0, 200)}`);
       }
     } catch (err) { skip(String(err.message || err)); }
@@ -1196,7 +1178,7 @@ async function runInner(name, input, cfg, jr = []) {
     case "delete_file": {
       const p = checkPath(i.path, cfg); if (!fs.existsSync(p)) throw new Error("not found");
       const dir = fs.statSync(p).isDirectory();
-      const r = await ps(`Add-Type -AssemblyName Microsoft.VisualBasic; $p=$env:ORC_P; if(${dir ? "$true" : "$false"}){[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory($p,'OnlyErrorDialogs','SendToRecycleBin')}else{[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile($p,'OnlyErrorDialogs','SendToRecycleBin')}`, { ORC_P: p }, cfg.cwd, 30000);
+      const r = await psq(`Add-Type -AssemblyName Microsoft.VisualBasic; $p=$env:ORC_P; if(${dir ? "$true" : "$false"}){[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory($p,'OnlyErrorDialogs','SendToRecycleBin')}else{[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile($p,'OnlyErrorDialogs','SendToRecycleBin')}`, { ORC_P: p }, cfg.cwd, 30000);
       if (r.code !== 0) throw new Error(r.out);
       jr.push({ op: "deleted", path: p, dir });
       return `Moved to Recycle Bin: ${p}`;
@@ -1222,7 +1204,7 @@ async function runInner(name, input, cfg, jr = []) {
     case "notify": {
       const t = String(i.title || "OmniGPT").slice(0, 120), m = String(i.message || "").slice(0, 400);
       if (process.platform !== "win32") return `Notification (shown in the app only on this system): ${t} - ${m}`;
-      const r = await ps(TOAST_PS, { ORC_T: t, ORC_M: m }, cfg.cwd, 20000);
+      const r = await psq(TOAST_PS, { ORC_T: t, ORC_M: m }, cfg.cwd, 20000);
       return r.code === 0 ? `Notification shown: ${t}` : `The Windows notification could not be shown (${r.out.trim().slice(0, 160)}); the app shows it instead.`;
     }
     case "open_path": {
@@ -1234,8 +1216,8 @@ async function runInner(name, input, cfg, jr = []) {
     }
     case "clipboard": {
       if (process.platform !== "win32") throw new Error("the clipboard tool needs Windows");
-      if (i.action === "read") { const r = await ps("Get-Clipboard -Raw", {}, cfg.cwd, 15000); return r.out ? "Clipboard text:\n" + r.out : "The clipboard holds no text."; }
-      const r = await ps("Set-Clipboard -Value $env:ORC_T", { ORC_T: String(i.text ?? "") }, cfg.cwd, 15000); if (r.code !== 0) throw new Error(r.out.trim().slice(0, 200)); return "Copied to the clipboard.";
+      if (i.action === "read") { const r = await psq("Get-Clipboard -Raw", {}, cfg.cwd, 15000); return r.out ? "Clipboard text:\n" + r.out : "The clipboard holds no text."; }
+      const r = await psq("Set-Clipboard -Value $env:ORC_T", { ORC_T: String(i.text ?? "") }, cfg.cwd, 15000); if (r.code !== 0) throw new Error(r.out.trim().slice(0, 200)); return "Copied to the clipboard.";
     }
     case "archive": return archiveTool(i, cfg, jr);
     case "browser": return browserAction(i, { exe: findBrowser(), profile: path.join(CFG_DIR, "browser"), downloads: path.join(cfg.cwd, "Browser downloads"), headless: !!i.headless || process.env.OMNIGPT_BROWSER_HEADLESS === "1", checkUrl: browserUrlOk });
