@@ -17,9 +17,14 @@ const html = fs.readFileSync(path.join(src, "index.html"), "utf8");
 const script = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]).join("\n") + "\n" + ["brain.js", "app.js"].map((f) => fs.readFileSync(path.join(src, f), "utf8")).join("\n");
 check("index.html loads style.css, brain.js and app.js", html.includes('href="style.css"') && html.indexOf('src="brain.js"') > 0 && html.indexOf('src="brain.js"') < html.indexOf('src="app.js"'));
 const tmp = path.join(os.tmpdir(), "omnigpt-preflight.js"); fs.writeFileSync(tmp, script);
-for (const [n, f] of [["index.html script", tmp], ["server.mjs", path.join(src, "server.mjs")], ["tools.mjs", path.join(src, "tools.mjs")], ["web.mjs", path.join(src, "web.mjs")], ["files.mjs", path.join(src, "files.mjs")], ["zip.mjs", path.join(src, "zip.mjs")], ["docs.mjs", path.join(src, "docs.mjs")], ["browser.mjs", path.join(src, "browser.mjs")]]) {
+for (const [n, f] of [["index.html script", tmp], ["server.mjs", path.join(src, "server.mjs")], ["tools.mjs", path.join(src, "tools.mjs")], ["web.mjs", path.join(src, "web.mjs")], ["files.mjs", path.join(src, "files.mjs")], ["zip.mjs", path.join(src, "zip.mjs")], ["docs.mjs", path.join(src, "docs.mjs")], ["browser.mjs", path.join(src, "browser.mjs")], ["jobs.mjs", path.join(src, "jobs.mjs")]]) {
   try { execFileSync(process.execPath, ["--check", f], { stdio: "pipe" }); check("syntax: " + n, true); } catch (e) { check("syntax: " + n, false, String(e.stderr).slice(0, 200)); }
 }
+// 1a. every module the backend imports exists, and the installer build ships all of them
+{ const mods = fs.readdirSync(src).filter((f) => f.endsWith(".mjs")), missing = [];
+  for (const f of mods) for (const m of fs.readFileSync(path.join(src, f), "utf8").matchAll(/from "\.\/([\w.-]+)"/g)) if (!mods.includes(m[1])) missing.push(f + " -> " + m[1]);
+  const build = path.join(here, "..", "build.ps1"), ships = !fs.existsSync(build) || fs.readFileSync(build, "utf8").includes('Get-ChildItem "$src\\*.mjs"');
+  check(`backend modules complete and shipped (${mods.length} modules)`, !missing.length && ships, missing.join("; ") + (ships ? "" : " build.ps1 does not copy every .mjs")); }
 // 1b. the file reader understands every sample format
 try { const out = execFileSync(process.execPath, [path.join(here, "files-test.mjs")], { stdio: "pipe" }).toString(); check("file reader: " + (/All (\d+) file types/.exec(out) || [, "?"])[1] + " formats", true); }
 catch (e) { check("file reader", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 400)); }
@@ -55,6 +60,9 @@ catch (e) { check("browser tool", false, String(e.stdout).split("\n").filter((l)
 // 1b11. tools that run inside the page (memory, checklist, helpers), in the real page with a fake model
 try { execFileSync(process.execPath, [path.join(here, "page-test.mjs")], { stdio: "pipe", timeout: 240000 }); check("page tools: memory, checklist, helpers", true); }
 catch (e) { check("page tools: memory, checklist, helpers", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 600)); }
+// 1b12. background jobs: start, read, stop, and stopped when OmniGPT closes
+try { execFileSync(process.execPath, [path.join(here, "jobs-test.mjs")], { stdio: "pipe", timeout: 180000 }); check("background jobs", true); }
+catch (e) { check("background jobs", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 600)); }
 // 1c. inspect_file follows the same folder rules as every other tool
 { let ok = true; try { await tools.precheck("inspect_file", { path: "C:/Windows/win.ini" }); ok = false; } catch {} try { await tools.precheck("inspect_file", { path: path.join(os.homedir(), ".ssh", "id_rsa") }); ok = false; } catch {} check("inspect_file stays inside the allowed folders", ok); }
 
