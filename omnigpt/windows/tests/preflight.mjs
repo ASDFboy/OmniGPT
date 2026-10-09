@@ -84,6 +84,9 @@ catch (e) { check("learning: scores per kind of task, recipes, benchmark harness
 // 1b19. chats: one file per chat, the move from the old single file, search, export, project chat tools, idle brain graph
 try { execFileSync(process.execPath, [path.join(here, "chats-test.mjs")], { stdio: "pipe", timeout: 240000 }); check("chat storage", true); }
 catch (e) { check("chat storage", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
+// 1b20. speed: one PowerShell kept open for the app's own scripts (Windows), one browser for chart pictures and PDFs
+try { const out = execFileSync(process.execPath, [path.join(here, "speed-test.mjs")], { stdio: "pipe", timeout: 300000 }).toString(); check("shared PowerShell worker and drawing browser", true, out.split("\n").filter((l) => l.startsWith("TIMING")).map((l) => l.slice(8)).join("; ")); }
+catch (e) { check("shared PowerShell worker and drawing browser", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
 // 1c. inspect_file follows the same folder rules as every other tool
 { let ok = true; try { await tools.precheck("inspect_file", { path: "C:/Windows/win.ini" }); ok = false; } catch {} try { await tools.precheck("inspect_file", { path: path.join(os.homedir(), ".ssh", "id_rsa") }); ok = false; } catch {} check("inspect_file stays inside the allowed folders", ok); }
 
