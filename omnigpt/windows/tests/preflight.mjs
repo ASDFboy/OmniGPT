@@ -17,7 +17,7 @@ const html = fs.readFileSync(path.join(src, "index.html"), "utf8");
 const script = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]).join("\n") + "\n" + ["brain.js", "app.js"].map((f) => fs.readFileSync(path.join(src, f), "utf8")).join("\n");
 check("index.html loads style.css, brain.js and app.js", html.includes('href="style.css"') && html.indexOf('src="brain.js"') > 0 && html.indexOf('src="brain.js"') < html.indexOf('src="app.js"'));
 const tmp = path.join(os.tmpdir(), "omnigpt-preflight.js"); fs.writeFileSync(tmp, script);
-for (const [n, f] of [["index.html script", tmp], ["server.mjs", path.join(src, "server.mjs")], ["tools.mjs", path.join(src, "tools.mjs")], ["web.mjs", path.join(src, "web.mjs")], ["files.mjs", path.join(src, "files.mjs")], ["zip.mjs", path.join(src, "zip.mjs")], ["docs.mjs", path.join(src, "docs.mjs")], ["browser.mjs", path.join(src, "browser.mjs")], ["jobs.mjs", path.join(src, "jobs.mjs")]]) {
+for (const [n, f] of [["index.html script", tmp], ...fs.readdirSync(src).filter((m) => m.endsWith(".mjs")).sort().map((m) => [m, path.join(src, m)])]) { // every backend module
   try { execFileSync(process.execPath, ["--check", f], { stdio: "pipe" }); check("syntax: " + n, true); } catch (e) { check("syntax: " + n, false, String(e.stderr).slice(0, 200)); }
 }
 // 1a. every module the backend imports exists, and the installer build ships all of them
@@ -63,6 +63,9 @@ catch (e) { check("page tools: memory, checklist, helpers", false, String(e.stdo
 // 1b12. background jobs: start, read, stop, and stopped when OmniGPT closes
 try { execFileSync(process.execPath, [path.join(here, "jobs-test.mjs")], { stdio: "pipe", timeout: 180000 }); check("background jobs", true); }
 catch (e) { check("background jobs", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 600)); }
+// 1b13. http_request, make_chart, pdf_tools, ocr
+try { execFileSync(process.execPath, [path.join(here, "tier2-test.mjs")], { stdio: "pipe", timeout: 420000 }); check("http requests, charts, PDF tools and OCR", true); }
+catch (e) { check("http requests, charts, PDF tools and OCR", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
 // 1c. inspect_file follows the same folder rules as every other tool
 { let ok = true; try { await tools.precheck("inspect_file", { path: "C:/Windows/win.ini" }); ok = false; } catch {} try { await tools.precheck("inspect_file", { path: path.join(os.homedir(), ".ssh", "id_rsa") }); ok = false; } catch {} check("inspect_file stays inside the allowed folders", ok); }
 

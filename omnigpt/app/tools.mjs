@@ -16,6 +16,9 @@ import { inspect } from "./files.mjs";
 import { zipBuild, zipRead } from "./zip.mjs";
 import { browserAction } from "./browser.mjs";
 import { startJob, stopJob, readJob, PASS_CODE } from "./jobs.mjs";
+import { chartSvg, chartSpec, seriesFromCsv } from "./charts.mjs";
+import { htmlToPng } from "./render.mjs";
+import { OCR_PS, OCR_EXT, pageList, parseOcr, PDF_ACTIONS, qpdfRange, stem, qpdfFailed, newFiles } from "./pdfocr.mjs";
 export { listJobs, stopAllJobs, stopJob } from "./jobs.mjs";
 import { parseMarkdown, toHtml, toDocx, toXlsx, toPptx, sheetsFromText, slidesFromText } from "./docs.mjs";
 
@@ -313,6 +316,55 @@ export async function precheck(name, input, cfg = loadConfig(), scope) {
     case "generate_image": { if (!String(i.prompt || "").trim()) throw new Error("prompt is required"); const d = i.path ? W(i.path) : null; return { class: "write", summary: `Generate an image: ${String(i.prompt).slice(0, 200)}${d ? `\n  save as ${d}` : ""}` }; }
     case "transcribe_audio": { const s = checkPath(i.path, cfg); if (i.output) W(i.output); return { class: "read", summary: `Transcribe ${s}${i.output ? " into " + i.output : ""}` }; }
     case "speak": { if (!String(i.text || "").trim()) throw new Error("text is required"); if (String(i.text).length > 20000) throw new Error("text is too long (20000 characters max)"); const d = i.path ? W(i.path) : null; return { class: "write", summary: `Read aloud into an audio file${d ? " " + d : ""}: ${String(i.text).slice(0, 160)}` }; }
+    case "http_request": {
+      const m = String(i.method || "GET").toUpperCase(); if (!HTTP_METHODS.has(m)) throw new Error("method must be GET, POST, PUT, PATCH, DELETE or HEAD");
+      const u = await httpUrlOk(String(i.url || ""));
+      const h = i.headers && typeof i.headers === "object" && !Array.isArray(i.headers) ? i.headers : {};
+      for (const [k, v] of Object.entries(h)) {
+        if (!/^[A-Za-z0-9-]{1,64}$/.test(k)) throw new Error(`bad header name: ${k.slice(0, 40)}`);
+        if (SECRET_HEADER.test(k)) throw new Error(`the ${k} header carries a secret, and secrets are never typed into the chat. Save the key in Settings, Connections, and pass its name as connection.`);
+        if (/[\r\n]/.test(String(v))) throw new Error("header values cannot contain line breaks");
+      }
+      const body = httpBody(i);
+      if (body.length > 1e6) throw new Error("body is too large (1 MB max)");
+      if (body && (m === "GET" || m === "HEAD")) throw new Error("GET and HEAD requests have no body: put parameters in the URL, or use POST");
+      return { class: m === "GET" || m === "HEAD" ? "web" : "network", summary: `${m} ${u.href}${Object.keys(h).length ? "\nHeaders: " + Object.keys(h).join(", ") : ""}${body ? "\n" + body.slice(0, 800) : ""}` };
+    }
+    case "ocr": {
+      const p = checkPath(i.path, cfg); if (!OCR_EXT.test(p)) throw new Error("ocr reads pictures (png, jpg, bmp, gif, tiff, webp) and PDFs");
+      pageList(i.pages); const d = i.output ? W(i.output) : null;
+      if (d && fs.existsSync(d) && !i.overwrite) throw new Error("output exists: " + d);
+      return { class: d ? "write" : "read", summary: `Read the text in ${p} with the Windows OCR engine${i.pages ? ` (pages ${i.pages})` : ""}${d ? `\n  save the text as ${d}` : ""}` };
+    }
+    case "pdf_tools": {
+      const a = String(i.action || ""); if (!PDF_ACTIONS.has(a)) throw new Error("action must be info, merge, split, rotate or extract");
+      const pdf = (p) => { const x = checkPath(p, cfg); if (!/\.pdf$/i.test(x)) throw new Error("not a .pdf file: " + x); return x; };
+      const out = (d, srcs) => { if (srcs.some((x) => lc(x) === lc(d))) throw new Error("output must be a new file, not one of the inputs"); if (fs.existsSync(d) && !i.overwrite) throw new Error("output exists: " + d + " (set overwrite to replace it; the old version is backed up)"); return d; };
+      if (a === "merge") {
+        const L = list(i.paths, 50).map(pdf); if (L.length < 2) throw new Error("merge needs at least 2 PDFs in paths");
+        const d = out(W(i.output || stem(L[0]) + " merged.pdf"), L); if (!/\.pdf$/i.test(d)) throw new Error("output must end in .pdf");
+        return { class: "write", summary: `Merge ${L.length} PDFs into ${d}:\n${L.map((x) => "- " + x).join("\n")}` };
+      }
+      const s = pdf(i.path);
+      if (a === "info") return { class: "read", summary: `Read the page count and details of ${s}` };
+      if (a === "extract") { const r = qpdfRange(i.pages); const d = out(W(i.output || `${stem(s)} pages ${r}.pdf`), [s]); return { class: "write", summary: `Copy pages ${r} of ${s}\n  into ${d}` }; }
+      if (a === "rotate") {
+        const ang = Number(i.angle ?? 90); if (![90, 180, 270, -90].includes(ang)) throw new Error("angle must be 90, 180, 270 (clockwise) or -90");
+        const r = i.pages ? qpdfRange(i.pages) : "1-z", d = out(W(i.output || stem(s) + " rotated.pdf"), [s]);
+        return { class: "write", summary: `Rotate pages ${r} of ${s} by ${ang}°\n  save as ${d}` };
+      }
+      const n = Math.max(1, Math.min(Math.round(Number(i.every) || 1), 1000)), d = W(i.output || stem(s) + " pages");
+      if (fs.existsSync(d) && (!fs.statSync(d).isDirectory() || fs.readdirSync(d).length)) throw new Error("the output folder exists and is not empty: " + d);
+      return { class: "write", summary: `Split ${s} into files of ${n} page${n > 1 ? "s" : ""}\n  in the folder ${d}` };
+    }
+    case "make_chart": {
+      const p = W(i.path), ext = path.extname(p).toLowerCase();
+      if (ext !== ".png" && ext !== ".svg") throw new Error("path must end in .png or .svg");
+      if (fs.existsSync(p) && !i.overwrite) throw new Error("file exists: " + p + " (set overwrite to replace it; the old version is backed up)");
+      const csv = i.csv ? checkPath(i.csv, cfg) : null;
+      const sp = chartSpec(csv ? { ...i, ...seriesFromCsv(fs.readFileSync(csv, "utf8"), i.columns) } : i);
+      return { class: "write", summary: `${fs.existsSync(p) ? "OVERWRITE" : "Create"} ${p}: ${sp.type} chart${sp.title ? ` "${sp.title}"` : ""}, ${sp.series.length} series${csv ? " from " + csv : ""}` };
+    }
     case "view_images": {
       const L = list(i.paths, 8).map((p) => checkPath(p, cfg));
       return { class: "read", summary: `Look at ${L.length} image${L.length > 1 ? "s" : ""}:\n${L.map((p) => "- " + p).join("\n")}` };
@@ -488,6 +540,83 @@ function saveNew(p, data, jr, overwrite) {
   if (fs.existsSync(p)) { if (!overwrite) throw new Error("file exists: " + p); jr.push({ op: "modified", path: p, backup: backup(p) }); } else jr.push({ op: "created", path: p });
   fs.writeFileSync(p, data);
 }
+// ---------- http_request: public addresses only (like download_file), never secrets typed by the model
+const HTTP_METHODS = new Set(["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"]);
+const SECRET_HEADER = /authorization|cookie|token|secret|passw|api[-_]?key|^x-key$|session/i;
+const httpUrlOk = async (u) => { if (process.env.OMNIGPT_TEST_ALLOW_LOCAL === "1" && /^http:\/\/127\.0\.0\.1:\d+\//.test(u)) return new URL(u); return checkUrl(u); };
+const httpBody = (i) => i.body === undefined || i.body === null ? "" : typeof i.body === "string" ? i.body : JSON.stringify(i.body);
+async function httpRequest(i) {
+  let m = String(i.method || "GET").toUpperCase(), url = await httpUrlOk(String(i.url)), body = httpBody(i);
+  const headers = { "user-agent": "OmniGPT/1.0", accept: "application/json, text/plain, */*", ...(i.headers || {}) };
+  if (body && typeof i.body !== "string" && !Object.keys(headers).some((k) => k.toLowerCase() === "content-type")) headers["content-type"] = "application/json";
+  const ms = Math.min(Math.max(Number(i.timeout_sec) || 30, 1), 120) * 1000, t0 = Date.now();
+  let res;
+  for (let hop = 0; ; hop++) {
+    res = await fetch(url, { method: m, headers, body: body || undefined, redirect: "manual", signal: AbortSignal.timeout(ms) });
+    if (!(res.status >= 300 && res.status < 400 && res.headers.get("location"))) break;
+    if (hop >= 5) throw new Error("too many redirects");
+    url = await httpUrlOk(new URL(res.headers.get("location"), url).href); // every hop is checked again
+    if (res.status === 303 || ((res.status === 301 || res.status === 302) && m === "POST")) { m = "GET"; body = ""; }
+  }
+  const chunks = []; let n = 0, cut = false;
+  if (res.body && m !== "HEAD") for await (const c of res.body) { n += c.length; if (n > 2 * 1024 * 1024) { cut = true; break; } chunks.push(c); }
+  const buf = Buffer.concat(chunks), type = res.headers.get("content-type") || "";
+  const keep = ["content-type", "content-length", "location", "retry-after", "x-ratelimit-remaining", "x-ratelimit-reset", "ratelimit-remaining", "etag", "last-modified"];
+  const head = `HTTP ${res.status} ${res.statusText}  (${m} ${url.href}, ${Date.now() - t0} ms)\n` + keep.filter((k) => res.headers.get(k)).map((k) => `${k}: ${res.headers.get(k)}`).join("\n");
+  if (!buf.length) return head + "\n\n(no body)";
+  const text = buf.toString("utf8");
+  if (/^(image|audio|video|application\/(octet-stream|pdf|zip))/i.test(type) || buf.subarray(0, 4000).includes(0)) return head + `\n\nBinary content (${fmtB(buf.length)}${cut ? ", more not read" : ""}). Use download_file to save it.`;
+  let shown = text; if (/json/i.test(type) || /^\s*[[{]/.test(text)) { try { shown = JSON.stringify(JSON.parse(text), null, 1); } catch {} }
+  return head + `\n\n${shown.length > 20000 ? shown.slice(0, 20000) + `\n…[${shown.length - 20000} more characters]` : shown}${cut ? "\n…[the response is over 2 MB; only the first 2 MB were read]" : ""}`;
+}
+
+// ---------- ocr and pdf_tools
+async function ocrTool(i, cfg, jr) {
+  if (process.platform !== "win32") throw new Error("the ocr tool uses the OCR engine built into Windows");
+  const p = checkPath(i.path, cfg); if (!fs.existsSync(p)) throw new Error("not found: " + p);
+  const pages = pageList(i.pages);
+  const r = await ps(OCR_PS, { ORC_P: p, ORC_LANG: String(i.language || ""), ORC_PAGES: pages === "all" ? "all" : pages.join(",") }, cfg.cwd, 300000);
+  if (r.timedOut) throw new Error("OCR took longer than 5 minutes and was stopped; ask for fewer pages");
+  const o = parseOcr(r.out);
+  const text = o.parts.map((x) => (o.pages ? `--- Page ${x.page} ---\n` : "") + (x.text || "(no text found)")).join("\n\n");
+  let d = null; if (i.output) { d = checkPath(i.output, cfg); saveNew(d, text, jr, !!i.overwrite); }
+  return `Text read by OCR from ${p} (language ${o.lang}${o.pages ? `; ${o.parts.length} of ${o.pages} pages${pages === "all" && o.pages > 30 ? ", the first 30: use pages for the rest" : ""}` : ""}). OCR can misread characters; check numbers that matter.` + (d ? `\nSaved to ${d}.` : "") + "\n\n" + cap(text, 20000);
+}
+let qpdfPath = null;
+async function findQpdf(cwd) {
+  if (qpdfPath && fs.existsSync(qpdfPath)) return qpdfPath;
+  if (process.platform === "win32") {
+    const r = await ps("(Get-Command qpdf -ErrorAction SilentlyContinue).Source; Get-ChildItem \"$env:ProgramFiles\\qpdf*\\bin\\qpdf.exe\",\"$env:LOCALAPPDATA\\Microsoft\\WinGet\\Packages\\QPDF*\\*\\bin\\qpdf.exe\" -ErrorAction SilentlyContinue | Sort-Object FullName -Descending | ForEach-Object FullName", {}, cwd, 20000);
+    qpdfPath = r.out.split(/\r?\n/).map((l) => l.trim()).find((f) => f && fs.existsSync(f)) || null;
+  } else for (const d of String(process.env.PATH || "").split(":")) if (d && fs.existsSync(path.join(d, "qpdf"))) { qpdfPath = path.join(d, "qpdf"); break; }
+  return qpdfPath;
+}
+async function pdfTools(i, cfg, jr) {
+  const q = await findQpdf(cfg.cwd);
+  if (!q) throw new Error("qpdf (a free PDF program) is not installed. Install it with install_tool (manager winget, package QPDF.QPDF), then call pdf_tools again.");
+  const a = String(i.action), qp = (args) => execFile(q, args, 300000);
+  const write = async (d, args) => { // qpdf writes a temporary file that replaces nothing until it succeeded
+    const tmp = d + ".part.pdf"; fs.mkdirSync(path.dirname(d), { recursive: true });
+    const r = await qp([...args, tmp]), bad = qpdfFailed(r); if (bad || !fs.existsSync(tmp)) { try { fs.unlinkSync(tmp); } catch {} throw new Error(bad || "qpdf wrote nothing"); }
+    if (fs.existsSync(d)) jr.push({ op: "modified", path: d, backup: backup(d) }); else jr.push({ op: "created", path: d });
+    fs.renameSync(tmp, d); const n = Number((await qp(["--show-npages", d])).out.trim()) || 0; return n;
+  };
+  if (a === "merge") { const L = i.paths.map((p) => checkPath(p, cfg)), d = checkPath(i.output || stem(L[0]) + " merged.pdf", cfg); const n = await write(d, ["--empty", "--pages", ...L, "--"]); return `Merged ${L.length} PDFs into ${d} (${n} pages).`; }
+  const s = checkPath(i.path, cfg); if (!fs.existsSync(s)) throw new Error("not found: " + s);
+  const total = Number((await qp(["--show-npages", s])).out.trim()) || 0;
+  if (a === "info") {
+    const enc = (await qp(["--is-encrypted", s])).code === 0, chk = await qp(["--check", s]), ver = (/PDF Version: (\S+)/i.exec(chk.out) || [])[1];
+    return `${s}: ${total} page${total === 1 ? "" : "s"}, ${fmtB(fs.statSync(s).size)}${ver ? ", PDF " + ver : ""}${enc ? ", password-protected or encrypted" : ""}${qpdfFailed(chk) ? "\nqpdf found problems: " + qpdfFailed(chk) : ""}.\nUse inspect_file to read its text, or ocr for scanned pages.`;
+  }
+  if (a === "extract") { const r = qpdfRange(i.pages), d = checkPath(i.output || `${stem(s)} pages ${r}.pdf`, cfg); const n = await write(d, ["--empty", "--pages", s, r, "--"]); return `Copied pages ${r} of ${s} (${total} pages) into ${d} (${n} pages).`; }
+  if (a === "rotate") { const ang = Number(i.angle ?? 90), r = i.pages ? qpdfRange(i.pages) : "1-z", d = checkPath(i.output || stem(s) + " rotated.pdf", cfg); await write(d, [s, `--rotate=${ang < 0 ? "" : "+"}${ang}:${r}`]); return `Rotated pages ${r} of ${s} by ${ang}° and saved ${d}.`; }
+  const n = Math.max(1, Math.min(Math.round(Number(i.every) || 1), 1000)), d = checkPath(i.output || stem(s) + " pages", cfg);
+  if (!fs.existsSync(d)) { fs.mkdirSync(d, { recursive: true }); jr.push({ op: "created", path: d, dir: true }); }
+  const before = new Set(fs.readdirSync(d)), r = await qp([`--split-pages=${n}`, s, path.join(d, path.basename(stem(s)) + "-%d.pdf")]), files = newFiles(d, before);
+  for (const f of files) jr.push({ op: "created", path: f });
+  const bad = qpdfFailed(r); if (bad) throw new Error(bad + (files.length ? ` (${files.length} files were written before it stopped)` : ""));
+  return `Split ${s} (${total} pages) into ${files.length} files in ${d}:\n${files.slice(0, 60).map((f) => "- " + path.basename(f)).join("\n")}${files.length > 60 ? `\n…and ${files.length - 60} more` : ""}`;
+}
 function findBrowser() {
   if (process.env.OMNIGPT_BROWSER && fs.existsSync(process.env.OMNIGPT_BROWSER)) return process.env.OMNIGPT_BROWSER;
   const pf = [process.env["ProgramFiles(x86)"], process.env.ProgramFiles, process.env.LOCALAPPDATA].filter(Boolean);
@@ -506,6 +635,19 @@ async function htmlToPdf(html, out) {
     if (!fs.existsSync(pdf) || fs.statSync(pdf).size < 100) throw new Error("the browser did not produce a PDF: " + r.out.trim().slice(-200));
     return fs.readFileSync(pdf);
   } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+}
+// renders an SVG to PNG with Edge (or Chrome) in the background, at twice the size for sharp text
+async function svgToPng(svg, w, h) {
+  const b = findBrowser(); if (!b) throw new Error("Microsoft Edge was not found, so the PNG could not be drawn. Save the chart as .svg instead.");
+  return htmlToPng(b, `<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:0;overflow:hidden;background:#fcfcfb}svg{display:block}</style></head><body>${svg}</body></html>`, w, h, 2);
+}
+async function makeChart(i, cfg, jr) {
+  const p = checkPath(i.path, cfg), csv = i.csv ? checkPath(i.csv, cfg) : null;
+  const c = chartSvg(csv ? { ...i, ...seriesFromCsv(fs.readFileSync(csv, "utf8"), i.columns) } : i);
+  const data = path.extname(p).toLowerCase() === ".png" ? await svgToPng(c.svg, c.width, c.height) : c.svg;
+  saveNew(p, data, jr, !!i.overwrite);
+  const pts = c.spec.type === "scatter" ? c.spec.series.reduce((n, s) => n + s.points.length, 0) + " points" : c.spec.labels.length + " categories";
+  return `Created ${p}: ${c.spec.type} chart, ${c.spec.series.length} series, ${pts}${c.spec.type === "pie" && c.spec.labels.length > 8 ? " (the smallest slices are combined into Other)" : ""} (${fmtB(Buffer.byteLength(data))}). Look at it with view_images before telling the user it is right.`;
 }
 async function makeDocument(i, cfg, jr) {
   const p = checkPath(i.path, cfg), ext = path.extname(p).toLowerCase(), title = i.title ? String(i.title) : "";
@@ -921,7 +1063,7 @@ export function run(name, input, cfg = loadConfig(), scope, meta) {
     catch (e) { logActivity({ t: Date.now(), chat: meta?.chat || null, turn: meta?.turn || null, tool: name, summary: String(pre.summary || "").slice(0, 600), ok: false, error: String(e.message || e).slice(0, 300) }); throw e; }
     finally { journal(meta, jr); } // a bulk action that partly failed still records what it did
   };
-  if (["run_command", "run_code", "read_file", "read_files", "list_dir", "download_file", "web_search", "web_open", "inspect_file", "find_duplicates", "view_images", "install_tool", "find_files", "search_files", "system_info", "notify", "open_path", "clipboard", "convert_media", "generate_image", "transcribe_audio", "speak", "browser", "start_process", "read_process", "stop_process"].includes(name)) return go();
+  if (["run_command", "run_code", "read_file", "read_files", "list_dir", "download_file", "web_search", "web_open", "inspect_file", "find_duplicates", "view_images", "install_tool", "find_files", "search_files", "system_info", "notify", "open_path", "clipboard", "convert_media", "generate_image", "transcribe_audio", "speak", "browser", "start_process", "read_process", "stop_process", "http_request", "ocr"].includes(name)) return go();
   const p = chain.then(go, go); chain = p.catch(() => {}); return p;
 }
 async function runInner(name, input, cfg, jr = []) {
@@ -1024,6 +1166,10 @@ async function runInner(name, input, cfg, jr = []) {
     case "archive": return archiveTool(i, cfg, jr);
     case "browser": return browserAction(i, { exe: findBrowser(), profile: path.join(CFG_DIR, "browser"), downloads: path.join(cfg.cwd, "Browser downloads"), headless: !!i.headless || process.env.OMNIGPT_BROWSER_HEADLESS === "1", checkUrl: browserUrlOk });
     case "make_document": return makeDocument(i, cfg, jr);
+    case "make_chart": return makeChart(i, cfg, jr);
+    case "http_request": return httpRequest(i);
+    case "ocr": return ocrTool(i, cfg, jr);
+    case "pdf_tools": return pdfTools(i, cfg, jr);
     case "edit_image": return editImage(i, cfg, jr);
     case "convert_media": return convertMedia(i, cfg, jr);
     case "generate_image": return generateImage(i, cfg, jr);
