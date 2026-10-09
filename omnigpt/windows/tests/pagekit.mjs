@@ -31,7 +31,7 @@ export async function openApp({ port = "20171", env: extra = {} } = {}) {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), "omnigpt-page-"));
   const base = `http://127.0.0.1:${port}`;
   const env = { ...process.env, OMNIGPT_PORT: port, LOCALAPPDATA: data, OMNIROUTE_URL: "http://127.0.0.1:9", OMNIROUTE_SCRIPT: path.join(data, "no-omniroute.mjs"), ...extra };
-  delete env.OMNIGPT_PARENT_PID; delete env.OMNIROUTE_API_KEY;
+  delete env.OMNIGPT_PARENT_PID; if (!extra.OMNIROUTE_API_KEY) delete env.OMNIROUTE_API_KEY; // only a caller that passes a key (the benchmark) gets one
   const server = spawn(process.execPath, [path.join(src, "server.mjs")], { env, stdio: ["ignore", "ignore", "pipe"], windowsHide: true });
   let serverErr = ""; server.stderr.on("data", (d) => { serverErr = (serverErr + d).slice(-2000); });
   let browser = null, ws = null;

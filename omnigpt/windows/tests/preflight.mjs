@@ -78,6 +78,9 @@ catch (e) { check("request start: routing, tool groups, summaries", false, Strin
 // 1b17. the agent's tool loop: old output shrinks (read_output), reads run side by side, one review per step, work is checked before done
 try { execFileSync(process.execPath, [path.join(here, "loop-test.mjs")], { stdio: "pipe", timeout: 240000 }); check("tool loop: shorter old output, parallel reads, batched reviews, self-check", true); }
 catch (e) { check("tool loop: shorter old output, parallel reads, batched reviews, self-check", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
+// 1b18. learning from results: model scores per kind of task, recipes, and the benchmark harness against a scripted OmniRoute
+try { execFileSync(process.execPath, [path.join(here, "learning-test.mjs")], { stdio: "pipe", timeout: 240000 }); check("learning: scores per kind of task, recipes, benchmark harness", true); }
+catch (e) { check("learning: scores per kind of task, recipes, benchmark harness", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
 // 1c. inspect_file follows the same folder rules as every other tool
 { let ok = true; try { await tools.precheck("inspect_file", { path: "C:/Windows/win.ini" }); ok = false; } catch {} try { await tools.precheck("inspect_file", { path: path.join(os.homedir(), ".ssh", "id_rsa") }); ok = false; } catch {} check("inspect_file stays inside the allowed folders", ok); }
 
