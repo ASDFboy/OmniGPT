@@ -136,6 +136,15 @@ try {
   }
   check("pdf_tools only takes PDFs", /not a \.pdf/.test(await refused("pdf_tools", { action: "info", path: f("data.csv") })));
 
+  // ---- analyze_data (the sandbox run itself is tested on Windows in sandbox-test.mjs, against the built app)
+  const pa = await tools.precheck("analyze_data", { files: [f("data.csv")], code: "print(1)" }, cfg);
+  check("analyze_data is a change that asks (it saves result files)", pa.class === "write" && /Analyze 1 file with python/.test(pa.summary) && /Analysis results/.test(pa.summary), pa.summary.split("\n")[0]);
+  check("analyze_data takes at most 20 files, only from the allowed folders", /at most 20/.test(await refused("analyze_data", { files: Array(21).fill(f("data.csv")), code: "print(1)" })) && /outside the allowed/.test(await refused("analyze_data", { files: ["/etc/passwd"], code: "print(1)" })));
+  check("analyze_data needs code", /code is required/.test(await refused("analyze_data", { files: [], code: " " })));
+  const { xlsxSheets } = await import(pathToFileURL(path.join(src, "files.mjs")).href), { toXlsx } = await import(pathToFileURL(path.join(src, "docs.mjs")).href);
+  const sh = xlsxSheets(toXlsx([{ name: "Plan", rows: [["month", "budget"], ["Jan", 100], ["Feb", "=B2*2"]] }, { name: "Notes", rows: [["a"]] }], "x"));
+  check("Excel sheets are read as rows for the sandbox's CSV copies", sh.length === 2 && sh[0].name === "Plan" && JSON.stringify(sh[0].rows[1]) === '["Jan","100"]' && sh[1].name === "Notes", JSON.stringify(sh).slice(0, 160));
+
   // ---- ocr
   check("ocr only takes pictures and PDFs", /pictures/.test(await refused("ocr", { path: f("data.csv") })));
   check("ocr checks page ranges", /pages must look like/.test(await refused("ocr", { path: f("three.pdf"), pages: "x" })));

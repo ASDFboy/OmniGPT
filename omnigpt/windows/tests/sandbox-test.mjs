@@ -6,8 +6,8 @@ import path from "node:path";
 
 const ROOT = process.argv[2];
 if (!ROOT || !fs.existsSync(path.join(ROOT, "OmniGPT.Sandbox.exe"))) { console.error("usage: node sandbox-test.mjs <installRoot>"); process.exit(2); }
-function sbx(lang, code, secs = 10, mem = 256) {
-  const r = spawnSync(path.join(ROOT, "OmniGPT.Sandbox.exe"), [ROOT, lang, String(secs), String(mem)], { input: code, encoding: "utf8", timeout: (secs + 40) * 1000, windowsHide: true, maxBuffer: 50e6 });
+function sbx(lang, code, secs = 10, mem = 256, io = []) {
+  const r = spawnSync(path.join(ROOT, "OmniGPT.Sandbox.exe"), [ROOT, lang, String(secs), String(mem), ...io], { input: code, encoding: "utf8", timeout: (secs + 40) * 1000, windowsHide: true, maxBuffer: 50e6 });
   try { return JSON.parse(r.stdout); } catch { return { error: "bad output: " + String(r.stdout).slice(0, 200), stdout: "", stderr: String(r.stderr).slice(0, 200), exitCode: -9 }; }
 }
 const HOME = os.homedir().replace(/\\/g, "\\\\");
@@ -52,6 +52,42 @@ r = sbx("javascript", `require('fs').writeFileSync(String.raw\`${WRITE_TARGET}\`
 r = sbx("javascript", `const s=require('net').connect(20128,'127.0.0.1');s.on('connect',()=>console.log('CONN'+'ECTED'));s.on('error',e=>console.log('ERR',e.code));setTimeout(()=>process.exit(),3000)`); check("javascript cannot reach OmniRoute on localhost", !/CONNECTED/.test(out(r)), out(r).trim().slice(0, 60));
 r = sbx("javascript", `console.log(require('child_process').execSync('cmd /c echo SPAW'+'NED').toString())`); check("javascript cannot start other programs", !/SPAWNED/.test(out(r)));
 r = sbx("javascript", `console.log(process.env.OMNIROUTE_API_KEY, Object.keys(process.env).filter(k=>/KEY|TOKEN|OMNI/i.test(k)).length)`); check("javascript sees no secrets", !/canary/.test(out(r)) && /undefined 0/.test(r.stdout), r.stdout.trim());
+
+// ---- analyze_data: copies of chosen files in, result files out, and nothing else
+{
+  const stage = fs.mkdtempSync(path.join(os.tmpdir(), "omnigpt-sbx-io-")), inD = path.join(stage, "in"), outD = path.join(stage, "out"), WS = path.dirname(SECRET_FILE); // used inside Python raw strings
+  fs.mkdirSync(inD); fs.writeFileSync(path.join(inD, "data.csv"), "item,amount\napples,3\npears,4.5\n");
+  const io = (o) => ["--in", inD, "--out", o];
+  r = sbx("python", `import csv, os\nrows=list(csv.DictReader(open("input/data.csv")))\nt=sum(float(x["amount"]) for x in rows)\nos.makedirs("output/charts", exist_ok=True)\nopen("output/summary.csv","w").write("total\\n%s\\n" % t)\nopen("output/charts/c.svg","w").write("<svg/>")\nprint("TOTAL", t)`, 20, 512, io(outD));
+  check("analysis code reads its input copies and its result files come out", r.exitCode === 0 && /TOTAL 7\.5/.test(r.stdout) && JSON.stringify((r.files || []).sort()) === JSON.stringify(["charts\\c.svg", "summary.csv"]) && /7\.5/.test(fs.readFileSync(path.join(outD, "summary.csv"), "utf8")), out(r).slice(0, 160) + " files=" + JSON.stringify(r.files));
+  r = sbx("python", `import os\nprint(sorted(os.listdir("input")))\nprint(open(r"${S}").read())`, 10, 256, io(path.join(stage, "o2")));
+  check("analysis code sees only its copies, not the original folder", /\['data\.csv'\]/.test(r.stdout) && !/CANARY/.test(out(r)), r.stdout.trim().split("\n")[0]);
+  r = sbx("python", `import _winapi, os\nos.makedirs("output", exist_ok=True)\ntry:\n  _winapi.CreateJunction(r"${WS}", r"output\\evil")\n  print("JUNCTION-MADE")\nexcept Exception as e: print("no junction:", e)\nopen("output/ok.txt","w").write("fine")`, 10, 256, io(path.join(stage, "o3")));
+  const o3 = path.join(stage, "o3"), got3 = fs.existsSync(o3) ? fs.readdirSync(o3, { recursive: true }).map(String) : [];
+  check("a link planted in output/ is never followed (no user file comes out)", !got3.some((n) => /canary/i.test(n)) && JSON.stringify(r.files) === JSON.stringify(["ok.txt"]), `${/JUNCTION-MADE/.test(r.stdout) ? "junction made" : "junction refused"}; copied: ${got3.join(", ")}`);
+  r = sbx("python", `import _winapi, os, shutil\nshutil.rmtree("output", ignore_errors=True)\ntry:\n  _winapi.CreateJunction(r"${WS}", "output")\n  print("SWAPPED")\nexcept Exception as e: print("no swap:", e)`, 10, 256, io(path.join(stage, "o4")));
+  const o4 = path.join(stage, "o4"), got4 = fs.existsSync(o4) ? fs.readdirSync(o4) : [];
+  check("output/ itself swapped for a link copies nothing", got4.length === 0 && (r.files || []).length === 0, `${/SWAPPED/.test(r.stdout) ? "swapped" : "swap refused"}; copied ${got4.length}`);
+  r = sbx("python", `import os\nfor i in range(60): open("output/f%02d.txt" % i,"w").write("x")`, 10, 256, io(path.join(stage, "o5")));
+  check("at most 50 result files come out", (r.files || []).length === 50 && r.skipped === 10, `${(r.files || []).length} files, ${r.skipped} skipped`);
+  fs.rmSync(stage, { recursive: true, force: true });
+  // the whole tool, as the app runs it: CSV and Excel copies in, a summary file saved in the results folder, undoable
+  const lad = process.env.LOCALAPPDATA; process.env.LOCALAPPDATA = fs.mkdtempSync(path.join(os.tmpdir(), "omnigpt-sbx-cfg-")); process.env.OMNIGPT_ROOT = ROOT;
+  const { pathToFileURL } = await import("node:url");
+  const tools = await import(pathToFileURL(path.join(ROOT, "app", "tools.mjs")).href), { toXlsx } = await import(pathToFileURL(path.join(ROOT, "app", "docs.mjs")).href);
+  const cfgDir = process.env.LOCALAPPDATA; process.env.LOCALAPPDATA = lad;
+  const Wd = path.join(path.dirname(SECRET_FILE), ".omnigpt-analyze-test-" + process.pid); fs.mkdirSync(Wd, { recursive: true });
+  fs.writeFileSync(path.join(Wd, "sales.csv"), "month,units\nJan,10\nFeb,32\n"); fs.writeFileSync(path.join(Wd, "budget.xlsx"), toXlsx([{ name: "Plan", rows: [["month", "budget"], ["Jan", 100], ["Feb", 250]] }], "Budget"));
+  const cfg = { ...tools.loadConfig(), cwd: Wd, roots: [path.dirname(Wd)], granted: [] }, meta = { turn: "t-analyze-" + process.pid };
+  const code = `import csv, os\nprint(sorted(os.listdir("input")))\nu=sum(int(r["units"]) for r in csv.DictReader(open("input/sales.csv")))\nb=sum(float(r["budget"]) for r in csv.DictReader(open("input/budget.Plan.csv")))\nopen("output/summary.csv","w").write("units,budget\\n%d,%g\\n" % (u,b))\nprint("UNITS", u, "BUDGET", b)`;
+  const pre = await tools.precheck("analyze_data", { files: [path.join(Wd, "sales.csv"), path.join(Wd, "budget.xlsx")], code, output: path.join(Wd, "results") }, cfg);
+  check("analyze_data asks before it saves result files", pre.class === "write" && /Analyze 2 files with python/.test(pre.summary));
+  const res = await tools.run("analyze_data", { files: [path.join(Wd, "sales.csv"), path.join(Wd, "budget.xlsx")], code, output: path.join(Wd, "results") }, cfg, undefined, meta).catch((e) => "ERROR " + e.message);
+  check("analyze_data: Excel sheets arrive as CSV, results are saved", /UNITS 42 BUDGET 350/.test(res) && /input\/budget\.Plan\.csv/.test(res) && fs.existsSync(path.join(Wd, "results", "summary.csv")) && /42,350/.test(fs.readFileSync(path.join(Wd, "results", "summary.csv"), "utf8")), res.replace(/\n/g, " | ").slice(0, 300));
+  check("analyze_data results are in the undo journal", tools.undoInfo(meta.turn).changes === 2, JSON.stringify(tools.undoInfo(meta.turn)));
+  check("analyze_data never fills a folder that already has files", await tools.precheck("analyze_data", { files: [], code: "print(1)", output: path.join(Wd, "results") }, cfg).then(() => false, (e) => /not empty/.test(e.message)));
+  fs.rmSync(Wd, { recursive: true, force: true }); fs.rmSync(cfgDir, { recursive: true, force: true });
+}
 
 // ---- cleanup
 const leftovers = (() => { try { return fs.readdirSync(path.join(process.env.LOCALAPPDATA, "OmniGPT", "sandbox", "runs")).filter((n) => !n.startsWith(".")).length; } catch { return 0; } })();
