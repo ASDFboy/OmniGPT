@@ -69,6 +69,9 @@ catch (e) { check("http requests, charts, PDF tools and OCR", false, String(e.st
 // 1b14. account connections: secrets never shown (DPAPI on Windows), messages always ask, calendars, saved API keys, gh allowlist
 try { execFileSync(process.execPath, [path.join(here, "connections-test.mjs")], { stdio: "pipe", timeout: 240000 }); check("account connections", true); }
 catch (e) { check("account connections", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
+// 1b15. chats: one file per chat, the move from the old single file, search, export, project chat tools, idle brain graph
+try { execFileSync(process.execPath, [path.join(here, "chats-test.mjs")], { stdio: "pipe", timeout: 240000 }); check("chat storage", true); }
+catch (e) { check("chat storage", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
 // 1c. inspect_file follows the same folder rules as every other tool
 { let ok = true; try { await tools.precheck("inspect_file", { path: "C:/Windows/win.ini" }); ok = false; } catch {} try { await tools.precheck("inspect_file", { path: path.join(os.homedir(), ".ssh", "id_rsa") }); ok = false; } catch {} check("inspect_file stays inside the allowed folders", ok); }
 

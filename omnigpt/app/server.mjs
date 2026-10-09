@@ -154,8 +154,111 @@ setInterval(() => { // a missed run (app was closed) fires once on the next tick
 // ---------- key/value storage for chats, folders, projects and model health (no browser quota)
 const KVDIR = path.join(path.dirname(TASKS_FILE), "kv");
 const kvFile = (k) => path.join(KVDIR, k.replace(/[^a-z.]/g, "_") + ".json");
-const kvAll = () => { const o = {}; try { for (const f of fs.readdirSync(KVDIR)) if (f.endsWith(".json")) { const n = f.slice(0, -5); try { o[n] = JSON.parse(fs.readFileSync(path.join(KVDIR, f), "utf8")); } catch { try { o[n] = JSON.parse(fs.readFileSync(path.join(KVDIR, f + ".bak"), "utf8")); } catch {} } } } catch {} return o; }; // a damaged file falls back to the previous copy
+const kvAll = () => { const o = {}; try { for (const f of fs.readdirSync(KVDIR)) if (f.endsWith(".json") && f !== "orc.chats.json") { const n = f.slice(0, -5); try { o[n] = JSON.parse(fs.readFileSync(path.join(KVDIR, f), "utf8")); } catch { try { o[n] = JSON.parse(fs.readFileSync(path.join(KVDIR, f + ".bak"), "utf8")); } catch {} } } } catch {} return o; }; // a damaged file falls back to the previous copy
 const kvSet = (k, v) => { if (!/^orc\.[a-z]+$/.test(k)) throw new Error("bad key"); fs.mkdirSync(KVDIR, { recursive: true }); const t = kvFile(k) + ".tmp"; fs.writeFileSync(t, JSON.stringify(v)); try { fs.copyFileSync(kvFile(k), kvFile(k) + ".bak"); } catch {} fs.renameSync(t, kvFile(k)); };
+
+// ---------- chats: one file per chat (kv/chats/<id>.json) and a small index (title, time, folder, project, mode, short
+// previews), so saving a chat writes only that chat. The page loads the index at start and a chat's full record on demand.
+// The old single orc.chats file is moved over once, checked, and kept as orc.chats.json.migrated-backup.
+const CHATDIR = path.join(KVDIR, "chats"), CHATIDX = path.join(CHATDIR, "_index.json"); // ids never start with "_"
+const okId = (id) => typeof id === "string" && /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(id) && !/^(con|prn|aux|nul|com\d|lpt\d)$/i.test(id); // CON, NUL, COM1...: Windows devices, not files
+const badReq = (m) => Object.assign(new Error(m), { status: 400 });
+const chatFile = (id) => { if (!okId(id)) throw badReq("bad chat id"); return path.join(CHATDIR, id + ".json"); };
+const writeAtomic = (f, s) => { const t = f + ".tmp"; fs.writeFileSync(t, s); fs.renameSync(t, f); };
+const textOf = (c) => (typeof c === "string" ? c : Array.isArray(c) ? c.map((b) => (b && b.type === "text" ? String(b.text || "") : b && b.type === "image" ? "[image]" : "")).join("\n") : "");
+const oneLine = (s, n) => String(s || "").replace(/\s+/g, " ").trim().slice(0, n);
+const hist = (c) => (Array.isArray(c.history) ? c.history : []);
+const entryOf = (c) => { const h = hist(c); return { id: c.id, title: String(c.title || "").slice(0, 200), ts: Number(c.ts) || 0, folder: c.folder || null, project: c.project || null, mode: c.mode || "default", n: h.length,
+  q: oneLine(textOf(h.find((m) => m && m.role === "user")?.content), 160), last: oneLine(textOf([...h].reverse().find((m) => m && m.role === "assistant")?.content), 200) }; };
+let chatIdx = new Map(), chatTxt = null, txtTimer = null; // chatTxt: each chat's text for searching, read on the first search and dropped after 10 idle minutes
+const txtOf = (c) => { const b = hist(c).map((m) => textOf(m && m.content)).join("\n"); return { b, l: b.toLowerCase() }; };
+const saveIdx = () => { fs.mkdirSync(CHATDIR, { recursive: true }); writeAtomic(CHATIDX, JSON.stringify([...chatIdx.values()])); };
+const readChat = (id) => { try { const c = JSON.parse(fs.readFileSync(chatFile(id), "utf8")); return c && typeof c === "object" && c.id === id ? c : null; } catch { return null; } };
+const chatList = () => [...chatIdx.values()].sort((a, b) => b.ts - a.ts);
+function putChat(c, idx = true) {
+  if (!c || typeof c !== "object" || Array.isArray(c)) throw badReq("bad chat");
+  const id = String(c.id ?? ""); chatFile(id);
+  const rec = { ...c, id, ts: Number(c.ts) || Date.now(), history: hist(c) }, s = JSON.stringify(rec);
+  fs.mkdirSync(CHATDIR, { recursive: true }); writeAtomic(chatFile(id), s);
+  const e = entryOf(rec); chatIdx.set(id, e); if (chatTxt) chatTxt.set(id, txtOf(rec)); if (idx) saveIdx();
+  return { entry: e, hash: crypto.createHash("sha1").update(s).digest("hex") };
+}
+// older copies (the old orc.chats file, an old window that is still open, the old browser storage): a chat is written
+// only when it is new or newer than the stored one, so running this twice changes nothing
+function importChats(list) {
+  const done = [], seen = new Set();
+  for (const c of Array.isArray(list) ? list : []) {
+    if (!c || typeof c !== "object" || Array.isArray(c)) continue;
+    let id = String(c.id ?? ""); if (!okId(id)) id = id.replace(/[^A-Za-z0-9_-]/g, "_").replace(/^[_-]+/, "").slice(0, 56);
+    if (!okId(id)) id = "c" + crypto.createHash("sha1").update(JSON.stringify(c)).digest("hex").slice(0, 12);
+    for (let k = 2; seen.has(id); k++) id = id.slice(0, 56) + "-" + k; seen.add(id);
+    const ts = Number(c.ts) || 0, old = chatIdx.get(id);
+    if (old && old.ts >= ts && readChat(id)) { done.push({ id, ts }); continue; }
+    done.push({ id, ts, hash: putChat({ ...c, id, ts: ts || Date.now() }, false).hash });
+  }
+  if (done.some((d) => d.hash)) saveIdx(); return done;
+}
+function metaChats(items) {
+  const out = [], L = (Array.isArray(items) ? items : []).slice(0, 5000).filter((it) => it && typeof it === "object");
+  L.forEach((it) => chatFile(String(it.id ?? ""))); // every id is checked before anything changes
+  for (const it of L) {
+    const id = String(it.id), c = readChat(id); if (!c) continue;
+    if (typeof it.title === "string" && it.title.trim()) c.title = it.title.trim().slice(0, 200);
+    for (const k of ["folder", "project"]) if (k in it) c[k] = it[k] == null ? null : String(it[k]).slice(0, 64);
+    writeAtomic(chatFile(id), JSON.stringify(c)); const e = entryOf(c); chatIdx.set(id, e); out.push(e);
+  }
+  saveIdx(); return out;
+}
+function delChats(ids) {
+  const L = (Array.isArray(ids) ? ids : []).map(String); L.forEach(chatFile);
+  for (const id of L) { const f = chatFile(id); try { fs.unlinkSync(f); } catch (e) { if (e.code !== "ENOENT") throw e; } chatIdx.delete(id); if (chatTxt) chatTxt.delete(id); }
+  saveIdx();
+}
+function wipeChats() { // "Delete all chats" also removes the copies kept from the move to one file per chat
+  try { for (const f of fs.readdirSync(CHATDIR)) if (/\.(json|tmp)$/.test(f) && f !== "_index.json") fs.unlinkSync(path.join(CHATDIR, f)); } catch (e) { if (e.code !== "ENOENT") throw e; }
+  try { for (const f of fs.readdirSync(KVDIR)) if (/^orc\.chats\.json(\.bak|\.migrated-backup.*)?$/.test(f)) fs.unlinkSync(path.join(KVDIR, f)); } catch {}
+  chatIdx = new Map(); chatTxt = null; saveIdx();
+}
+function searchChats(q) { // every word must appear in the title or the conversation; the text is read once and kept for 10 minutes
+  if (!chatTxt) { chatTxt = new Map(); for (const id of chatIdx.keys()) { const c = readChat(id); if (c) chatTxt.set(id, txtOf(c)); } }
+  clearTimeout(txtTimer); txtTimer = setTimeout(() => { chatTxt = null; }, 600000); txtTimer.unref();
+  const words = String(q || "").toLowerCase().split(/\s+/).filter(Boolean).slice(0, 12), hits = [];
+  if (!words.length) return hits; // an empty search only reads the text in advance
+  for (const e of chatList()) {
+    const t = chatTxt.get(e.id) || { b: "", l: "" }, tl = e.title.toLowerCase();
+    if (!words.every((w) => t.l.includes(w) || tl.includes(w))) continue;
+    const at = t.l.indexOf(words[0]); hits.push({ id: e.id, snip: at < 0 ? "" : t.b.slice(Math.max(0, at - 30), at + 70).replace(/\s+/g, " ") });
+    if (hits.length >= 100) break;
+  }
+  return hits;
+}
+// at start: read the index and bring it up to date with the chat files (a chat saved just before a crash is picked up)
+function loadChats() {
+  fs.mkdirSync(CHATDIR, { recursive: true });
+  let at = 0, list = null; try { list = JSON.parse(fs.readFileSync(CHATIDX, "utf8")); at = fs.statSync(CHATIDX).mtimeMs; } catch {}
+  chatIdx = new Map((Array.isArray(list) ? list : []).filter((e) => e && okId(e.id)).map((e) => [e.id, e]));
+  let changed = !Array.isArray(list); const ids = new Set();
+  for (const f of fs.readdirSync(CHATDIR)) {
+    if (f.endsWith(".tmp")) { try { fs.unlinkSync(path.join(CHATDIR, f)); } catch {} continue; } // a write that never finished; the previous copy is intact
+    const id = f.slice(0, -5); if (!f.endsWith(".json") || !okId(id)) continue; ids.add(id);
+    let m = 0; try { m = fs.statSync(path.join(CHATDIR, f)).mtimeMs; } catch {}
+    if (!chatIdx.has(id) || m >= at) { const c = readChat(id); if (c) { const e = entryOf(c); if (JSON.stringify(e) !== JSON.stringify(chatIdx.get(id))) { chatIdx.set(id, e); changed = true; } } }
+  }
+  for (const id of [...chatIdx.keys()]) if (!ids.has(id)) { chatIdx.delete(id); changed = true; }
+  if (changed) saveIdx();
+}
+function migrateChats() {
+  const old = path.join(KVDIR, "orc.chats.json"); if (!fs.existsSync(old)) return;
+  let list = null; for (const f of [old, old + ".bak"]) { try { list = JSON.parse(fs.readFileSync(f, "utf8")); break; } catch {} }
+  if (!Array.isArray(list)) { console.error("orc.chats.json could not be read, so it was left as it is."); return; }
+  const done = importChats(list);
+  const bad = done.filter((d) => { try { const s = fs.readFileSync(chatFile(d.id), "utf8"); return d.hash ? crypto.createHash("sha1").update(s).digest("hex") !== d.hash : !((Number(JSON.parse(s).ts) || 0) >= d.ts); } catch { return true; } });
+  if (bad.length) { console.error(bad.length + " chats could not be checked after the move; orc.chats.json is kept and the move runs again next start."); return; }
+  let bak = old + ".migrated-backup"; if (fs.existsSync(bak)) bak += "-" + Date.now();
+  fs.renameSync(old, bak);
+  console.log("Moved " + done.length + " chats to one file each; the old file is kept as " + path.basename(bak));
+}
+try { loadChats(); migrateChats(); } catch (e) { console.error("chat storage: " + e.message); }
 
 const json = (res, code, obj) => { res.writeHead(code, { "content-type": "application/json" }); res.end(JSON.stringify(obj)); };
 const readBody = (req, max = 8e6) => new Promise((ok, bad) => {
@@ -241,8 +344,25 @@ http.createServer(async (req, res) => {
       } catch (e) { return json(res, 200, { ok: false, error: String(e.message || e) }); }
     }
     if (req.url === "/api/kv") {
-      if (req.method === "POST") { const b = JSON.parse(await readBody(req, 60e6)); kvSet(b.key, b.value); return json(res, 200, { ok: true }); }
+      if (req.method === "POST") { const b = JSON.parse(await readBody(req, 60e6)); if (b.key === "orc.chats") importChats(b.value); else kvSet(b.key, b.value); return json(res, 200, { ok: true }); } // orc.chats: from a window of the old version
       return json(res, 200, kvAll());
+    }
+    if (req.url === "/api/chats" || req.url.startsWith("/api/chats/")) {
+      try {
+        if (req.method === "GET" && req.url === "/api/chats") return json(res, 200, { ok: true, chats: chatList() });
+        if (req.method === "GET" && req.url.startsWith("/api/chats/get?")) { const id = String(new URL(req.url, "http://x").searchParams.get("id") || ""); chatFile(id); const c = readChat(id); return json(res, c ? 200 : 404, c ? { ok: true, chat: c } : { ok: false, error: "No such chat." }); }
+        if (req.method === "GET" && req.url === "/api/chats/all") return json(res, 200, { ok: true, chats: chatList().map((e) => readChat(e.id)).filter(Boolean) }); // export
+        if (req.method === "POST") {
+          const b = JSON.parse((await readBody(req, 60e6)) || "{}"), u = req.url;
+          if (u === "/api/chats/save") return json(res, 200, { ok: true, chat: putChat(b.chat).entry });
+          if (u === "/api/chats/meta") return json(res, 200, { ok: true, chats: metaChats(b.items) });
+          if (u === "/api/chats/delete") { delChats(b.ids); return json(res, 200, { ok: true }); }
+          if (u === "/api/chats/wipe") { wipeChats(); return json(res, 200, { ok: true }); }
+          if (u === "/api/chats/search") return json(res, 200, { ok: true, hits: searchChats(b.q) });
+          if (u === "/api/chats/import") return json(res, 200, { ok: true, chats: importChats(b.chats).length });
+        }
+        return json(res, 404, { ok: false, error: "not found" });
+      } catch (e) { return json(res, e.status || (e instanceof SyntaxError ? 400 : 500), { ok: false, error: String(e.message || e) }); }
     }
     if (req.url === "/api/status") return json(res, 200, { omniroute: await orUp(), key: !!key(), keyFromEnv: !!process.env.OMNIROUTE_API_KEY, sandbox: sandboxInfo(), version: VERSION, omniroute_url: OR });
     if (req.url.startsWith("/api/update") && req.url !== "/api/update/install") { try { return json(res, 200, { ok: true, ...(await checkUpdate(req.url.includes("force"))) }); } catch (e) { return json(res, 200, { ok: false, current: VERSION, error: String(e.message || e) }); } }
