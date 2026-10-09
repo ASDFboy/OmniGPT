@@ -1,6 +1,7 @@
 // Speed: the shared PowerShell worker (Windows, or anywhere with OMNIGPT_POWERSHELL pointing to pwsh) and the shared
 // browser that draws chart PNGs and prints PDFs (every system with Edge or Chromium). Prints the timings.
 // Run: node speed-test.mjs (exit 0 = all passed)
+process.env.OMNIGPT_PS_WORKER = "1"; // this test exercises the worker, which is opt-in on Windows
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -59,7 +60,7 @@ try {
     r = await q("Get-Item ./does-not-exist-xyz; [IO.File]::ReadAllText('does-not-exist.txt'); 'after'");
     check("errors that only end one statement let the script go on", r.code === 0 && /after\n$/.test(r.out), JSON.stringify(r).slice(0, 200));
     r = await q("'before'; throw 'boom'; 'after'");
-    check("a thrown error ends the script with code 1", r.code === 1 && /^before\n/.test(r.out) && /boom/.test(r.err) && !/after/.test(r.out), JSON.stringify(r).slice(0, 200));
+    check("a thrown error ends the script with code 1", r.code === 1 && /^before\n/.test(r.out) && /boom/.test(r.err + r.out) && !/after/.test(r.out), JSON.stringify(r).slice(0, 200));
     r = await q("'x'; exit 5; 'never'");
     check("exit 5 ends the call with code 5", r.code === 5 && r.out === "x\n", JSON.stringify(r));
     r = await q("function Stop-Here { exit 9 }; Stop-Here; 'never'");

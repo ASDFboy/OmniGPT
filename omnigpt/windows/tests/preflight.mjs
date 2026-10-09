@@ -8,6 +8,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const src = ["app", "OmniGPT"].map((d) => path.resolve(here, "..", "..", d)).find((d) => fs.existsSync(path.join(d, "server.mjs"))); // repository layout or development layout
 const tools = await import(pathToFileURL(path.join(src, "tools.mjs")).href);
+// what a failed test file said: its FAIL lines, or (when it crashed) the end of its error output
+const why = (e) => String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ") || String(e.stderr || e.message).trim().split("\n").slice(-6).join(" | ");
 let failed = 0;
 const check = (name, ok, extra = "") => { if (!ok) failed++; console.log((ok ? "PASS  " : "FAIL  ") + name + (extra ? "  " + extra : "")); };
 
@@ -27,66 +29,66 @@ for (const [n, f] of [["index.html script", tmp], ...fs.readdirSync(src).filter(
   check(`backend modules complete and shipped (${mods.length} modules)`, !missing.length && ships, missing.join("; ") + (ships ? "" : " build.ps1 does not copy every .mjs")); }
 // 1b. the file reader understands every sample format
 try { const out = execFileSync(process.execPath, [path.join(here, "files-test.mjs")], { stdio: "pipe" }).toString(); check("file reader: " + (/All (\d+) file types/.exec(out) || [, "?"])[1] + " formats", true); }
-catch (e) { check("file reader", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 400)); }
+catch (e) { check("file reader", false, why(e).slice(0, 400)); }
 // 1b2. attached-folder rules, against a throwaway settings folder
 { const tmp = path.join(os.tmpdir(), "omnigpt-foldertest"); fs.rmSync(tmp, { recursive: true, force: true }); fs.mkdirSync(tmp, { recursive: true });
   try { execFileSync(process.execPath, [path.join(here, "folder-test.mjs")], { stdio: "pipe", env: { ...process.env, LOCALAPPDATA: tmp } }); check("attached folders: all rules", true); }
-  catch (e) { check("attached folders", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 400)); }
+  catch (e) { check("attached folders", false, why(e).slice(0, 400)); }
   fs.rmSync(tmp, { recursive: true, force: true }); }
 // 1b3. settings and chats keep saving after a backend restart
 try { execFileSync(process.execPath, [path.join(here, "settings-test.mjs")], { stdio: "pipe" }); check("settings survive a backend restart", true); }
-catch (e) { check("settings survive a backend restart", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 400)); }
+catch (e) { check("settings survive a backend restart", false, why(e).slice(0, 400)); }
 // 1b4. undo reverses what an agent changed (on Windows including the Recycle Bin)
 try { execFileSync(process.execPath, [path.join(here, "undo-test.mjs")], { stdio: "pipe" }); check("undo reverses agent changes", true); }
-catch (e) { check("undo reverses agent changes", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 400)); }
+catch (e) { check("undo reverses agent changes", false, why(e).slice(0, 400)); }
 // 1b5. find_duplicates compares content, not names
 try { execFileSync(process.execPath, [path.join(here, "dupes-test.mjs")], { stdio: "pipe" }); check("find duplicates by content", true); }
-catch (e) { check("find duplicates by content", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 400)); }
+catch (e) { check("find duplicates by content", false, why(e).slice(0, 400)); }
 // 1b6. the brain graph keeps drawing whatever it is fed
 try { execFileSync(process.execPath, [path.join(here, "brain-test.mjs")], { stdio: "pipe" }); check("brain graph draws every node", true); }
-catch (e) { check("brain graph draws every node", false, (String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ") || String(e.stderr).split("\n").slice(0, 3).join(" ")).slice(0, 400)); }
+catch (e) { check("brain graph draws every node", false, (why(e) || String(e.stderr).split("\n").slice(0, 3).join(" ")).slice(0, 400)); }
 // 1b7. view_images shows real pictures; install_tool only takes plain package names
 try { execFileSync(process.execPath, [path.join(here, "view-test.mjs")], { stdio: "pipe" }); check("view images and install tool", true); }
-catch (e) { check("view images and install tool", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 400)); }
+catch (e) { check("view images and install tool", false, why(e).slice(0, 400)); }
 // 1b8. everyday tools: find, search, system info, open, archive, clipboard, notify
 try { execFileSync(process.execPath, [path.join(here, "tools-test.mjs")], { stdio: "pipe" }); check("everyday tools", true); }
-catch (e) { check("everyday tools", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 400)); }
+catch (e) { check("everyday tools", false, why(e).slice(0, 400)); }
 // 1b9. documents, images, media and OmniRoute media tools
 try { execFileSync(process.execPath, [path.join(here, "media-test.mjs")], { stdio: "pipe", timeout: 300000 }); check("documents and media", true); }
-catch (e) { check("documents and media", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 600)); }
+catch (e) { check("documents and media", false, why(e).slice(0, 600)); }
 // 1b10. the browser tool drives a real Edge window on a local test site
 try { execFileSync(process.execPath, [path.join(here, "browser-test.mjs")], { stdio: "pipe", timeout: 240000 }); check("browser tool", true); }
-catch (e) { check("browser tool", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 600)); }
+catch (e) { check("browser tool", false, why(e).slice(0, 600)); }
 // 1b11. tools that run inside the page (memory, checklist, helpers), in the real page with a fake model
 try { execFileSync(process.execPath, [path.join(here, "page-test.mjs")], { stdio: "pipe", timeout: 240000 }); check("page tools: memory, checklist, helpers", true); }
-catch (e) { check("page tools: memory, checklist, helpers", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 600)); }
+catch (e) { check("page tools: memory, checklist, helpers", false, why(e).slice(0, 600)); }
 // 1b12. background jobs: start, read, stop, and stopped when OmniGPT closes
 try { execFileSync(process.execPath, [path.join(here, "jobs-test.mjs")], { stdio: "pipe", timeout: 180000 }); check("background jobs", true); }
-catch (e) { check("background jobs", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 600)); }
+catch (e) { check("background jobs", false, why(e).slice(0, 600)); }
 // 1b13. http_request, make_chart, pdf_tools, ocr
 try { execFileSync(process.execPath, [path.join(here, "tier2-test.mjs")], { stdio: "pipe", timeout: 420000 }); check("http requests, charts, PDF tools and OCR", true); }
-catch (e) { check("http requests, charts, PDF tools and OCR", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
+catch (e) { check("http requests, charts, PDF tools and OCR", false, why(e).slice(0, 700)); }
 // 1b14. account connections: secrets never shown (DPAPI on Windows), messages always ask, calendars, saved API keys, gh allowlist
 try { execFileSync(process.execPath, [path.join(here, "connections-test.mjs")], { stdio: "pipe", timeout: 240000 }); check("account connections", true); }
-catch (e) { check("account connections", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
+catch (e) { check("account connections", false, why(e).slice(0, 700)); }
 // 1b15. finding by meaning: memories, skills, recall and search_meaning against a stand-in OmniRoute
 try { execFileSync(process.execPath, [path.join(here, "meaning-test.mjs")], { stdio: "pipe", timeout: 300000 }); check("search by meaning", true); }
-catch (e) { check("search by meaning", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
+catch (e) { check("search by meaning", false, why(e).slice(0, 700)); }
 // 1b16. the start of each request: router and refiner at once, tool groups and more_tools, summaries of old messages
 try { execFileSync(process.execPath, [path.join(here, "flow-test.mjs")], { stdio: "pipe", timeout: 240000 }); check("request start: routing, tool groups, summaries", true); }
-catch (e) { check("request start: routing, tool groups, summaries", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
+catch (e) { check("request start: routing, tool groups, summaries", false, why(e).slice(0, 700)); }
 // 1b17. the agent's tool loop: old output shrinks (read_output), reads run side by side, one review per step, work is checked before done
 try { execFileSync(process.execPath, [path.join(here, "loop-test.mjs")], { stdio: "pipe", timeout: 240000 }); check("tool loop: shorter old output, parallel reads, batched reviews, self-check", true); }
-catch (e) { check("tool loop: shorter old output, parallel reads, batched reviews, self-check", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
+catch (e) { check("tool loop: shorter old output, parallel reads, batched reviews, self-check", false, why(e).slice(0, 700)); }
 // 1b18. learning from results: model scores per kind of task, recipes, and the benchmark harness against a scripted OmniRoute
 try { execFileSync(process.execPath, [path.join(here, "learning-test.mjs")], { stdio: "pipe", timeout: 240000 }); check("learning: scores per kind of task, recipes, benchmark harness", true); }
-catch (e) { check("learning: scores per kind of task, recipes, benchmark harness", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
+catch (e) { check("learning: scores per kind of task, recipes, benchmark harness", false, why(e).slice(0, 700)); }
 // 1b19. chats: one file per chat, the move from the old single file, search, export, project chat tools, idle brain graph
 try { execFileSync(process.execPath, [path.join(here, "chats-test.mjs")], { stdio: "pipe", timeout: 240000 }); check("chat storage", true); }
-catch (e) { check("chat storage", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
+catch (e) { check("chat storage", false, why(e).slice(0, 700)); }
 // 1b20. speed: one PowerShell kept open for the app's own scripts (Windows), one browser for chart pictures and PDFs
 try { const out = execFileSync(process.execPath, [path.join(here, "speed-test.mjs")], { stdio: "pipe", timeout: 300000 }).toString(); check("shared PowerShell worker and drawing browser", true, out.split("\n").filter((l) => l.startsWith("TIMING")).map((l) => l.slice(8)).join("; ")); }
-catch (e) { check("shared PowerShell worker and drawing browser", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
+catch (e) { check("shared PowerShell worker and drawing browser", false, why(e).slice(0, 700)); }
 // 1c. inspect_file follows the same folder rules as every other tool
 { let ok = true; try { await tools.precheck("inspect_file", { path: "C:/Windows/win.ini" }); ok = false; } catch {} try { await tools.precheck("inspect_file", { path: path.join(os.homedir(), ".ssh", "id_rsa") }); ok = false; } catch {} check("inspect_file stays inside the allowed folders", ok); }
 
