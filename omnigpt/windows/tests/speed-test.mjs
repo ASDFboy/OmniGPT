@@ -60,7 +60,7 @@ try {
     r = await q("Get-Item ./does-not-exist-xyz; [IO.File]::ReadAllText('does-not-exist.txt'); 'after'");
     check("errors that only end one statement let the script go on", r.code === 0 && /after\n$/.test(r.out), JSON.stringify(r).slice(0, 200));
     r = await q("'before'; throw 'boom'; 'after'");
-    check("a thrown error ends the script with code 1", r.code === 1 && /^before\n/.test(r.out) && /boom/.test(r.err + r.out) && !/after/.test(r.out), JSON.stringify(r).slice(0, 200));
+    check("a thrown error ends the script with code 1", r.code === 1 && /^before\n/.test(r.out) && /boom/.test(r.err + r.out) && !/^after$/m.test(r.out) /* the error text quotes the script, so look for the line "after" itself */, JSON.stringify(r).slice(0, 200));
     r = await q("'x'; exit 5; 'never'");
     check("exit 5 ends the call with code 5", r.code === 5 && r.out === "x\n", JSON.stringify(r));
     r = await q("function Stop-Here { exit 9 }; Stop-Here; 'never'");
