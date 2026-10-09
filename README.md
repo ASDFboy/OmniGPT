@@ -263,6 +263,32 @@ on the right shows which models are talking.
 * **Settings:** theme, accent color, text size, memory, skills, models, approvals, steps per task, token budget,
   attached folders, data export.
 
+### Smarter and faster
+
+* **Quicker start:** OmniGPT works out what kind of request it is while it clarifies it, and the agent gets only the
+  tools the request needs (it can ask for more with **more tools**). In long chats, older messages are replaced by a
+  short summary instead of being dropped.
+* **Long jobs:** long tool results are shortened once the agent has seen them (it can read them again with **read
+  output**), reading actions in one step run at the same time, the safety reviewer checks a whole step at once, and in
+  "Ask before changes" mode the approval button appears right away. For bigger jobs that changed something, the agent
+  checks its work once before answering ("Self-check" in the reasoning).
+* **Search by meaning (Settings, Search by meaning):** with an embedding model from OmniRoute (Automatic picks one on
+  this PC first, then free ones), memories, skills and earlier answers are found by what they mean. **Search my
+  documents by meaning** (off by default) lets agents find passages in your allowed folders with **search meaning**;
+  to build its index, the text of your documents is sent to the embedding provider chosen in OmniRoute (a provider on
+  this PC, such as Ollama, keeps it here). The index is stored in `%LOCALAPPDATA%\OmniRouteChat\index`, updates only
+  when it is used, and **Clear index** deletes it.
+* **Learning (Settings, Models and Skills):** OmniGPT learns which models work best for each kind of task (files, web,
+  writing, code, chat): answers that worked raise a model; corrections, Undo, failed actions and empty replies lower
+  it. When every action in a request worked, the steps are kept as a **recipe** (tool names only, never contents or
+  paths) and suggested for similar requests; recipes that later fail are dropped.
+* **Light when idle:** the brain graph draws only while something changes. Notifications, clipboard, Recycle Bin,
+  undo, pictures, OCR and saved-account encryption reuse one hidden PowerShell (closed after 5 idle minutes), and
+  charts and PDFs reuse one hidden Edge (closed after 3 idle minutes). Each chat is saved in its own file, so saving
+  stays fast with hundreds of chats; the sidebar search looks inside every chat.
+* **Benchmark:** `node omnigpt\windows\tests\bench.mjs` runs about 30 everyday tasks against your OmniRoute in
+  temporary folders and prints a score table (`--list`, `--only=name,name`).
+
 ## 11. Safety and approvals
 
 Settings, **Agents and safety**, **Approval**:
@@ -300,6 +326,8 @@ Turn it off in Settings, General, **Update notifications**. Settings, About, **C
 | The program | `%LOCALAPPDATA%\Programs\OmniGPT` |
 | Chats, settings, memories, skills, saved key, undo journal, activity log | `%LOCALAPPDATA%\OmniRouteChat` |
 | Connected accounts (links and keys encrypted for your Windows user) | `%LOCALAPPDATA%\OmniRouteChat\connections.json` |
+| Chats (one file each) and the backup of the old single file | `%LOCALAPPDATA%\OmniRouteChat\kv\chats`, `kv\orc.chats.json.migrated-backup` |
+| Search-by-meaning index and embedding cache | `%LOCALAPPDATA%\OmniRouteChat\index`, `embed-cache.json` |
 | Backups of files agents overwrote | `%LOCALAPPDATA%\OmniRouteChat\backups` |
 | Logs, sandbox runs, window data | `%LOCALAPPDATA%\OmniGPT` |
 | Attached files | `Documents\OmniRoute Workspace\Attachments` |
