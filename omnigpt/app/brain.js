@@ -27,12 +27,12 @@ const Brain=(()=>{
   const touch=(k,label,from)=>{if(!okKey(k))return{};const h=hub(k,label);if(typeof from!=="string")from=null;h.lastTurn=turnNo;
     if(h.leaving){h.leaving=false;h.vx=h.vy=0;dirty=true} // needed again after all: it comes back
     if(!h.vis){h.vis=true;h.fade=0;h.sc=.3;h.placed=false;h.from=from||null;dirty=true}
-    return h};
+    wake();return h};
   // fly off: drift sideways away from the centre, rise a little, grow slightly and fade out
   function drop(k){
     const h=hubs[k];if(!h||!h.vis||h.leaving||k==="user"||k==="output"||h.busy)return;
     const dir=h.x<W/2-4?-1:h.x>W/2+4?1:(Math.random()<.5?-1:1);
-    h.leaving=true;h.vx=dir*(120+Math.random()*90);h.vy=-30-Math.random()*50;dirty=true;
+    h.leaving=true;h.vx=dir*(120+Math.random()*90);h.vy=-30-Math.random()*50;dirty=true;wake();
   }
   const links={}, pulses=[];
   const GREEN=[[22,150,80],[70,230,130]], RED=[[210,40,40],[255,80,80]];
@@ -43,8 +43,15 @@ const Brain=(()=>{
     if(/^[0-9a-f]{6}$/i.test(v)){ink=[0,2,4].map(i=>parseInt(v.slice(i,i+2),16));dark=(ink[0]+ink[1]+ink[2])/3<128}
   }
   const color=c=>c===1?GREEN[dark?0:1]:c===2?RED[dark?0:1]:ink;
-  let W=0,H=0,dpr=1,last=0;
-  function size(){dpr=window.devicePixelRatio||1;const r=cv.getBoundingClientRect();W=r.width;H=r.height;cv.width=Math.max(1,Math.round(W*dpr));cv.height=Math.max(1,Math.round(H*dpr));dirty=true}
+  let W=0,H=0,dpr=1,last=0,raf=0,tmo=0,slow=false; // raf: a frame is requested or being drawn; tmo: a slow frame is waiting
+  function size(){dpr=window.devicePixelRatio||1;const r=cv.getBoundingClientRect();W=r.width;H=r.height;cv.width=Math.max(1,Math.round(W*dpr));cv.height=Math.max(1,Math.round(H*dpr));dirty=true;wake();watchDpr()}
+  // Frames are only drawn while the picture changes: every frame while something moves, once a second while links only
+  // fade out, none once everything has settled or while the window or the graph is hidden. While the window is not
+  // focused, moving parts are shown twice a second. Any update, resize, theme change, focus or pointer on the graph wakes it.
+  function shown(){return!!cv.offsetParent&&!document.hidden}
+  let foc=true; // the window counts as focused until it really loses focus (focus moving into a preview frame does not count)
+  function wake(){if(raf||!shown())return;if(tmo){clearTimeout(tmo);tmo=0}slow=false;raf=requestAnimationFrame(frame)}
+  let mq=null;function watchDpr(){try{if(mq)mq.removeEventListener("change",size);mq=matchMedia(`(resolution: ${dpr}dppx)`);mq.addEventListener("change",size)}catch(e){}} // moved to a screen with different scaling
   new ResizeObserver(size).observe(cv.parentElement);
   // organised placement: rows top to bottom, evenly spaced, at most three per row, centred as one compact block
   function layout(){
@@ -67,22 +74,23 @@ const Brain=(()=>{
   function msg(a,b,c=0){
     if(a===b||!okKey(a)||!okKey(b))return;touch(a);touch(b,undefined,a);
     const k=a+">"+b;(links[k]||(links[k]={a,b,t:0,grow:0}));links[k].t=performance.now();links[k].keep=false;
-    if(cv.offsetParent){pulses.push({a,b,pos:0,sp:1.1+Math.random()*.4,c});if(pulses.length>120)pulses.splice(0,pulses.length-120)} // hidden graph: no signals to queue up
+    if(shown()){pulses.push({a,b,pos:0,sp:1.1+Math.random()*.4,c});if(pulses.length>120)pulses.splice(0,pulses.length-120)} // hidden graph: no signals to queue up
   }
   const mark=(key,c)=>{const h=touch(key);h.mark={c,t:performance.now()};h.glow=1;h.gc=c;h.act=1};
-  function draw(now,dt){
-    theme(now);if(dirty)layout();
+  function draw(now,dt){ // returns what the next frame needs: 2 = something moves, 1 = links are fading, 0 = settled
+    theme(now);if(dirty)layout();let need=0;
     cx.setTransform(dpr,0,0,dpr,0,0);cx.clearRect(0,0,W,H);
     const R=7,rgb=(c,a)=>`rgba(${c[0]},${c[1]},${c[2]},${a})`;
     for(const k in hubs){const h=hubs[k];if(!h.vis)continue;
       if(h.leaving){h.x+=h.vx*dt;h.y+=h.vy*dt;h.vy+=60*dt;h.sc+=dt*.5;h.fade-=dt*1.4;
         if(h.fade<=0){h.vis=false;h.leaving=false;h.placed=false;h.fade=0;h.sc=1;h.mark=null;h.glow=0;for(const l in links)if(links[l].a===k||links[l].b===k)delete links[l]}
-        continue}
-      h.x+=(h.tx-h.x)*Math.min(1,dt*5);h.y+=(h.ty-h.y)*Math.min(1,dt*5);h.fade=Math.min(1,h.fade+dt*2.2);h.sc+=(1-h.sc)*Math.min(1,dt*6)}
+        need=2;continue}
+      h.x+=(h.tx-h.x)*Math.min(1,dt*5);h.y+=(h.ty-h.y)*Math.min(1,dt*5);h.fade=Math.min(1,h.fade+dt*2.2);h.sc+=(1-h.sc)*Math.min(1,dt*6);
+      if(Math.abs(h.tx-h.x)>.1||Math.abs(h.ty-h.y)>.1||h.fade<1||Math.abs(1-h.sc)>.003)need=2}
     // links that have carried a signal, fading over time
     for(const k in links){const l=links[k],age=l.keep?0:(performance.now()-l.t)/1000;if(age>40){delete links[k];continue}
       const A=hubs[l.a],B=hubs[l.b];if(!A.vis||!B.vis)continue;const g=curve(A,B),fa=Math.min(A.fade,B.fade);
-      l.grow=Math.min(1,(l.grow===undefined?1:l.grow)+dt*2.2);
+      l.grow=Math.min(1,(l.grow===undefined?1:l.grow)+dt*2.2);if(l.grow<1)need=2;else if(!l.keep&&need<1)need=1;
       cx.strokeStyle=rgb(ink,(l.keep?.3:.4*(1-age/40))*fa);cx.lineWidth=1.5;cx.beginPath();cx.moveTo(A.x,A.y);
       if(l.grow<1){ // a new connection draws itself from the caller to the new node, with a bright tip
         const e=1-Math.pow(1-l.grow,3);for(let s=1;s<=20;s++){const q=g.at(e*s/20);cx.lineTo(q[0],q[1])}cx.stroke();
@@ -92,7 +100,8 @@ const Brain=(()=>{
     for(let k=pulses.length-1;k>=0;k--){
       const p=pulses[k];p.pos+=p.sp*dt;const A=hubs[p.a],B=hubs[p.b];
       if(!A.vis||!B.vis||A.leaving||B.leaving){pulses.splice(k,1);continue}
-      if(p.pos>=1){B.glow=1;B.gc=p.c;B.act=1;pulses.splice(k,1);continue}
+      if(p.pos>=1){B.glow=1;B.gc=p.c;B.act=1;pulses.splice(k,1);need=2;continue}
+      need=2;
       const g=curve(A,B),c=color(p.c);
       cx.strokeStyle=rgb(c,.9);cx.lineWidth=2.6;cx.lineCap="round";cx.beginPath();
       for(let s=0;s<=10;s++){const t=Math.max(0,p.pos-.2*(1-s/10)),q=g.at(t);s?cx.lineTo(q[0],q[1]):cx.moveTo(q[0],q[1])}cx.stroke();
@@ -104,6 +113,7 @@ const Brain=(()=>{
       const h=hubs[key];if(!h.vis)continue;
       try{h.glow=Math.max(0,h.glow-dt*.8);h.act=Math.max(0,h.act-dt*.3);
       const x=h.x,y=h.y,al=Math.max(0,h.fade),active=h.busy||h.act>.05||h.mark,c=h.glow>.02?color(h.gc):ink,R=7*h.sc;
+      if(h.busy||h.mark||h.glow>.02)need=2;else if(h.act>.05&&need<1)need=1;
       cx.globalAlpha=al;
       if(h.glow>.02){const rr=R*(2.4+2*h.glow),gr=cx.createRadialGradient(x,y,0,x,y,rr);gr.addColorStop(0,rgb(c,.5*h.glow));gr.addColorStop(1,rgb(c,0));cx.fillStyle=gr;cx.beginPath();cx.arc(x,y,rr,0,6.3);cx.fill()}
       if(h.mark){const age=(performance.now()-h.mark.t)/1000;if(age>1.8)h.mark=null;else{const mc=color(h.mark.c);cx.strokeStyle=rgb(mc,Math.max(0,1-age/1.8)*.9);cx.lineWidth=2.2;cx.beginPath();cx.arc(x,y,R*(1.3+age*3),0,6.3);cx.stroke()}}
@@ -117,12 +127,22 @@ const Brain=(()=>{
       }catch(e){errs++}
       cx.globalAlpha=1;
     }
+    return need;
   }
   let errs=0;
-  function frame(t){requestAnimationFrame(frame);if(!cv.offsetParent||t-last<32)return;const dt=Math.min(.1,(t-last)/1000);last=t;
-    if((window.devicePixelRatio||1)!==dpr)size(); // moved to a screen with different scaling
-    try{draw(t/1000,dt)}catch(e){errs++;try{cx.globalAlpha=1}catch{}}}
-  requestAnimationFrame(frame);
+  function frame(t){if(!shown()){raf=0;return}if(t-last<32){raf=requestAnimationFrame(frame);return}
+    const dt=Math.min(slow?1:.1,(t-last)/1000);last=t;let need=1;raf=-1; // wake() while drawing must not start a second loop
+    if((window.devicePixelRatio||1)!==dpr)size();
+    try{need=draw(t/1000,dt)}catch(e){errs++;try{cx.globalAlpha=1}catch{}}
+    const f=need===2&&foc;slow=!f;raf=f?requestAnimationFrame(frame):0;
+    if(!f&&need)tmo=setTimeout(()=>{tmo=0;if(!raf&&shown())raf=requestAnimationFrame(frame)},need===2?500:1000)}
+  try{const re=()=>{inkAt=0;wake()};
+    document.addEventListener("visibilitychange",wake);addEventListener("focus",()=>{foc=true;wake()});addEventListener("blur",()=>setTimeout(()=>{try{foc=!document.hasFocus||document.hasFocus()}catch(e){foc=true}},0));addEventListener("pageshow",wake);
+    for(const e of ["pointerenter","pointerdown"])cv.addEventListener(e,wake);
+    for(const el of [document.documentElement,document.body])new MutationObserver(re).observe(el,{attributes:true}); // theme, accent, font and graph settings
+    matchMedia("(prefers-color-scheme: dark)").addEventListener("change",re);
+  }catch(e){}
+  wake();
   const fed=new Set(), pending=new Set(); let ctxPruned=true, ctxReady=false; // ctxReady: this turn's memories and skills have been chosen // memories and skills shown this turn, and the ones waiting for the next model to start
   return{
     last:"user",
@@ -146,8 +166,8 @@ const Brain=(()=>{
     register(){},
     get errors(){return errs}, // drawing problems caught so far (for tests)
     snapshot(){try{const n=Object.values(hubs).filter(h=>h.vis&&!h.leaving&&h.key!=="user").sort((a,b)=>a.ord-b.ord).map(h=>h.key);const N=new Set(["user",...n]);return{n,l:Object.values(links).filter(l=>N.has(l.a)&&N.has(l.b)).map(l=>[l.a,l.b]),lb:Object.fromEntries(n.filter(k=>LB[k]).map(k=>[k,LB[k]]))}}catch(e){return null}},
-    restore(g){try{if(!g||!Array.isArray(g.n))return;const n=new Set(g.n.filter(k=>typeof k==="string"&&k));n.forEach(k=>touch(k,g.lb&&g.lb[k]));(Array.isArray(g.l)?g.l:[]).forEach(l=>{if(Array.isArray(l)&&n.has(l[0])&&n.has(l[1]))links[l[0]+">"+l[1]]={a:l[0],b:l[1],t:0,keep:true,grow:0}});dirty=true}catch(e){}},
-    reset(){pulses.length=0;fed.clear();pending.clear();for(const k in links)delete links[k];for(const k in hubs){const h=hubs[k];h.busy=0;h.mark=null;h.glow=0;if(k!=="user"){h.vis=false;h.fade=0;h.placed=false;h.leaving=false;h.sc=1}}ctxPruned=true;dirty=true;this.last="user"}
+    restore(g){try{if(!g||!Array.isArray(g.n))return;const n=new Set(g.n.filter(k=>typeof k==="string"&&k));n.forEach(k=>touch(k,g.lb&&g.lb[k]));(Array.isArray(g.l)?g.l:[]).forEach(l=>{if(Array.isArray(l)&&n.has(l[0])&&n.has(l[1]))links[l[0]+">"+l[1]]={a:l[0],b:l[1],t:0,keep:true,grow:0}});dirty=true;wake()}catch(e){}},
+    reset(){pulses.length=0;fed.clear();pending.clear();for(const k in links)delete links[k];for(const k in hubs){const h=hubs[k];h.busy=0;h.mark=null;h.glow=0;if(k!=="user"){h.vis=false;h.fade=0;h.placed=false;h.leaving=false;h.sc=1}}ctxPruned=true;dirty=true;this.last="user";wake()}
   };
 })();
 // BRAIN-END
