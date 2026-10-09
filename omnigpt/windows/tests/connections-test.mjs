@@ -243,7 +243,7 @@ try {
 } catch (e) { check("connections test", false, String(e.stack || e)); }
 
 // ---- the backend's endpoints, in a throwaway backend
-const port = "20175", sbase = `http://127.0.0.1:${port}`, sdata = fs.mkdtempSync(path.join(os.tmpdir(), "omnigpt-conntest-srv-"));
+const port = process.env.OMNIGPT_TEST_PORT ? String(Number(process.env.OMNIGPT_TEST_PORT) + 5) : "20175", sbase = `http://127.0.0.1:${port}`, sdata = fs.mkdtempSync(path.join(os.tmpdir(), "omnigpt-conntest-srv-"));
 const env = { ...process.env, OMNIGPT_PORT: port, LOCALAPPDATA: sdata, OMNIROUTE_URL: "http://127.0.0.1:9", OMNIROUTE_SCRIPT: path.join(sdata, "no-omniroute.mjs"), OMNIGPT_GH: fakeGh, OMNIGPT_TEST_ALLOW_LOCAL: "1" };
 delete env.OMNIGPT_PARENT_PID; delete env.OMNIROUTE_API_KEY; delete env.TZ;
 const srv = spawn(process.execPath, [path.join(src, "server.mjs")], { env, stdio: "ignore", windowsHide: true });
