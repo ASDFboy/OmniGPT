@@ -75,6 +75,9 @@ catch (e) { check("search by meaning", false, String(e.stdout).split("\n").filte
 // 1b16. the start of each request: router and refiner at once, tool groups and more_tools, summaries of old messages
 try { execFileSync(process.execPath, [path.join(here, "flow-test.mjs")], { stdio: "pipe", timeout: 240000 }); check("request start: routing, tool groups, summaries", true); }
 catch (e) { check("request start: routing, tool groups, summaries", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
+// 1b17. the agent's tool loop: old output shrinks (read_output), reads run side by side, one review per step, work is checked before done
+try { execFileSync(process.execPath, [path.join(here, "loop-test.mjs")], { stdio: "pipe", timeout: 240000 }); check("tool loop: shorter old output, parallel reads, batched reviews, self-check", true); }
+catch (e) { check("tool loop: shorter old output, parallel reads, batched reviews, self-check", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
 // 1c. inspect_file follows the same folder rules as every other tool
 { let ok = true; try { await tools.precheck("inspect_file", { path: "C:/Windows/win.ini" }); ok = false; } catch {} try { await tools.precheck("inspect_file", { path: path.join(os.homedir(), ".ssh", "id_rsa") }); ok = false; } catch {} check("inspect_file stays inside the allowed folders", ok); }
 
