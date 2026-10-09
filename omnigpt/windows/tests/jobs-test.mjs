@@ -62,7 +62,7 @@ try {
   check("stopping it again just says so", /had already stopped/.test(r), r);
 
   r = await R("start_process", { command: "node quick.js", wait: 0 });
-  const q = idOf(r); await R("read_process", { id: q, wait: 20 }); r = await R("read_process", { id: q, all: true });
+  const q = idOf(r); for (let k = 0; k < 40 && !/exited/.test(r); k++) r = await R("read_process", { id: q, wait: 1 }); r = await R("read_process", { id: q, all: true }); // output can arrive before the program has ended
   check("a job that ends by itself reports its exit code and output", /exited with code 3/.test(r) && /finished the build/.test(r), r.split("\n")[0]);
 
   r = await R("start_process", { command: "node env.js", until: "secret=" });
