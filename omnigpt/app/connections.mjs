@@ -134,7 +134,9 @@ export async function listText() {
 }
 
 // ---------- send_message: Discord or Slack incoming webhooks
-const msgBody = (kind, title, text) => kind === "discord" ? { content: (title ? `**${title}**\n` : "") + text, allowed_mentions: { parse: [] } } : { text: (title ? `*${title}*\n` : "") + text };
+// mentions never ping: Discord is told to parse none; in Slack, <!channel>, <!here> and <@user> only work unescaped
+const slackSafe = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const msgBody = (kind, title, text) => kind === "discord" ? { content: (title ? `**${title}**\n` : "") + text, allowed_mentions: { parse: [] } } : { text: slackSafe((title ? `*${title}*\n` : "") + text) };
 async function message(i) {
   const c = findConn(i.connection, "webhook"), url = await reveal(c), kind = webhookKind(url);
   await H.urlOk(url); // public addresses only, like downloads

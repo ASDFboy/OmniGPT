@@ -110,11 +110,24 @@ output and a **Stop** button. Every job stops when OmniGPT closes.
 Parallel workers do not get `remember`, `forget`, `todo` or `delegate`. In OMNI (autonomous) mode each cycle gets its
 own helper count and checklist.
 
+### Accounts (Settings, Accounts)
+Links and keys are encrypted for the Windows user with DPAPI (`%LOCALAPPDATA%\OmniRouteChat\connections.json`) and never
+reach the page or the model: they only see names, addresses and a masked hint. Commands cannot read that folder.
+
+| Tool | Arguments | How | Safety |
+|---|---|---|---|
+| `list_connections` | none | Names, types and what each account is for | Read-only; no links or keys |
+| `send_message` | `connection`, `text`, `title` | Posts to a Discord (2000 characters) or Slack (40000 characters) incoming webhook | Always asks, in every approval mode, showing the exact text; mentions never ping; not for parallel workers or helpers |
+| `calendar_events` | `connection`, `from`, `to`, `query` | Reads an ICS link (up to 10 MB): repeats (RRULE, EXDATE), all-day events and time zones; default today plus 14 days; at most 200 events | Read-only; public addresses only |
+| `github` | `args` (a gh command as a list) | The free GitHub CLI (`gh`, install with `install_tool winget GitHub.cli`); sign-in through Settings, Accounts, GitHub, Connect | Allowed: repo view/list/clone, issue list/view/create/comment/close/reopen, pr list/view/diff/checks/create/comment/merge/review, run list/view/watch, release list/view/download, search, status, api (GET only). Never auth, secret, ssh-key, gpg-key, config, extension, alias, codespace or gist. Changes always ask; tokens in output are hidden; not for parallel workers or helpers |
+| `http_request` + `connection` | the name of a saved API key | Adds the saved header | Only for the address it was saved for; dropped on a redirect to another host; hidden if echoed back |
+
 ## Tier 2 (next)
 
 | Tool | What and how | Safety |
 |---|---|---|
-| `connect_account` + account tools | Sign in once with free official methods: GitHub through the GitHub CLI (`gh auth login`), Google (Gmail, Calendar, Drive) and Microsoft (Outlook, OneDrive, Calendar) through their OAuth device sign-in, Discord and Slack through webhooks the user creates. Then tools such as `email_search`, `email_read`, `email_draft`, `calendar_list`, `calendar_add`, `github` | Tokens stored for the Windows user only, never shown to the model; sending email or posting always asks |
+| Email | Not built yet. Gmail, Yahoo, iCloud and most providers allow mail programs with an app password; Outlook.com needs a Microsoft sign-in (a free app registration). Tools would be `email_search`, `email_read`, `email_draft`, `email_send` | Email content is untrusted; sending always asks with the full message shown |
+| Google and Microsoft sign-in | Calendars and files beyond read-only ICS links (adding events, Drive, OneDrive) through their free OAuth sign-in | Same storage and rules as Accounts |
 
 ### Screen control (computer use): planned, not built yet
 None of these tools exist in the app yet; this is the design.
