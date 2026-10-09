@@ -3,14 +3,17 @@
 A **tool** is something the OmniGPT app runs on the user's PC when an agent asks for it with a structured call: a tool
 name plus arguments (for example `view_images {"paths": ["D:\\Photos\\a.jpg"]}`). Every call goes through the same
 pipeline: hard safety rules (`precheck` in `app/tools.mjs`), the safety reviewer and the approval mode, then the run,
-the activity log and, for changes, the undo journal.
+the activity log and, for changes, the undo journal. Tools that only touch the app itself (questions, scheduled tasks,
+memory, the checklist, helpers) run inside the page instead (`PAGE_TOOLS` in `app/app.js`). A call to a tool the agent
+was not given (for example a read-only helper calling `write_file`) is refused before anything runs.
 
 This catalog lists what an agent needs to do anything a user would ask Claude to do (Claude Code, the Claude apps,
 Claude in Chrome, computer use, connectors), compared with what OmniGPT already has. Everything uses free software:
 what ships with Windows (PowerShell, .NET, Edge, the Windows OCR engine), free programs installed on demand with
-`install_tool` (ffmpeg, 7-Zip, Git, GitHub CLI), and the user's own OmniRoute providers.
+`install_tool` (ffmpeg, 7-Zip, qpdf, Git, GitHub CLI), and the user's own OmniRoute providers.
 
-Tiers: **1** = built now, **2** = next, **3** = later or on request.
+Tiers: **1** = built first, **2** = built second (what is still to come is under "Tier 2 (next)"), **3** = later or on
+request.
 
 ## Already available
 
@@ -76,20 +79,48 @@ Tiers: **1** = built now, **2** = next, **3** = later or on request.
 | `screen` | `action`: `screenshot`, `click` x,y (left/right/double), `type` text, `key` combo (ctrl+s, alt+tab), `scroll`, `move` | Windows input APIs (SendInput) through PowerShell; screenshots scaled down for the model | Every request that uses it asks once ("Allow screen control for this request?") in every approval mode, including bypass. A visible banner shows while it is allowed; Stop ends it. Coordinates are in screenshot pixels |
 | `windows` | `action`: `list`, `focus` title, `launch` app name, `minimize`, `close` title | PowerShell window and process APIs; `launch` uses Start-menu app names, never paths | Same permission as `screen`; `close` asks first |
 
+## Tier 2 (built now)
+
+### Background jobs
+| Tool | Arguments | How | Safety |
+|---|---|---|---|
+| `start_process` | `command`, `name`, `cwd`, `wait` (seconds to wait for the first output, default 3), `until` (text or pattern to wait for, e.g. `listening on`) | Runs a PowerShell command in the background (`app/jobs.mjs`) and returns a job id with its first output | Same command rules and approval as `run_command`. Not for parallel workers. Secrets are left out of its environment. At most 8 jobs run at once. Recorded in the undo journal as a command (it cannot be undone) and in the activity log |
+| `read_process` | `id` (none: list all jobs), `all`, `wait` (up to 60 s), `until` | Returns what the job printed since the last read (the most recent 400,000 characters per job are kept; at most 12,000 shown per read), its state and the program's own exit code | Read-only |
+| `stop_process` | `id` | Ends the job and the programs it started | Only jobs OmniGPT started |
+
+While a job runs, the header shows "N background jobs"; clicking it opens the job list with each job's command, recent
+output and a **Stop** button. Every job stops when OmniGPT closes.
+
+### Web APIs
+| Tool | Arguments | How | Safety |
+|---|---|---|---|
+| `http_request` | `method` (GET, POST, PUT, PATCH, DELETE, HEAD), `url`, `headers`, `body` (an object is sent as JSON; up to 1 MB; none for GET and HEAD), `timeout_sec` (default 30, at most 120) | Node `fetch`. Returns the status, key headers (content type, rate limits, retry-after) and the body: JSON formatted, cut after 20,000 characters, at most 2 MB read; binary content is only described (`download_file` saves it) | Public addresses only, same rules as `download_file`; every redirect is checked again (at most 5). Headers that carry a secret (Authorization, cookies, tokens, API keys, passwords, sessions) are refused, so keys are never typed into the chat. GET and HEAD count as reading the web; sending data is a network action that goes through approval and, once web content was read in the request, asks even with every check bypassed. The response counts as web content |
+
+### Data, charts and PDFs
+| Tool | Arguments | How | Safety |
+|---|---|---|---|
+| `analyze_data` | `files[]` (up to 20, 200 MB together), `code`, `language` (`python`, the default, or `javascript`), `output` (folder), `name` (for the results folder), `timeout_sec` (default 30, at most 60) | The code sandbox (`windows/Sandbox.cs`) with copies of the files in `input/` (each sheet of an .xlsx file also as `input/<file>.<sheet>.csv`). Files the code writes to `output/` are saved to a new folder under `Analysis results` in the working folder | The code sees only the copies; no network; Python has its standard library only (no pandas or matplotlib); 1 GB memory. Links in `output/` are never followed; at most 50 result files, 200 MB and 4 folder levels come out. The results folder must be new or empty. Goes through approval like any change; undoable |
+| `make_chart` | `path` (.png or .svg), `type` (`bar`, `line`, `pie`, `scatter`), `title`, `subtitle`, `labels`, `series` (`[{name, values}]`; scatter: `[{name, points: [[x,y],...]}]`) or `csv` (first column = labels, other columns = series) with `columns`, `x_label`, `y_label`, `stacked`, `width`, `height`, `overwrite` | Drawn as SVG in Node (`app/charts.mjs`); PNGs are rendered at twice the size by Edge in the background through the DevTools protocol (`app/render.mjs`) | Charts that would mislead are refused with a reason: more than 8 series, more than 3 scatter series, a pie with several series, negative values or a single slice. Pies with more than 8 slices combine the smallest into Other. At most 500 values per series (20,000 scatter points). One fixed colour-blind-checked colour order. Never replaces a file unless `overwrite` (backed up); undoable |
+| `pdf_tools` | `action`: `info` path; `merge` paths (2 to 50) + output; `extract` path + pages (`1-3,7`, `5-z`, z = last page) + output; `rotate` path + angle (90/180/270) + pages + output; `split` path + every (pages per file, default 1) + output folder; `overwrite` | qpdf, run directly without a shell (`app/pdfocr.mjs`); installed on demand with `install_tool winget QPDF.QPDF` | Results are new files; the originals are never changed and the output cannot be one of the inputs. An existing output is only replaced with `overwrite` (backed up); `split` needs a new or empty folder. Password-protected PDFs cannot be changed. Undoable. PDF text is read with `inspect_file`, scanned pages with `ocr` |
+| `ocr` | `path` (png, jpg, bmp, gif, tiff, webp, heic, ico or PDF), `pages` (`1-3,5`; default the first 30; at most 50 per call), `language` (e.g. `en-US`; default the user's Windows languages), `output` (also save the text), `overwrite` | The OCR engine built into Windows (`Windows.Media.Ocr`) through PowerShell, offline; PDF pages are drawn with `Windows.Data.Pdf` first | Read-only unless `output` is given (then a new, undoable file). Needs an OCR language installed in Windows (Settings > Time & language > Language & region). Stopped after 5 minutes |
+
+### Memory, checklist and helpers (run inside the app)
+| Tool | Arguments | How | Safety |
+|---|---|---|---|
+| `remember` | `text` (up to 300 characters), `kind` (`user`, `preference`, `fact`) | Saves to long-term memory; saying the same thing again updates the existing memory instead of adding a copy | Secrets (passwords, keys, tokens) are refused. Saves nothing when Memory is turned off. Every memory is shown, and can be deleted, in Settings, Memory |
+| `recall` | `query` (none: everything) | Searches the memories and returns them with their ids | Read-only |
+| `forget` | `id` (from `recall`) or `query` (at least 3 characters) | Removes the matching memories | A text that matches more than 5 memories removes nothing and lists their ids instead |
+| `todo` | `items[]` (`text` + `status`: `pending`, `doing`, `done`; up to 40) | One checklist card per request, in the conversation under the reasoning line (not hidden inside it), updated in place: "Checklist · 2 of 5 done" | None |
+| `delegate` | `title`, `instructions`, `tools` (`all`; `web` = web search and open only; `read` = reading files and the web, no changes) | A helper agent does a self-contained sub-task in its own lane in the reasoning ("Helper 1 · title") and in the brain graph, then reports back | The helper sees only its instructions, not the conversation. It cannot ask the user, delegate, schedule tasks, use the clipboard or change memory, and its actions go through the same safety checks. At most 6 helpers per request |
+
+Parallel workers do not get `remember`, `forget`, `todo` or `delegate`. In OMNI (autonomous) mode each cycle gets its
+own helper count and checklist.
+
 ## Tier 2 (next)
 
 | Tool | What and how | Safety |
 |---|---|---|
 | `connect_account` + account tools | Sign in once with free official methods: GitHub through the GitHub CLI (`gh auth login`), Google (Gmail, Calendar, Drive) and Microsoft (Outlook, OneDrive, Calendar) through their OAuth device sign-in, Discord and Slack through webhooks the user creates. Then tools such as `email_search`, `email_read`, `email_draft`, `calendar_list`, `calendar_add`, `github` | Tokens stored for the Windows user only, never shown to the model; sending email or posting always asks |
-| `http_request` | Call public JSON APIs (GET/POST with headers and body) | Same public-address rules as downloads; secrets only from saved connections |
-| `start_process`, `read_process`, `stop_process` | Long-running jobs (dev servers, builds, watchers) in the background, with their output readable later | Listed in the UI; stopped when OmniGPT closes |
-| `ocr` | Text from images and scanned PDFs with the Windows OCR engine (offline, built in) | Read-only |
-| `pdf_tools` | Merge, split, rotate, extract pages, images and text (qpdf / pdfcpu installed on demand) | New files; undoable |
-| `analyze_data` | Run Python in the sandbox with copies of chosen files (CSV, Excel, JSON, SQLite) as input and charts or tables as output | The sandbox still has no network and sees only the copies |
-| `make_chart` | Bar, line, pie and scatter charts from data as PNG/SVG (drawn in the browser engine) | New files |
-| `remember`, `forget`, `recall` | Explicit control over long-term memory | Shown in Settings, Memory |
-| `todo` | A visible task checklist the agent keeps updated during long jobs | None |
-| `delegate` | Hand a self-contained sub-task to a worker agent and get its report | Workers keep their lane limits |
 
 ## Tier 3 (later or on request)
 
