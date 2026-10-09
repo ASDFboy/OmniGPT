@@ -11,6 +11,8 @@ import { Readable } from "node:stream";
 import { loadConfig, saveConfig, precheck, run, resolveScope, runSandboxRaw, sandboxInfo, checkPath, grantFolder, ungrantFolder, folderConfig, insideFolder, undoTurn, undoInfo, readActivity, setOmniRoute, listJobs, stopJob, stopAllJobs } from "./tools.mjs";
 import { inspect, MIME, RUNNABLE } from "./files.mjs";
 import { publicList, saveConnection, deleteConnection, testConnection, ghStatus, ghLogin } from "./connections.mjs";
+import { stopPs } from "./psworker.mjs";
+import { stopRender } from "./render.mjs";
 import { pipeline } from "node:stream/promises";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -106,7 +108,7 @@ async function ensureOmniRoute() {
   omniChild.on("exit", () => { omniChild = null; });
 }
 const killTree = (c) => { try { if (c && c.pid) spawn("taskkill", ["/pid", String(c.pid), "/t", "/f"], { windowsHide: true, stdio: "ignore" }); } catch {} };
-function shutdown() { stopAllJobs(); killTree(omniChild); setTimeout(() => process.exit(0), 300); } // background jobs end with the app
+function shutdown() { stopAllJobs(); stopPs(); stopRender(); killTree(omniChild); setTimeout(() => process.exit(0), 300); } // background jobs, the PowerShell worker and the drawing browser end with the app
 for (const sig of ["SIGINT", "SIGTERM", "SIGBREAK"]) process.on(sig, shutdown);
 const parentPid = Number(process.env.OMNIGPT_PARENT_PID || 0); // exit when the app window process is gone
 if (parentPid) setInterval(() => { try { process.kill(parentPid, 0); } catch { shutdown(); } }, 4000);
