@@ -6,6 +6,12 @@ models for it, can split work between several agents running at the same time, c
 reads and edits files on your PC (with a safety reviewer and your approval), searches the web, and can keep working
 on its own in OMNI mode.
 
+Beyond files and the web, agents can run long jobs in the background, call web APIs, draw charts, work with PDFs,
+read scanned pages (OCR), analyze your data files in an isolated sandbox, find things by meaning, post to Discord or
+Slack, read your calendar and use GitHub, and OmniGPT learns which models work best for which kind of task. The full
+list is in the [tool catalog](omnigpt/TOOL-CATALOG.md); what changed in each version is in the
+[release notes](omnigpt/RELEASE-NOTES.md).
+
 This repository is a fork of OmniRoute with OmniGPT added in [`omnigpt/`](omnigpt). Everything runs on your own
 computer. Your API keys stay on your PC and are never part of this repository.
 
@@ -392,7 +398,8 @@ To run the OmniRoute dashboard from this fork (with the OmniGPT look built in), 
 `omnigpt/windows/Setup.cs` (`Version`), build the installer (locally or from the Actions artifact), then
 `gh release create omnigpt-vX.Y.Z omnigpt/windows/release/OmniGPT-Setup.exe omnigpt/windows/release/OmniGPT-Setup.exe.sha256`
 (the `.sha256` file is needed for **Install now**). The update check only looks at tags named
-`omnigpt-vX.Y.Z`.
+`omnigpt-vX.Y.Z`. Write the release's notes in [`omnigpt/RELEASE-NOTES.md`](omnigpt/RELEASE-NOTES.md) first and use
+them as the release text.
 
 ---
 
