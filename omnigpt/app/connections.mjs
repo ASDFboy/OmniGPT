@@ -6,6 +6,7 @@ import path from "node:path";
 import os from "node:os";
 import crypto from "node:crypto";
 import { spawn } from "node:child_process";
+import { psq } from "./psworker.mjs";
 
 const CFG_DIR = path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"), "OmniRouteChat");
 const FILE = path.join(CFG_DIR, "connections.json");
@@ -20,16 +21,8 @@ const KIND = { discord: "Discord", slack: "Slack" };
 const ONE = { webhook: "Discord or Slack channel", calendar: "calendar", api: "API key" }, MANY = { webhook: "channels", calendar: "calendars", api: "API keys" };
 const an = (w) => (/^[aeiou]/i.test(w) ? "an " : "a ") + w;
 
-// ---------- PowerShell (DPAPI and finding gh on Windows); values always travel in environment variables
-function psRun(script, env, ms = 30000) {
-  return new Promise((ok) => {
-    let c; try { c = spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", script], { env: cleanEnv(env), windowsHide: true, stdio: ["ignore", "pipe", "pipe"] }); } catch (e) { return ok({ code: -1, out: "", err: String(e.message) }); }
-    let out = "", err = ""; c.stdout.on("data", (d) => (out += d)); c.stderr.on("data", (d) => (err += d));
-    const t = setTimeout(() => { try { c.kill(); } catch {} }, ms);
-    c.on("close", (code) => { clearTimeout(t); ok({ code, out, err }); });
-    c.on("error", (e) => { clearTimeout(t); ok({ code: -1, out: "", err: String(e.message) }); });
-  });
-}
+// ---------- PowerShell (DPAPI and finding gh on Windows) in the shared worker; values always travel in environment variables
+const psRun = (script, env, ms = 30000) => psq(script, env, undefined, ms).then((r) => ({ code: r.code, out: r.out, err: r.err || (r.code ? r.out : "") }));
 const DP = "Add-Type -AssemblyName System.Security\n$e=[Text.Encoding]::UTF8.GetBytes('OmniGPT connections')\n";
 const b64line = (s) => { const l = String(s).trim().split(/\r?\n/).pop() || ""; return /^[A-Za-z0-9+/=]+$/.test(l) ? l : ""; };
 async function protect(v) {
