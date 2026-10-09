@@ -69,6 +69,9 @@ catch (e) { check("http requests, charts, PDF tools and OCR", false, String(e.st
 // 1b14. account connections: secrets never shown (DPAPI on Windows), messages always ask, calendars, saved API keys, gh allowlist
 try { execFileSync(process.execPath, [path.join(here, "connections-test.mjs")], { stdio: "pipe", timeout: 240000 }); check("account connections", true); }
 catch (e) { check("account connections", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
+// 1b15. the agent's tool loop: old output shrinks (read_output), reads run side by side, one review per step, work is checked before done
+try { execFileSync(process.execPath, [path.join(here, "loop-test.mjs")], { stdio: "pipe", timeout: 240000 }); check("tool loop: shorter old output, parallel reads, batched reviews, self-check", true); }
+catch (e) { check("tool loop: shorter old output, parallel reads, batched reviews, self-check", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
 // 1c. inspect_file follows the same folder rules as every other tool
 { let ok = true; try { await tools.precheck("inspect_file", { path: "C:/Windows/win.ini" }); ok = false; } catch {} try { await tools.precheck("inspect_file", { path: path.join(os.homedir(), ".ssh", "id_rsa") }); ok = false; } catch {} check("inspect_file stays inside the allowed folders", ok); }
 
