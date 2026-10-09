@@ -166,8 +166,10 @@ function call(script, env, cwd, timeoutMs) {
 // psq: same arguments and result as ps() ({ code, out, timedOut }, plus err: the error-stream text alone). While the
 // worker is busy with a long call (OCR of many pages), a new call gets its own process instead of waiting behind it.
 // Programs a psq script starts share the worker's input, so they must not wait for typed input (use ps() for those).
+// On Windows the shared worker is opt-in (OMNIGPT_PS_WORKER=1) until it has been proven on real PCs; elsewhere it only runs in tests (OMNIGPT_POWERSHELL)
+const workerOn = () => win ? process.env.OMNIGPT_PS_WORKER === "1" : !!process.env.OMNIGPT_POWERSHELL;
 export function psq(script, env = {}, cwd, timeoutMs = 60000) {
-  if (broken || (!win && !process.env.OMNIGPT_POWERSHELL) || (W && W.cur && Date.now() - W.cur.since > 1500)) return ps(script, env, cwd, timeoutMs);
+  if (broken || !workerOn() || (W && W.cur && Date.now() - W.cur.since > 1500)) return ps(script, env, cwd, timeoutMs);
   const job = queue.then(() => call(String(script), env, cwd, timeoutMs));
   queue = job.catch(() => {}); return job;
 }
