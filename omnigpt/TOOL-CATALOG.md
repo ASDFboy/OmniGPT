@@ -122,6 +122,13 @@ reach the page or the model: they only see names, addresses and a masked hint. C
 | `github` | `args` (a gh command as a list) | The free GitHub CLI (`gh`, install with `install_tool winget GitHub.cli`); sign-in through Settings, Accounts, GitHub, Connect | Allowed: repo view/list/clone, issue list/view/create/comment/close/reopen, pr list/view/diff/checks/create/comment/merge/review, run list/view/watch, release list/view/download, search, status, api (GET only). Never auth, secret, ssh-key, gpg-key, config, extension, alias, codespace or gist. Changes always ask; tokens in output are hidden; not for parallel workers or helpers |
 | `http_request` + `connection` | the name of a saved API key | Adds the saved header | Only for the address it was saved for; dropped on a redirect to another host; hidden if echoed back |
 
+### Working smarter (run inside the app or the backend)
+| Tool | Arguments | How | Safety |
+|---|---|---|---|
+| `more_tools` | `groups`, `reason` | Adds tool groups (files, web, code, docs, media, accounts, schedule, helpers, clipboard) when a request was given only some | Offered only when the list was trimmed; tools not offered are still refused |
+| `read_output` | `id`, `offset` | Reads the rest of an earlier long tool result that was shortened | Read-only |
+| `search_meaning` | `query`, `path`, `types`, `limit` | Embeddings from OmniRoute over an on-demand index of documents in the allowed folders | Off until the user turns it on; protected, hidden and credential-like files never read; file text goes to the chosen embedding provider |
+
 ## Tier 2 (next)
 
 | Tool | What and how | Safety |
