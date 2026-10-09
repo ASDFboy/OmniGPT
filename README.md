@@ -223,6 +223,23 @@ on the right shows which models are talking.
 * **Web APIs:** agents can call public web APIs and read their answers (**http request**). Local and private network
   addresses are refused. Keys are never typed into the chat: a request that carries a key, password or cookie in its
   headers is refused. Sending data to an API (anything other than reading) goes through approval like a change.
+* **Accounts (Settings, Accounts):** connect free accounts once; the links and keys you paste are encrypted for your
+  Windows user and never shown to the AI (Settings only shows names, addresses and a masked hint). Each account has
+  **Test** (it never sends a message) and **Remove**.
+  * **Discord or Slack channel:** paste an incoming-webhook link (Discord: channel settings, Integrations, Webhooks,
+    Copy Webhook URL; Slack: an Incoming Webhook for a channel). Agents post with **send message**, which always asks
+    you first, in every approval mode, and shows the exact text. Mentions such as @everyone never ping anyone.
+  * **Calendar:** paste an ICS link (Google Calendar: Settings, your calendar, Integrate calendar, Secret address in
+    iCal format; Outlook: Settings, Calendar, Shared calendars, Publish a calendar, ICS link). Agents read events with
+    **calendar events** (today and the next 14 days unless asked otherwise, repeats and time zones worked out). It is
+    read-only: agents cannot add events this way.
+  * **Web API key:** an https address, the header name (for example Authorization or X-API-Key) and the key. Agents
+    use it by name with **http request**; it is only ever sent to that address, never to another site after a
+    redirect, and hidden if the API echoes it back.
+  * **GitHub:** uses the free GitHub CLI (agents install it with your approval: winget GitHub.cli). **Connect** opens a
+    window where you sign in with your browser; OmniGPT stores nothing. Agents can list and read repositories, issues,
+    pull requests, workflow runs and releases (**github**); creating, commenting, closing, merging and reviewing always
+    ask first. Sign-in, secrets, keys and settings commands are never run.
 * **Checklist:** on long jobs the agent keeps a checklist in the conversation, under the reasoning line
   ("Checklist · 2 of 5 done"), and ticks items off as it works.
 * **Helpers:** the agent can hand a self-contained part of the job to a helper agent. Each helper has its own lane in
@@ -282,6 +299,7 @@ Turn it off in Settings, General, **Update notifications**. Settings, About, **C
 |---|---|
 | The program | `%LOCALAPPDATA%\Programs\OmniGPT` |
 | Chats, settings, memories, skills, saved key, undo journal, activity log | `%LOCALAPPDATA%\OmniRouteChat` |
+| Connected accounts (links and keys encrypted for your Windows user) | `%LOCALAPPDATA%\OmniRouteChat\connections.json` |
 | Backups of files agents overwrote | `%LOCALAPPDATA%\OmniRouteChat\backups` |
 | Logs, sandbox runs, window data | `%LOCALAPPDATA%\OmniGPT` |
 | Attached files | `Documents\OmniRoute Workspace\Attachments` |

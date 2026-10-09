@@ -127,6 +127,8 @@ try {
   got.length = 0; r = await R("send_message", { connection: "ops slack", title: "Status", text: "Build finished" });
   const sj = JSON.parse(got.find((g) => g.path.startsWith("/services/"))?.body || "{}");
   check("Slack gets {text}", r === 'Sent to "Ops Slack" (Slack).' && sj.text === "*Status*\nBuild finished" && !("content" in sj), r + " " + JSON.stringify(sj));
+  got.length = 0; await R("send_message", { connection: "ops slack", text: "Hi <!channel> and <@U123> & <!here>" });
+  check("Slack mentions are sent as plain text, so nobody is pinged", JSON.parse(got.find((g) => g.path.startsWith("/services/"))?.body || "{}").text === "Hi &lt;!channel&gt; and &lt;@U123&gt; &amp; &lt;!here&gt;", got[0]?.body);
   check("message limits: Discord 2000 characters, Slack 40000", /at most 2000/.test(await refused("send_message", { connection: "Team chat", text: "x".repeat(2001) })) && !(await refused("send_message", { connection: "Ops Slack", text: "x".repeat(2001) })) && /at most 40000/.test(await refused("send_message", { connection: "Ops Slack", text: "x".repeat(40001) })) && /text is required/.test(await refused("send_message", { connection: "Team chat", text: " " })));
   const goneErr = await fails(R("send_message", { connection: "Old hook", text: "hi" }));
   check("a deleted webhook is reported plainly, without its link", /HTTP 404/.test(goneErr) && /may have been deleted/.test(goneErr) && !leaks(goneErr).length, goneErr);
