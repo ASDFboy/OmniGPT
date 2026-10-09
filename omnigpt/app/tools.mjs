@@ -15,7 +15,7 @@ import { webOpen, webSearch } from "./web.mjs";
 import { inspect } from "./files.mjs";
 import { zipBuild, zipRead } from "./zip.mjs";
 import { browserAction } from "./browser.mjs";
-import { startJob, stopJob, readJob } from "./jobs.mjs";
+import { startJob, stopJob, readJob, PASS_CODE } from "./jobs.mjs";
 export { listJobs, stopAllJobs, stopJob } from "./jobs.mjs";
 import { parseMarkdown, toHtml, toDocx, toXlsx, toPptx, sheetsFromText, slidesFromText } from "./docs.mjs";
 
@@ -825,7 +825,7 @@ function ps(script, env, cwd, timeoutMs) {
   return new Promise((ok) => {
     const clean = cleanEnv(env);
     const refresh = "$env:Path=[Environment]::GetEnvironmentVariable('Path','Machine')+';'+[Environment]::GetEnvironmentVariable('Path','User')+';'+$env:Path\n"; // programs installed during this session are found
-    const c = spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "[Console]::OutputEncoding=[Text.Encoding]::UTF8\n" + refresh + script], { cwd, env: clean, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
+    const c = spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "[Console]::OutputEncoding=[Text.Encoding]::UTF8\n" + refresh + script + PASS_CODE], { cwd, env: clean, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
     let out = "", timedOut = false;
     c.stdout.on("data", (d) => (out += d)); c.stderr.on("data", (d) => (out += d));
     const t = setTimeout(() => { timedOut = true; spawn("taskkill", ["/pid", String(c.pid), "/t", "/f"], { windowsHide: true }); }, timeoutMs);

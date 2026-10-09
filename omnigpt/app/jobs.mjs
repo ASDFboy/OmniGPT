@@ -4,6 +4,8 @@
 import { spawn } from "node:child_process";
 
 const MAX_RUNNING = 8, KEEP = 400000;
+// PowerShell reports 1 for any failed program; this passes the program's own exit code through (and 1 for a failed command)
+export const PASS_CODE = "\n$__ok=$?; if ($LASTEXITCODE) { exit $LASTEXITCODE }; if (-not $__ok) { exit 1 }";
 const jobs = new Map(); let nextId = 1;
 const ANSI = /\x1b\[[0-9;?]*[ -/]*[@-~]|\x1b\][^\x07]*\x07|\r(?!\n)/g;
 
@@ -17,7 +19,7 @@ export function startJob({ command, name, cwd, env }) {
   const win = process.platform === "win32";
   const refresh = "$env:Path=[Environment]::GetEnvironmentVariable('Path','Machine')+';'+[Environment]::GetEnvironmentVariable('Path','User')+';'+$env:Path\n";
   const c = win
-    ? spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "[Console]::OutputEncoding=[Text.Encoding]::UTF8\n" + refresh + command], { cwd, env, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] })
+    ? spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "[Console]::OutputEncoding=[Text.Encoding]::UTF8\n" + refresh + command + PASS_CODE], { cwd, env, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] })
     : spawn("/bin/sh", ["-c", command], { cwd, env, detached: true, stdio: ["ignore", "pipe", "pipe"] }); // own process group, so stop reaches its children
   const j = { id: String(nextId++), name: String(name || command).replace(/\s+/g, " ").slice(0, 60), command: String(command), cwd, pid: c.pid, started: Date.now(), out: "", dropped: 0, read: 0, child: c, code: undefined, ended: 0, stopped: false };
   const add = (d) => { j.out += String(d).replace(ANSI, ""); if (j.out.length > KEEP) { const cut = j.out.length - KEEP; j.out = j.out.slice(cut); j.dropped += cut; } };
