@@ -72,6 +72,9 @@ catch (e) { check("account connections", false, String(e.stdout).split("\n").fil
 // 1b15. finding by meaning: memories, skills, recall and search_meaning against a stand-in OmniRoute
 try { execFileSync(process.execPath, [path.join(here, "meaning-test.mjs")], { stdio: "pipe", timeout: 300000 }); check("search by meaning", true); }
 catch (e) { check("search by meaning", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
+// 1b16. the start of each request: router and refiner at once, tool groups and more_tools, summaries of old messages
+try { execFileSync(process.execPath, [path.join(here, "flow-test.mjs")], { stdio: "pipe", timeout: 240000 }); check("request start: routing, tool groups, summaries", true); }
+catch (e) { check("request start: routing, tool groups, summaries", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
 // 1c. inspect_file follows the same folder rules as every other tool
 { let ok = true; try { await tools.precheck("inspect_file", { path: "C:/Windows/win.ini" }); ok = false; } catch {} try { await tools.precheck("inspect_file", { path: path.join(os.homedir(), ".ssh", "id_rsa") }); ok = false; } catch {} check("inspect_file stays inside the allowed folders", ok); }
 
