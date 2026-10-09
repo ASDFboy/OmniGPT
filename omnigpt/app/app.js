@@ -2110,7 +2110,7 @@ async function refreshJobs(){
 function renderJobs(){
   $("#j-list").innerHTML=JOBS.length?JOBS.slice().reverse().map(j=>`<div class="job"><div class="job-h"><b>${esc(j.name)}</b><span class="mut">${esc(j.state)} · started ${esc(new Date(j.started).toLocaleTimeString())}</span>${j.running?`<button class="btn" data-jstop="${esc(j.id)}">Stop</button>`:""}</div><div class="mut job-c">${esc(j.command)}</div><pre class="job-o">${esc(j.tail||"(no output yet)")}</pre></div>`).join(""):'<p class="mut">No background jobs.</p>';
 }
-$("#jobstat").onclick=()=>{renderJobs();$("#jdlg").showModal();refreshJobs()};
+$("#jobstat").onclick=async()=>{await refreshJobs();renderJobs();$("#jdlg").showModal()};
 $("#jdlg").addEventListener("click",async e=>{
   const b=e.target.closest("[data-jstop]");if(b){b.disabled=true;b.textContent="Stopping…";await api("/api/jobs/stop",{id:b.dataset.jstop}).catch(()=>{});refreshJobs();return}
   if(e.target.id==="j-x")$("#jdlg").close()});

@@ -155,8 +155,9 @@ try {
   const jobVisible = async () => E(`(() => { const e = document.getElementById("jobstat"); return !e.hidden && e.offsetParent !== null ? e.textContent : ""; })()`);
   let head = ""; for (let k = 0; k < 30 && !head; k++) { head = await jobVisible(); if (!head) await new Promise((r) => setTimeout(r, 200)); }
   check("the header shows the running job", head === "1 background job", head);
-  await E(`document.getElementById("jobstat").click()`); await new Promise((r) => setTimeout(r, 600));
-  const listed = await E(`(() => ({ open: document.getElementById("jdlg").open, text: document.getElementById("j-list").textContent, stop: !!document.querySelector("[data-jstop]") }))()`);
+  await E(`document.getElementById("jobstat").click()`);
+  let listed = {}; // the list refreshes from the backend after it opens; a slow PC can take a moment
+  for (let k = 0; k < 25 && !/ready/.test(listed.text || ""); k++) { await new Promise((r) => setTimeout(r, 200)); listed = await E(`(() => ({ open: document.getElementById("jdlg").open, text: document.getElementById("j-list").textContent, stop: !!document.querySelector("[data-jstop]") }))()`); }
   check("the job list shows the job, its output and a Stop button", listed.open && /dev server/.test(listed.text) && /node server\.js/.test(listed.text) && /ready/.test(listed.text) && listed.stop, JSON.stringify(listed).slice(0, 160));
   await E(`document.querySelector("[data-jstop]").click()`);
   let gone = false; for (let k = 0; k < 40 && !gone; k++) { await new Promise((r) => setTimeout(r, 250)); gone = !(await jobVisible()); }
