@@ -12,7 +12,7 @@ import { Readable } from "node:stream";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { pipeline } from "node:stream/promises";
 import { webOpen, webSearch } from "./web.mjs";
-import { inspect } from "./files.mjs";
+import { inspect, xlsxSheets } from "./files.mjs";
 import { zipBuild, zipRead } from "./zip.mjs";
 import { browserAction } from "./browser.mjs";
 import { startJob, stopJob, readJob, PASS_CODE } from "./jobs.mjs";
@@ -39,13 +39,14 @@ export function langOf(i) {
   if (/\b(console\.log|const |let |=>|function\s)/.test(code)) return "javascript";
   return undefined;
 }
-export function runSandboxRaw(language, code, timeoutSec = 10, memMB = 256) {
+// io: { inDir, outDir, maxSecs } for analyze_data: files copied in as input/, files written to output/ copied out
+export function runSandboxRaw(language, code, timeoutSec = 10, memMB = 256, io = {}) {
   return new Promise((ok) => {
     const lang = LANG[String(language || "").toLowerCase()];
     if (!lang) return ok({ error: "unsupported language: " + language, stdout: "", stderr: "", exitCode: -1 });
     if (!fs.existsSync(SBX)) return ok({ error: "the code sandbox is not installed", stdout: "", stderr: "", exitCode: -1 });
-    const secs = Math.min(Math.max(Number(timeoutSec) | 0 || 10, 1), 30);
-    const c = spawn(SBX, [ROOT, lang, String(secs), String(memMB)], { windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
+    const secs = Math.min(Math.max(Number(timeoutSec) | 0 || 10, 1), io.maxSecs || 30);
+    const c = spawn(SBX, [ROOT, lang, String(secs), String(memMB), ...(io.inDir ? ["--in", io.inDir] : []), ...(io.outDir ? ["--out", io.outDir] : [])], { windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
     let out = "", err = "";
     c.stdout.on("data", (d) => (out += d)); c.stderr.on("data", (d) => (err += d));
     const kill = setTimeout(() => { try { c.kill(); } catch {} }, (secs + 25) * 1000);
@@ -247,6 +248,19 @@ export async function precheck(name, input, cfg = loadConfig(), scope) {
       const code = String(i.code ?? ""); if (!code.trim()) throw new Error("code is required"); if (code.length > 100000) throw new Error("code is too long (100000 chars max)");
       const secs = Math.min(Math.max(Number(i.timeout_sec) || 10, 1), 30);
       return { class: "sandbox", summary: `Run ${lang} in the isolated sandbox (no network, no access to your files; ${secs}s limit)\n${code.slice(0, 700)}` };
+    }
+    case "analyze_data": {
+      const lang = langOf({ language: i.language || "python", code: i.code });
+      if (!lang) throw new Error("language must be python or javascript");
+      const code = String(i.code ?? ""); if (!code.trim()) throw new Error("code is required"); if (code.length > 100000) throw new Error("code is too long (100000 chars max)");
+      const L = (Array.isArray(i.files) ? i.files : []).slice(0, 21).map((p) => checkPath(p, cfg));
+      if (L.length > 20) throw new Error("at most 20 input files");
+      let size = 0; for (const p of L) { const st = fs.statSync(p); if (!st.isFile()) throw new Error("not a file: " + p); size += st.size; }
+      if (size > 200 * 1024 * 1024) throw new Error("the input files are over 200 MB together");
+      const out = W(i.output || path.join(cfg.cwd, "Analysis results", stampName(i.name || "results")));
+      if (fs.existsSync(out) && (!fs.statSync(out).isDirectory() || fs.readdirSync(out).length)) throw new Error("the output folder exists and is not empty: " + out);
+      const secs = Math.min(Math.max(Number(i.timeout_sec) || 30, 1), 60);
+      return { class: "write", summary: `Analyze ${L.length} file${L.length === 1 ? "" : "s"} with ${lang} in the isolated sandbox (copies only; no network; ${secs}s limit)${L.length ? ":\n" + L.map((p) => "- " + p).join("\n") : ""}\nResult files go to ${out}\n${code.slice(0, 700)}` };
     }
     case "read_files": {
       const L = list(i.paths, 20).map((p) => checkPath(p, cfg));
@@ -568,6 +582,34 @@ async function httpRequest(i) {
   if (/^(image|audio|video|application\/(octet-stream|pdf|zip))/i.test(type) || buf.subarray(0, 4000).includes(0)) return head + `\n\nBinary content (${fmtB(buf.length)}${cut ? ", more not read" : ""}). Use download_file to save it.`;
   let shown = text; if (/json/i.test(type) || /^\s*[[{]/.test(text)) { try { shown = JSON.stringify(JSON.parse(text), null, 1); } catch {} }
   return head + `\n\n${shown.length > 20000 ? shown.slice(0, 20000) + `\n…[${shown.length - 20000} more characters]` : shown}${cut ? "\n…[the response is over 2 MB; only the first 2 MB were read]" : ""}`;
+}
+
+// ---------- analyze_data: copies of the chosen files go into the sandbox as input/, result files come back from output/
+async function analyzeData(i, cfg, jr) {
+  const lang = langOf({ language: i.language || "python", code: i.code }), L = (i.files || []).map((p) => checkPath(p, cfg));
+  const out = checkPath(i.output || path.join(cfg.cwd, "Analysis results", stampName(i.name || "results")), cfg);
+  const stage = fs.mkdtempSync(path.join(os.tmpdir(), "omnigpt-analyze-")), inDir = path.join(stage, "in"), outDir = path.join(stage, "out"), given = [];
+  try {
+    fs.mkdirSync(inDir);
+    const free = (n) => { let b = n.replace(/[<>:"/\\|?*\x00-\x1f]/g, "_"), k = 2; const e = path.extname(b), s = b.slice(0, b.length - e.length); while (fs.existsSync(path.join(inDir, b))) b = `${s} (${k++})${e}`; return b; };
+    for (const p of L) {
+      const n = free(path.basename(p)); fs.copyFileSync(p, path.join(inDir, n)); given.push(`input/${n}  (copy of ${p})`);
+      if (/\.xlsx$/i.test(p)) { // Excel files also arrive as one CSV per sheet: the sandbox has only the Python standard library
+        try { for (const sh of xlsxSheets(fs.readFileSync(p))) { const c = free(`${path.basename(p, path.extname(p))}.${sh.name}.csv`); fs.writeFileSync(path.join(inDir, c), sh.rows.map((r) => r.map((v) => /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v).join(",")).join("\n")); given.push(`input/${c}  (sheet "${sh.name}", ${sh.rows.length} rows)`); } }
+        catch (e) { given.push(`(the sheets of ${path.basename(p)} could not be converted to CSV: ${e.message})`); }
+      }
+    }
+    const r = await runSandboxRaw(lang, i.code, Math.min(Math.max(Number(i.timeout_sec) || 30, 1), 60), 1024, { inDir, outDir, maxSecs: 60 });
+    const saved = [];
+    for (const rel of r.files || []) {
+      const from = path.join(outDir, rel), to = checkPath(path.join(out, rel), cfg); // a name can never point outside the results folder
+      if (!under(to, out) || !fs.existsSync(from)) continue;
+      if (!fs.existsSync(out)) { fs.mkdirSync(out, { recursive: true }); jr.push({ op: "created", path: out, dir: true }); }
+      fs.mkdirSync(path.dirname(to), { recursive: true }); fs.copyFileSync(from, to); jr.push({ op: "created", path: to }); saved.push(to);
+    }
+    return formatSandbox(r) + `\n\nInput files the code saw:\n${given.map((g) => "- " + g).join("\n") || "- (none)"}` +
+      (saved.length ? `\n\nResult files saved:\n${saved.map((p) => "- " + p).join("\n")}` : "\n\nNo result files (the code wrote nothing to output/).") + (r.skipped ? `\n${r.skipped} item(s) in output/ were not copied (links, too deep, or over 50 files / 200 MB).` : "");
+  } finally { fs.rmSync(stage, { recursive: true, force: true }); }
 }
 
 // ---------- ocr and pdf_tools
@@ -1130,6 +1172,7 @@ async function runInner(name, input, cfg, jr = []) {
       return `Moved to Recycle Bin: ${p}`;
     }
     case "run_code": return formatSandbox(await runSandboxRaw(langOf(i), i.code, i.timeout_sec));
+    case "analyze_data": return analyzeData(i, cfg, jr);
     case "read_files": case "write_files": case "move_files": case "delete_files": {
       const single = { read_files: ["read_file", (p) => ({ path: p }), i.paths], write_files: ["write_file", (f) => f, i.files], move_files: ["move_file", (m) => m, i.moves], delete_files: ["delete_file", (p) => ({ path: p }), i.paths] }[name];
       const out = []; let failed = 0;

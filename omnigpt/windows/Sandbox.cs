@@ -1,8 +1,10 @@
 // OmniGPT.Sandbox: runs one piece of code (Python or JavaScript) inside a Windows AppContainer.
 // An AppContainer process has no network access and no access to the user's files unless a folder is explicitly granted;
 // a Job Object adds a memory cap and kills the whole process tree on timeout. Written for the C# 5 compiler in Windows.
-//   usage:  OmniGPT.Sandbox.exe <installRoot> <python|javascript> <timeoutSeconds> <memoryMB>      (code is read from stdin)
-//   prints one JSON object: {"stdout","stderr","exitCode","timedOut","ms","error"}
+//   usage:  OmniGPT.Sandbox.exe <installRoot> <python|javascript> <timeoutSeconds> <memoryMB> [--in <folder>] [--out <folder>]
+//           (code is read from stdin). --in: the files in that folder are copied into the run's "input" folder first.
+//           --out: after the run, the files the code wrote to its "output" folder are copied there (links are never followed).
+//   prints one JSON object: {"stdout","stderr","exitCode","timedOut","ms","error","files":[...],"skipped":n}
 using System;
 using System.ComponentModel;
 using System.IO;
@@ -74,9 +76,13 @@ static class Program
         return b.Append('"').ToString();
     }
 
-    static void Emit(string stdout, string stderr, long exit, bool timedOut, long ms, string error)
+    static void Emit(string stdout, string stderr, long exit, bool timedOut, long ms, string error) { Emit(stdout, stderr, exit, timedOut, ms, error, new string[0], 0); }
+    static void Emit(string stdout, string stderr, long exit, bool timedOut, long ms, string error, string[] files, int skipped)
     {
-        string j = "{\"stdout\":" + Esc(stdout) + ",\"stderr\":" + Esc(stderr) + ",\"exitCode\":" + exit + ",\"timedOut\":" + (timedOut ? "true" : "false") + ",\"ms\":" + ms + ",\"error\":" + Esc(error) + "}";
+        StringBuilder f = new StringBuilder("[");
+        for (int k = 0; k < files.Length; k++) { if (k > 0) f.Append(','); f.Append(Esc(files[k])); }
+        f.Append(']');
+        string j = "{\"stdout\":" + Esc(stdout) + ",\"stderr\":" + Esc(stderr) + ",\"exitCode\":" + exit + ",\"timedOut\":" + (timedOut ? "true" : "false") + ",\"ms\":" + ms + ",\"error\":" + Esc(error) + ",\"files\":" + f.ToString() + ",\"skipped\":" + skipped + "}";
         byte[] data = new UTF8Encoding(false).GetBytes(j);
         Stream o = Console.OpenStandardOutput(); o.Write(data, 0, data.Length); o.Flush();
     }
@@ -108,6 +114,43 @@ static class Program
         return p;
     }
 
+    static bool IsLink(string p) { return (File.GetAttributes(p) & FileAttributes.ReparsePoint) != 0; }
+
+    // input files: plain files directly in the folder, copied (never linked) into the run's input folder
+    static void CopyInputs(string from, string to)
+    {
+        Directory.CreateDirectory(to);
+        long total = 0; int n = 0;
+        foreach (string f in Directory.GetFiles(from))
+        {
+            if (IsLink(f)) continue;
+            long len = new FileInfo(f).Length;
+            if (++n > 50 || total + len > 500L * 1024 * 1024) throw new Exception("too many or too large input files (50 files, 500 MB at most)");
+            total += len;
+            File.Copy(f, Path.Combine(to, Path.GetFileName(f)));
+        }
+    }
+
+    // output files: everything the code wrote under output (4 folder levels at most), copied out without following
+    // links or junctions, so code can never make the helper copy a file it could not read itself
+    static void CollectOutputs(string dir, string rel, string dest, int depth, System.Collections.Generic.List<string> files, ref long total, ref int skipped)
+    {
+        foreach (string f in Directory.GetFiles(dir))
+        {
+            string name = rel.Length > 0 ? rel + "\\" + Path.GetFileName(f) : Path.GetFileName(f);
+            long len = IsLink(f) ? -1 : new FileInfo(f).Length;
+            if (len < 0 || files.Count >= 50 || total + len > 200L * 1024 * 1024) { skipped++; continue; }
+            string target = Path.Combine(dest, name);
+            Directory.CreateDirectory(Path.GetDirectoryName(target));
+            File.Copy(f, target); total += len; files.Add(name);
+        }
+        foreach (string d in Directory.GetDirectories(dir))
+        {
+            if (IsLink(d) || depth >= 4) { skipped++; continue; }
+            CollectOutputs(d, rel.Length > 0 ? rel + "\\" + Path.GetFileName(d) : Path.GetFileName(d), dest, depth + 1, files, ref total, ref skipped);
+        }
+    }
+
     static string Drain(Stream s, int cap, out bool truncated)
     {
         MemoryStream ms = new MemoryStream(); byte[] buf = new byte[8192]; truncated = false; int n;
@@ -122,6 +165,10 @@ static class Program
         {
             if (a.Length < 4) { Emit("", "", -1, false, 0, "usage: OmniGPT.Sandbox <root> <python|javascript> <seconds> <memoryMB>"); return 2; }
             string root = a[0], lang = a[1]; int secs = Math.Max(1, Math.Min(int.Parse(a[2]), 60)), mem = Math.Max(32, Math.Min(int.Parse(a[3]), 2048));
+            string inDir = null, outDir = null;
+            for (int k = 4; k + 1 < a.Length; k += 2) { if (a[k] == "--in") inDir = a[k + 1]; else if (a[k] == "--out") outDir = a[k + 1]; }
+            if (inDir != null && !Directory.Exists(inDir)) { Emit("", "", -1, false, 0, "input folder not found"); return 2; }
+            if (outDir != null) Directory.CreateDirectory(outDir);
             string code = new StreamReader(Console.OpenStandardInput(), new UTF8Encoding(false)).ReadToEnd();
             if (code.Length > 200000) { Emit("", "", -1, false, 0, "code is too large"); return 2; }
 
@@ -144,6 +191,8 @@ static class Program
             Grant(Path.GetDirectoryName(exe), sid, FileSystemRights.ReadAndExecute, true);
             runDir = Path.Combine(runs, Guid.NewGuid().ToString("N")); Directory.CreateDirectory(runDir);
             File.WriteAllText(Path.Combine(runDir, file), code, new UTF8Encoding(false));
+            if (inDir != null) CopyInputs(inDir, Path.Combine(runDir, "input"));
+            if (outDir != null) Directory.CreateDirectory(Path.Combine(runDir, "output"));
 
             // pipes (parent ends are not inherited)
             Native.SECURITY_ATTRIBUTES sa = new Native.SECURITY_ATTRIBUTES(); sa.nLength = Marshal.SizeOf(typeof(Native.SECURITY_ATTRIBUTES)); sa.bInheritHandle = 1;
@@ -189,7 +238,10 @@ static class Program
             to.Join(3000); te.Join(3000);
             uint code2 = 0; Native.GetExitCodeProcess(pi.hProcess, out code2);
             Native.CloseHandle(job);
-            Emit(o, e, timedOut ? -1 : (long)(int)code2, timedOut, (long)(DateTime.Now - t0).TotalMilliseconds, "");
+            System.Collections.Generic.List<string> outFiles = new System.Collections.Generic.List<string>(); long outTotal = 0; int skipped = 0;
+            string od = Path.Combine(runDir, "output");
+            if (outDir != null && Directory.Exists(od)) { if (IsLink(od)) skipped++; else CollectOutputs(od, "", outDir, 0, outFiles, ref outTotal, ref skipped); } // the code may have swapped the folder itself for a link
+            Emit(o, e, timedOut ? -1 : (long)(int)code2, timedOut, (long)(DateTime.Now - t0).TotalMilliseconds, "", outFiles.ToArray(), skipped);
             return 0;
         }
         catch (Exception ex) { Emit("", "", -1, false, (long)(DateTime.Now - t0).TotalMilliseconds, ex.Message); return 1; }

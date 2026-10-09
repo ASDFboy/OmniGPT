@@ -39,6 +39,26 @@ function docx(z) {
   const x = z.get("word/document.xml") || "";
   return xmlText(x.replace(/<w:tab\/>/g, "\t").replace(/<\/w:p>/g, "\n").replace(/<\/w:tc>/g, "\t").replace(/<w:br\/>/g, "\n")).replace(/\n{3,}/g, "\n\n").trim();
 }
+// every sheet of a workbook as rows of cell text (analyze_data turns them into CSV files)
+export function xlsxSheets(buf, maxCells = 2000000) {
+  const z = unzip(buf), shared = [...(z.get("xl/sharedStrings.xml") || "").matchAll(/<si>([\s\S]*?)<\/si>/g)].map((m) => xmlText(m[1]));
+  const names = [...(z.get("xl/workbook.xml") || "").matchAll(/<sheet [^>]*name="([^"]*)"/g)].map((m) => xmlText(m[1]));
+  const col = (s) => [...s].reduce((n, c) => n * 26 + c.charCodeAt(0) - 64, 0) - 1;
+  let cells = 0;
+  return z.entries.map((e) => e.name).filter((n) => /^xl\/worksheets\/sheet\d+\.xml$/.test(n)).sort(natural).map((s, i) => {
+    const rows = [];
+    for (const r of (z.get(s) || "").matchAll(/<row[^>]*>([\s\S]*?)<\/row>/g)) {
+      const row = [];
+      for (const c of r[1].matchAll(/<c r="([A-Z]+)\d+"([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)) {
+        if (++cells > maxCells) throw new Error("the workbook is too large to convert");
+        const t = /t="(\w+)"/.exec(c[2] || ""), v = /<v>([\s\S]*?)<\/v>/.exec(c[3] || ""), is = /<is>([\s\S]*?)<\/is>/.exec(c[3] || "");
+        row[col(c[1])] = t && t[1] === "s" && v ? shared[+v[1]] : is ? xmlText(is[1]) : v ? xmlText(v[1]) : "";
+      }
+      rows.push(Array.from(row, (x) => x ?? ""));
+    }
+    return { name: names[i] || "Sheet" + (i + 1), rows };
+  });
+}
 function xlsx(z) {
   const shared = [...(z.get("xl/sharedStrings.xml") || "").matchAll(/<si>([\s\S]*?)<\/si>/g)].map((m) => xmlText(m[1]));
   const names = [...(z.get("xl/workbook.xml") || "").matchAll(/<sheet [^>]*name="([^"]*)"/g)].map((m) => xmlText(m[1]));
