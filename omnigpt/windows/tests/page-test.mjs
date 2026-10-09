@@ -143,6 +143,25 @@ try {
   check("the helper count starts again with the next request", /^Report from helper 1 \(Again\)/.test(step(0)), step(0).slice(0, 60));
   // autonomous mode starts a fresh count and checklist every cycle
   check("autonomous cycles reset the helper count and checklist", /omni\.cycle\+\+;[^\n]*DELEGATES=0;TURN\.todoEl=null/.test(fs.readFileSync(path.join(appDir, "app.js"), "utf8")));
+  // ---- background jobs: the start asks for approval, the header shows the running job, the list stops it
+  fs.writeFileSync(path.join(W, "server.js"), "console.log('ready');setInterval(()=>console.log('tick'),300);");
+  await E(`window.__job = runTurn("start my dev server", [{ tools: [{ name: "start_process", input: { command: "node server.js", cwd: ${Wj}, name: "dev server", until: "ready" } }] }, { text: "Started." }]); true`);
+  let asked = false;
+  for (let k = 0; k < 50 && !asked; k++) { asked = await E(`(() => { const b = document.querySelector(".act button[data-a=y]"); if (!b) return false; b.click(); return true; })()`); if (!asked) await new Promise((r) => setTimeout(r, 200)); }
+  check("starting a background job asks for approval first", asked);
+  await E(`window.__job`);
+  R = await E(`results("main")`);
+  check("the job starts and its first output comes back", /^<tool_output untrusted="true">\nStarted background job \d+ "dev server"/.test(step(0)) && /ready/.test(step(0)), step(0).slice(0, 120));
+  const jobVisible = async () => E(`(() => { const e = document.getElementById("jobstat"); return !e.hidden && e.offsetParent !== null ? e.textContent : ""; })()`);
+  let head = ""; for (let k = 0; k < 30 && !head; k++) { head = await jobVisible(); if (!head) await new Promise((r) => setTimeout(r, 200)); }
+  check("the header shows the running job", head === "1 background job", head);
+  await E(`document.getElementById("jobstat").click()`); await new Promise((r) => setTimeout(r, 600));
+  const listed = await E(`(() => ({ open: document.getElementById("jdlg").open, text: document.getElementById("j-list").textContent, stop: !!document.querySelector("[data-jstop]") }))()`);
+  check("the job list shows the job, its output and a Stop button", listed.open && /dev server/.test(listed.text) && /node server\.js/.test(listed.text) && /ready/.test(listed.text) && listed.stop, JSON.stringify(listed).slice(0, 160));
+  await E(`document.querySelector("[data-jstop]").click()`);
+  let gone = false; for (let k = 0; k < 40 && !gone; k++) { await new Promise((r) => setTimeout(r, 250)); gone = !(await jobVisible()); }
+  check("Stop in the list ends the job and the header clears", gone && /stopped/.test(await E(`document.getElementById("j-list").textContent`)));
+  await E(`document.getElementById("j-x").click()`);
   check("no errors in the page", app.logs.length === 0, app.logs.join("; ").slice(0, 300));
 } catch (e) { check("page test", false, String(e.stack || e).slice(0, 600)); }
 if (app) await app.close();

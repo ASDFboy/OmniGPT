@@ -15,6 +15,8 @@ import { webOpen, webSearch } from "./web.mjs";
 import { inspect } from "./files.mjs";
 import { zipBuild, zipRead } from "./zip.mjs";
 import { browserAction } from "./browser.mjs";
+import { startJob, stopJob, readJob } from "./jobs.mjs";
+export { listJobs, stopAllJobs, stopJob } from "./jobs.mjs";
 import { parseMarkdown, toHtml, toDocx, toXlsx, toPptx, sheetsFromText, slidesFromText } from "./docs.mjs";
 
 const HOME = os.homedir();
@@ -216,6 +218,14 @@ export async function precheck(name, input, cfg = loadConfig(), scope) {
   const W = (p) => { const a = checkPath(p, cfg); laneCheck(a, scope, cfg); return a; }; // write-class paths must be inside the lane
   switch (name) {
     case "run_command": if (scope) throw new Error("Commands are not available to parallel workers"); checkCommand(i.command, cfg.approval === "bypass"); return { class: "exec", summary: `PowerShell in ${cfg.cwd}:\n${i.command}` };
+    case "start_process": {
+      if (scope) throw new Error("Background jobs are not available to parallel workers");
+      checkCommand(i.command, cfg.approval === "bypass");
+      const d = i.cwd ? checkPath(i.cwd, cfg) : cfg.cwd;
+      return { class: "exec", summary: `Start in the background${i.name ? ` ("${String(i.name).slice(0, 60)}")` : ""}, PowerShell in ${d}:\n${i.command}\n(It keeps running until it ends, is stopped, or OmniGPT closes.)` };
+    }
+    case "read_process": return { class: "read", summary: i.id ? `Read the output of background job ${i.id}${i.wait ? ` (waiting up to ${Math.min(Number(i.wait) || 0, 60)} s${i.until ? ` for "${String(i.until).slice(0, 60)}"` : ""})` : ""}` : "List the background jobs" };
+    case "stop_process": if (!String(i.id ?? "").trim()) throw new Error("id is required (read_process with no id lists the jobs)"); return { class: "read", summary: `Stop background job ${i.id} (started by OmniGPT)` };
     case "read_file": { const p = checkPath(i.path, cfg); return { class: "read", summary: `Read ${p}` }; }
     case "list_dir": { const p = checkPath(i.path || ".", cfg); return { class: "read", summary: `List ${p}${i.recursive ? " (recursive)" : ""}` }; }
     case "write_file": { const p = W(i.path); return { class: "write", summary: `${fs.existsSync(p) ? "OVERWRITE" : "Create"} ${p} (${String(i.content ?? "").length} chars)` }; }
@@ -809,9 +819,11 @@ function backup(p) {
   const b = path.join(BACKUPS, `${new Date().toISOString().replace(/[:.]/g, "-")}__${Math.random().toString(36).slice(2, 6)}__${path.basename(p)}`);
   fs.copyFileSync(p, b); return b;
 }
+// the environment for programs the agents start: anything that looks like a secret is left out
+const cleanEnv = (env = {}) => Object.fromEntries(Object.entries({ ...process.env, ...env }).filter(([k]) => !/key|token|secret|passw|omniroute|api/i.test(k) || k in env));
 function ps(script, env, cwd, timeoutMs) {
   return new Promise((ok) => {
-    const clean = Object.fromEntries(Object.entries({ ...process.env, ...env }).filter(([k]) => !/key|token|secret|passw|omniroute|api/i.test(k) || k in env));
+    const clean = cleanEnv(env);
     const refresh = "$env:Path=[Environment]::GetEnvironmentVariable('Path','Machine')+';'+[Environment]::GetEnvironmentVariable('Path','User')+';'+$env:Path\n"; // programs installed during this session are found
     const c = spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "[Console]::OutputEncoding=[Text.Encoding]::UTF8\n" + refresh + script], { cwd, env: clean, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
     let out = "", timedOut = false;
@@ -909,7 +921,7 @@ export function run(name, input, cfg = loadConfig(), scope, meta) {
     catch (e) { logActivity({ t: Date.now(), chat: meta?.chat || null, turn: meta?.turn || null, tool: name, summary: String(pre.summary || "").slice(0, 600), ok: false, error: String(e.message || e).slice(0, 300) }); throw e; }
     finally { journal(meta, jr); } // a bulk action that partly failed still records what it did
   };
-  if (["run_command", "run_code", "read_file", "read_files", "list_dir", "download_file", "web_search", "web_open", "inspect_file", "find_duplicates", "view_images", "install_tool", "find_files", "search_files", "system_info", "notify", "open_path", "clipboard", "convert_media", "generate_image", "transcribe_audio", "speak", "browser"].includes(name)) return go();
+  if (["run_command", "run_code", "read_file", "read_files", "list_dir", "download_file", "web_search", "web_open", "inspect_file", "find_duplicates", "view_images", "install_tool", "find_files", "search_files", "system_info", "notify", "open_path", "clipboard", "convert_media", "generate_image", "transcribe_audio", "speak", "browser", "start_process", "read_process", "stop_process"].includes(name)) return go();
   const p = chain.then(go, go); chain = p.catch(() => {}); return p;
 }
 async function runInner(name, input, cfg, jr = []) {
@@ -922,6 +934,16 @@ async function runInner(name, input, cfg, jr = []) {
       const r = await ps(i.command, {}, cfg.cwd, secs * 1000);
       return `${r.timedOut ? `[timed out after ${secs}s and was stopped]\n` : ""}${r.out || "(no output)"}\n[exit code ${r.code}]`;
     }
+    case "start_process": {
+      const d = i.cwd ? checkPath(i.cwd, cfg) : cfg.cwd;
+      if (!fs.existsSync(d) || !fs.statSync(d).isDirectory()) throw new Error("not a folder: " + d);
+      jr.push({ op: "command", text: ("background: " + String(i.command || "")).slice(0, 300) });
+      const j = startJob({ command: String(i.command), name: i.name, cwd: d, env: cleanEnv() });
+      const first = await readJob({ id: j.id, wait: Math.min(Math.max(i.wait === undefined || i.wait === null || i.wait === "" ? 3 : Number(i.wait) || 0, 0), 30), until: i.until });
+      return `Started background job ${j.id} "${j.name}" (process ${j.pid}). Use read_process with id ${j.id} to see new output and stop_process to end it.\n` + first;
+    }
+    case "read_process": return readJob(i);
+    case "stop_process": return stopJob(i.id);
     case "read_file": {
       const p = checkPath(i.path, cfg), st = fs.statSync(p);
       if (!st.isFile()) throw new Error("not a file");

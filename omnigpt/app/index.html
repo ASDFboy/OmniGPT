@@ -19,7 +19,7 @@
 <main>
 <header>
   <button class="ib" id="tog" title="Sidebar (Ctrl+B)"><i data-i="menu"></i></button>
-  <span class="brand" id="brand">OmniGPT</span><span class="omstat" id="omstat"></span><span class="omstat" id="bpstat"></span><span class="omstat" id="usage"></span>
+  <span class="brand" id="brand">OmniGPT</span><span class="omstat" id="omstat"></span><span class="omstat" id="bpstat"></span><span class="omstat" id="usage"></span><button class="omstat jobstat" id="jobstat" hidden title="Background jobs started by the agents"></button>
   <label class="sw" id="omwrap"><input type="checkbox" id="omforever"><span></span>Run indefinitely</label>
   <span class="grow"></span>
   <datalist id="models"></datalist>
@@ -45,6 +45,12 @@
     <button data-p="general">General</button><button data-p="models">Models</button><button data-p="memory">Memory</button><button data-p="skills">Skills</button><button data-p="connection">Connection</button><button data-p="agents">Agents and safety</button><button data-p="activity">Activity</button><button data-p="data">Data</button><button data-p="about">About</button></nav>
   <section id="s-body"></section>
   <button class="ib s-close" id="s-x" title="Close"><i data-i="close"></i></button>
+</dialog>
+<dialog id="jdlg">
+  <h3 style="margin:0 0 10px">Background jobs</h3>
+  <p class="mut" style="margin:0 0 10px">Programs the agents started with start_process. They stop when OmniGPT closes.</p>
+  <div id="j-list"></div>
+  <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn" id="j-x">Close</button></div>
 </dialog>
 <dialog id="adlg">
   <h3 id="a-t"></h3><p class="mut" id="a-p"></p><input id="a-in">

@@ -8,7 +8,7 @@ import os from "node:os";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { Readable } from "node:stream";
-import { loadConfig, saveConfig, precheck, run, resolveScope, runSandboxRaw, sandboxInfo, checkPath, grantFolder, ungrantFolder, folderConfig, insideFolder, undoTurn, undoInfo, readActivity, setOmniRoute } from "./tools.mjs";
+import { loadConfig, saveConfig, precheck, run, resolveScope, runSandboxRaw, sandboxInfo, checkPath, grantFolder, ungrantFolder, folderConfig, insideFolder, undoTurn, undoInfo, readActivity, setOmniRoute, listJobs, stopJob, stopAllJobs } from "./tools.mjs";
 import { inspect, MIME, RUNNABLE } from "./files.mjs";
 import { pipeline } from "node:stream/promises";
 
@@ -105,7 +105,7 @@ async function ensureOmniRoute() {
   omniChild.on("exit", () => { omniChild = null; });
 }
 const killTree = (c) => { try { if (c && c.pid) spawn("taskkill", ["/pid", String(c.pid), "/t", "/f"], { windowsHide: true, stdio: "ignore" }); } catch {} };
-function shutdown() { killTree(omniChild); setTimeout(() => process.exit(0), 300); }
+function shutdown() { stopAllJobs(); killTree(omniChild); setTimeout(() => process.exit(0), 300); } // background jobs end with the app
 for (const sig of ["SIGINT", "SIGTERM", "SIGBREAK"]) process.on(sig, shutdown);
 const parentPid = Number(process.env.OMNIGPT_PARENT_PID || 0); // exit when the app window process is gone
 if (parentPid) setInterval(() => { try { process.kill(parentPid, 0); } catch { shutdown(); } }, 4000);
@@ -275,6 +275,8 @@ http.createServer(async (req, res) => {
       catch (e) { return json(res, 200, { ok: false, error: String(e.message || e) }); }
     }
     if (req.method === "POST" && req.url === "/api/undo/info") return json(res, 200, { ok: true, ...undoInfo(JSON.parse(await readBody(req)).turn) });
+    if (req.url === "/api/jobs") return json(res, 200, { ok: true, jobs: listJobs() }); // the user's own view: lists and stops jobs without approval
+    if (req.method === "POST" && req.url === "/api/jobs/stop") { try { return json(res, 200, { ok: true, text: await stopJob(JSON.parse(await readBody(req)).id) }); } catch (e) { return json(res, 200, { ok: false, error: String(e.message || e) }); } }
     if (req.url === "/api/activity") return json(res, 200, { ok: true, items: readActivity(400) });
     if (req.url === "/api/pricing") return json(res, 200, { ok: true, pricing: await pricing() });
     if (req.method === "POST" && req.url === "/api/update/install") {
