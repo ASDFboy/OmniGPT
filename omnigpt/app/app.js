@@ -409,7 +409,8 @@ function toSchedule(w){
 let DELEGATES=0;
 function renderTodo(items,T){
   const TR=T===undefined?trace:T;
-  if(!TURN.todoEl||!TURN.todoEl.isConnected){TURN.todoEl=document.createElement("div");TURN.todoEl.className="todo";(TR?TR.body:col).appendChild(TURN.todoEl)}
+  // the checklist sits in the conversation itself, under the reasoning line: inside the collapsed trace nobody would see it
+  if(!TURN.todoEl||!TURN.todoEl.isConnected){TURN.todoEl=document.createElement("div");TURN.todoEl.className="todo";if(TR&&TR.el&&TR.el.isConnected)TR.el.after(TURN.todoEl);else col.appendChild(TURN.todoEl)}
   const done=items.filter(i=>i.status==="done").length;
   TURN.todoEl.innerHTML=`<div class="todo-h">Checklist · ${done} of ${items.length} done</div>`+items.map(i=>`<div class="todo-i ${esc(i.status||"pending")}"><span>${i.status==="done"?"✓":i.status==="doing"?"›":"○"}</span>${esc(i.text)}</div>`).join("");
   scroll();
@@ -432,7 +433,9 @@ const PAGE_TOOLS={
   },
   forget:async(i,c)=>{
     const M=MEM(),q=String(i.query||"").toLowerCase().trim(),gone=M.filter(m=>(i.id&&m.id===String(i.id))||(q&&m.text.toLowerCase().includes(q)));
+    if(!i.id&&q.length<3)throw new Error("give a memory id (from recall) or at least 3 characters of its text");
     c.show("Forget: "+(i.id||q));if(!gone.length)return"No memory matched.";
+    if(!i.id&&gone.length>5)return`${gone.length} memories contain "${q}", so none were removed. Forget them one by one by id, or use more specific text:\n`+gone.slice(0,40).map(m=>`${m.id}  ${m.text}`).join("\n");
     LS.set("orc.memories",M.filter(m=>!gone.includes(m)));return`Forgot ${gone.length} memor${gone.length===1?"y":"ies"}: `+gone.map(m=>m.text).join("; ");
   },
   todo:async(i,c,cfg,T)=>{
@@ -596,7 +599,7 @@ function seenPictures(msgs){
 // o: {T: lane for a parallel worker, system, tools, scope:{writes:[abs paths]}, maxSteps}
 async function agent(q,ctx,leads,o={}){
   const T=o.T, cfg=await effCfg(), sys=typeof o.system==="function"?o.system(cfg):(o.system||agentSystem(cfg)), tools=o.tools||[...TOOLS,...(curProject?PROJ_TOOLS:[])], max=o.maxSteps||stepLimit(cfg);
-  let msgs=[...ctx], actions=[], final="", stopSent=0;
+  let msgs=[...ctx], actions=[], final="", stopSent=0; const offered=new Set(tools.map(t=>t.name));
   const seen=new Map(); let failRun=0, warned=false, empties=0, cur=leads; const silent=[], stops=[]; // silent: models that gave an empty reply // runaway guard: the same action again and again, or nothing but failures
   for(let step=0;step<=max;step++){ // the extra step is for the wrap-up summary once the limit is reached
     const out={};
@@ -634,7 +637,8 @@ async function agent(q,ctx,leads,o={}){
     msgs.push({role:"assistant",content:out.content});
     const results=[];
     for(const u of uses){
-      const res=await toolFlow(u,q,r.text,r.model,cfg,T,o.scope);
+      // a model can name a tool it was not given (for example a read-only helper calling write_file): never run it
+      const res=offered.has(u.name)?await toolFlow(u,q,r.text,r.model,cfg,T,o.scope):{text:"Error: the tool "+u.name+" is not available here. Use only the tools you were given.",err:true};
       actions.push(u.name+(res.err?" (not done)":""));
       results.push({type:"tool_result",tool_use_id:u.id,content:res.blocks?[{type:"text",text:res.text},...res.blocks]:res.text,is_error:res.err});
       failRun=res.err?failRun+1:0;
@@ -1436,7 +1440,7 @@ async function omniBegin(q){
   try{
     if(SET().refine&&!omni.notes.length){trace=mkTrace();const b=await refine(q);trace.finish();trace=null;if(b&&!/^ASK:/i.test(b))omni.goal=briefed(omni.goal,b)}
     while(!omni.stop){
-      omni.cycle++;omStat();trace=mkTrace();Brain.turn();
+      omni.cycle++;omStat();trace=mkTrace();Brain.turn();DELEGATES=0;TURN.todoEl=null; // each cycle gets its own helpers and checklist
       const forever=$("#omforever").checked, leads=[...TIERS.fast,...(!forever&&SET().omniStrong&&omni.fails>=2?TIERS.strong:[])];
       const guide=omni.steer.splice(0).join("\n\n");
       const msg=`GOAL:\n${omni.goal}\n\n`+(omni.notes.length?`Progress so far (oldest first):\n${omni.notes.map((n,i)=>`${i+1}. ${n}`).join("\n")}\n\n`:"")+(guide?`New guidance from the user (it overrides earlier plans):\n${guide}\n\n`:"")+omniAsk()+(omni.stall?"\n\nWarning: your recent steps repeated themselves. Do something clearly different; if you are stuck, research fresh ideas on the web first.":"");
