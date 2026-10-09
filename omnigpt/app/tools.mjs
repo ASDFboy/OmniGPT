@@ -21,6 +21,8 @@ import { htmlToPng } from "./render.mjs";
 import { OCR_PS, OCR_EXT, pageList, parseOcr, PDF_ACTIONS, qpdfRange, stem, qpdfFailed, newFiles } from "./pdfocr.mjs";
 export { listJobs, stopAllJobs, stopJob } from "./jobs.mjs";
 import { parseMarkdown, toHtml, toDocx, toXlsx, toPptx, sheetsFromText, slidesFromText } from "./docs.mjs";
+import { embedSetup, meaningSettings } from "./embed.mjs";
+import { searchMeaning, docTypes, MEANING_OFF } from "./docindex.mjs";
 import { useHelpers, findConn, reveal, secretParts, redact, listText, messageCheck, sendMessage, calendarCheck, calendarEvents, ghCheck, ghRun } from "./connections.mjs";
 useHelpers({ urlOk: (u) => httpUrlOk(u) }); // saved connections use the same public-address rules (and test hook) as http_request
 
@@ -284,6 +286,12 @@ export async function precheck(name, input, cfg = loadConfig(), scope) {
     case "inspect_file": { const p = checkPath(i.path, cfg); return { class: "read", summary: `Inspect ${p}` }; }
     case "find_files": { const p = checkPath(i.path || ".", cfg); return { class: "read", summary: `Find ${i.pattern || "*"} in ${p}` }; }
     case "search_files": { const p = checkPath(i.path || ".", cfg); if (!String(i.query || "")) throw new Error("query is required"); if (i.regex) new RegExp(String(i.query)); return { class: "read", summary: `Search for "${String(i.query).slice(0, 120)}" in ${p}` }; }
+    case "search_meaning": {
+      const q = String(i.query || "").trim(); if (!q) throw new Error("query is required"); if (q.length > 500) throw new Error("query is too long (500 chars max)");
+      if (!meaningSettings().docs) throw new Error(MEANING_OFF);
+      const p = i.path ? checkPath(String(i.path), cfg) : null, t = i.types && (!Array.isArray(i.types) || i.types.length) ? [...docTypes(i.types)] : null;
+      return { class: "read", summary: `Search ${p || "the allowed folders"} by meaning for "${q.slice(0, 120)}"${t ? ` (${t.join(", ")} files)` : ""}\n(new or changed documents are read and indexed first)` };
+    }
     case "system_info": return { class: "read", summary: "Read system information (Windows version, memory, disks, installed runtimes)" };
     case "notify": return { class: "read", summary: `Notification: ${String(i.title || "OmniGPT").slice(0, 80)}` };
     case "open_path": {
@@ -821,7 +829,7 @@ async function convertMedia(i, cfg, jr) {
 }
 // ---- OmniRoute media: image generation, speech-to-text, text-to-speech through the user's own providers
 let OR_URL = process.env.OMNIROUTE_URL || "http://127.0.0.1:20128", OR_KEY = () => "";
-export function setOmniRoute(url, keyFn) { OR_URL = String(url || OR_URL).replace(/\/$/, ""); if (keyFn) OR_KEY = keyFn; }
+export function setOmniRoute(url, keyFn) { OR_URL = String(url || OR_URL).replace(/\/$/, ""); if (keyFn) OR_KEY = keyFn; embedSetup(OR_URL, OR_KEY); } // embeddings (search by meaning) use the same OmniRoute
 const orFetch = (p, opts = {}) => fetch(OR_URL + p, { ...opts, headers: { ...(OR_KEY() ? { authorization: "Bearer " + OR_KEY() } : {}), ...(opts.headers || {}) }, signal: AbortSignal.timeout(opts.timeout || 180000) });
 const KIND = { image: /(image|dall-?e|flux|imagen|sdxl|stable-?diffusion|gpt-image|midjourney|seedream|ideogram|recraft|kolors)/i, stt: /(whisper|transcri|speech-to-text|\bstt\b|asr|parakeet)/i, tts: /(tts|text-to-speech|kokoro|eleven|speech|voice|orpheus|playai)/i };
 async function pickModels(kind) {
@@ -1127,7 +1135,7 @@ export function run(name, input, cfg = loadConfig(), scope, meta) {
     catch (e) { logActivity({ t: Date.now(), chat: meta?.chat || null, turn: meta?.turn || null, tool: name, summary: String(pre.summary || "").slice(0, 600), ok: false, error: String(e.message || e).slice(0, 300) }); throw e; }
     finally { journal(meta, jr); } // a bulk action that partly failed still records what it did
   };
-  if (["run_command", "run_code", "read_file", "read_files", "list_dir", "download_file", "web_search", "web_open", "inspect_file", "find_duplicates", "view_images", "install_tool", "find_files", "search_files", "system_info", "notify", "open_path", "clipboard", "convert_media", "generate_image", "transcribe_audio", "speak", "browser", "start_process", "read_process", "stop_process", "http_request", "ocr", "list_connections", "calendar_events"].includes(name)) return go();
+  if (["run_command", "run_code", "read_file", "read_files", "list_dir", "download_file", "web_search", "web_open", "inspect_file", "find_duplicates", "view_images", "install_tool", "find_files", "search_files", "search_meaning", "system_info", "notify", "open_path", "clipboard", "convert_media", "generate_image", "transcribe_audio", "speak", "browser", "start_process", "read_process", "stop_process", "http_request", "ocr", "list_connections", "calendar_events"].includes(name)) return go();
   const p = chain.then(go, go); chain = p.catch(() => {}); return p;
 }
 async function runInner(name, input, cfg, jr = []) {
@@ -1209,6 +1217,7 @@ async function runInner(name, input, cfg, jr = []) {
     case "find_duplicates": return findDuplicates(checkPath(i.path || ".", cfg), i.recursive !== false);
     case "find_files": return findFiles(checkPath(i.path || ".", cfg), i, cfg);
     case "search_files": return searchFiles(checkPath(i.path || ".", cfg), i, cfg);
+    case "search_meaning": return searchMeaning(i, cfg, { checkPath: (p) => checkPath(p, cfg), denySeg: (n) => DENY_SEG.has(lc(n)), denyFile: (n) => DENY_FILE.test(n), text: (p) => inspect(p, 0, true) });
     case "system_info": return systemInfo(cfg);
     case "notify": {
       const t = String(i.title || "OmniGPT").slice(0, 120), m = String(i.message || "").slice(0, 400);

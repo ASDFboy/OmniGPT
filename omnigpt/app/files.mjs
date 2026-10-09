@@ -169,8 +169,8 @@ export function kindOf(buf, ext) {
   return looksText(buf) ? "text" : "binary";
 }
 
-// Returns a readable report of the file. offset pages through long text.
-export function inspect(abs, offset = 0) {
+// Returns a readable report of the file. offset pages through long text; raw gives { kind, text } instead (search_meaning).
+export function inspect(abs, offset = 0, raw = false) {
   const st = fs.statSync(abs);
   if (st.isDirectory()) return `Folder: ${abs}\n` + fs.readdirSync(abs).slice(0, 200).join("\n");
   if (st.size > MAX_READ) return `File: ${abs}\nSize: ${kb(st.size)}\nToo large to read here (over ${kb(MAX_READ)}). Use a streaming tool (for example a Python script) to process it.`;
@@ -212,6 +212,7 @@ export function inspect(abs, offset = 0) {
     else { if (kind !== "binary") kind = kind.toUpperCase() + " file"; hint = RESEARCH(ext); }
   } catch (e) { hint = `Reading this file failed (${e.message}). ` + RESEARCH(ext); }
   if (kind === "binary") { kind = "unknown binary (." + (ext || "no extension") + ")"; info = "First bytes: " + buf.subarray(0, 32).toString("hex").replace(/(..)/g, "$1 ").trim(); }
+  if (raw) return { kind, text };
   const WIN = 12000, body = text.slice(offset, offset + WIN);
   return [`File: ${abs}`, `Type: ${kind}`, `Size: ${kb(st.size)}, modified ${st.mtime.toISOString().slice(0, 16).replace("T", " ")}`, info,
     text ? `Content${text.length > WIN ? ` (characters ${offset}-${Math.min(text.length, offset + WIN)} of ${text.length}; call again with offset ${offset + WIN} for more)` : ""}:\n${body}` : "", hint && "Note: " + hint].filter(Boolean).join("\n");

@@ -10,6 +10,8 @@ import { fileURLToPath } from "node:url";
 import { Readable } from "node:stream";
 import { loadConfig, saveConfig, precheck, run, resolveScope, runSandboxRaw, sandboxInfo, checkPath, grantFolder, ungrantFolder, folderConfig, insideFolder, undoTurn, undoInfo, readActivity, setOmniRoute, listJobs, stopJob, stopAllJobs } from "./tools.mjs";
 import { inspect, MIME, RUNNABLE } from "./files.mjs";
+import { embedApi, embedModels, meaningSettings, isLocalModel } from "./embed.mjs";
+import { indexInfo, clearIndexQueued } from "./docindex.mjs";
 import { publicList, saveConnection, deleteConnection, testConnection, ghStatus, ghLogin } from "./connections.mjs";
 import { pipeline } from "node:stream/promises";
 
@@ -291,6 +293,16 @@ http.createServer(async (req, res) => {
       } catch (e) { return json(res, 200, { ok: false, error: String(e.message || e) }); }
     }
     if (req.url === "/api/pricing") return json(res, 200, { ok: true, pricing: await pricing() });
+    // ---------- finding things by meaning: memories, skills and recall (scores from OmniRoute embeddings), Settings > Search by meaning
+    if (req.method === "POST" && req.url === "/api/embed") { // keeps going if the page stops waiting, so the cache is warm next time
+      try { return json(res, 200, { ok: true, ...(await embedApi(JSON.parse(await readBody(req, 8e6)))) }); } catch (e) { return json(res, 200, { ok: false, error: String(e.message || e) }); }
+    }
+    if (req.method === "GET" && req.url.startsWith("/api/meaning")) {
+      const s = meaningSettings(); let models = [], error = "";
+      try { models = await embedModels(req.url.includes("refresh")); } catch (e) { error = String(e.message || e); }
+      return json(res, 200, { ok: true, models, auto: models[0] || null, autoLocal: !!(models[0] && isLocalModel(models[0])), setting: s.model, docs: s.docs, error, index: indexInfo() });
+    }
+    if (req.method === "POST" && req.url === "/api/meaning/clear") return json(res, 200, { ok: true, index: await clearIndexQueued() });
     if (req.method === "POST" && req.url === "/api/update/install") {
       try { return json(res, 200, { ok: true, ...(await installUpdate()) }); }
       catch (e) { return json(res, 200, { ok: false, error: String(e.message || e) }); }
