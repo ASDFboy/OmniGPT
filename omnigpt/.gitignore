@@ -8,3 +8,4 @@ windows/release/
 .env.*
 config.json
 omniroute-key.txt
+windows/tests/bench-report*.json
