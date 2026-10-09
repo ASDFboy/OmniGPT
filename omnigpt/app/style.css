@@ -205,6 +205,7 @@ dialog.set[open]{display:flex}
 #adlg p:empty{display:none}
 #adlg input{margin-top:6px}
 .arow{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.acc-res{font-size:12px;align-self:center;max-width:340px;text-align:right}.acc-res.bad{color:#d14545}
 .fpath{color:inherit;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;cursor:pointer}
 .fpath:hover{text-decoration-style:solid}
 .fcards{display:flex;flex-direction:column;gap:10px;margin-top:14px;font-family:var(--ui)}
