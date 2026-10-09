@@ -21,6 +21,8 @@ import { htmlToPng } from "./render.mjs";
 import { OCR_PS, OCR_EXT, pageList, parseOcr, PDF_ACTIONS, qpdfRange, stem, qpdfFailed, newFiles } from "./pdfocr.mjs";
 export { listJobs, stopAllJobs, stopJob } from "./jobs.mjs";
 import { parseMarkdown, toHtml, toDocx, toXlsx, toPptx, sheetsFromText, slidesFromText } from "./docs.mjs";
+import { useHelpers, findConn, reveal, secretParts, redact, listText, messageCheck, sendMessage, calendarCheck, calendarEvents, ghCheck, ghRun } from "./connections.mjs";
+useHelpers({ urlOk: (u) => httpUrlOk(u) }); // saved connections use the same public-address rules (and test hook) as http_request
 
 const HOME = os.homedir();
 // ---------- code sandbox (AppContainer helper, see Sandbox.cs): code runs with no network and no access to the user's files
@@ -180,7 +182,7 @@ const CMD_RULES = [
   [/\b(iex|invoke-expression)\b|\bdownloadstring\b|\bdownloadfile\b.*\b(start|iex)|-enc(odedcommand)?\b|frombase64string|\bcertutil\b.*-(urlcache|decode)|\bbitsadmin\b|\bmshta\b|\bregsvr32\b|\brundll32\b|\bwscript\b|\bcscript\b/i, "obfuscated or download-and-execute code"],
   [/\b(invoke-webrequest|iwr|invoke-restmethod|irm|curl|wget|start-bitstransfer)\b/i, "network downloads must use the download_file tool"],
   [/\b(get-childitem|gci|dir|ls|get-item|gi|get-content|gc|cat|type)\b[^|;]*\benv:|\bprintenv\b|\[environment\]::getenvironmentvariable|\$env:\w*(key|token|secret|pass|omniroute)|\bgetenvironmentvariables\b|(^|[;|&]\s*)set\s*($|[;|&])/i, "reading environment variables"],
-  [/\.ssh|\.aws|\.gnupg|\.azure|\.kube|\.claude|\\appdata\\|omniroute\\data|id_rsa|id_ed25519|\.pem\b|\.kdbx|\.env\b|cookies|login data|credential|\bcmdkey\b|vaultcmd|get-credential|security\s+find|lsass|mimikatz|sam\b.*system/i, "credential or protected-location access"],
+  [/\.ssh|\.aws|\.gnupg|\.azure|\.kube|\.claude|\\appdata\\|omniroute\\data|omniroutechat|protecteddata|id_rsa|id_ed25519|\.pem\b|\.kdbx|\.env\b|cookies|login data|credential|\bcmdkey\b|vaultcmd|get-credential|security\s+find|lsass|mimikatz|sam\b.*system/i, "credential or protected-location access"],
   [/\b(remove-item|rm|del|erase|rd|rmdir|ri)\b[^;|]*(\s|^)(['"]?[a-z]:[\\/]?['"]?(\s|$|[;|&])|['"]?[a-z]:[\\/]\*|[\\/]\*|~(\s|$|[;|&])|\$home(\s|$|[;|&])|\$home[\\/](documents|desktop|downloads)([\\/]?\*)?(\s|$|[;|&])|\$env:(userprofile|systemroot|windir|programfiles))/i, "deleting a drive root or home folder"],
   [/\bstart-process\b[^;|]*\b-verb\s+runas\b|\bnet\s+(user|localgroup)\b|\bnew-localuser\b|\badd-localgroupmember\b|\btakeown\b|\bicacls\b[^;|]*\/(grant|reset|setowner)/i, "privilege or account changes"],
   [/\b(stop-process|taskkill|kill)\b[^;|]*\b(node|omniroute|python|explorer|csrss|winlogon|lsass|msedge)\b/i, "stopping core or app processes"],
@@ -336,13 +338,22 @@ export async function precheck(name, input, cfg = loadConfig(), scope) {
       const h = i.headers && typeof i.headers === "object" && !Array.isArray(i.headers) ? i.headers : {};
       for (const [k, v] of Object.entries(h)) {
         if (!/^[A-Za-z0-9-]{1,64}$/.test(k)) throw new Error(`bad header name: ${k.slice(0, 40)}`);
-        if (SECRET_HEADER.test(k)) throw new Error(`the ${k} header carries a secret, and secrets are never typed into the chat. Save the key in Settings, Connections, and pass its name as connection.`);
+        if (SECRET_HEADER.test(k)) throw new Error(`the ${k} header carries a secret, and secrets are never typed into the chat. Ask the user to save the key in Settings > Accounts (as an API key), then pass its name as connection.`);
         if (/[\r\n]/.test(String(v))) throw new Error("header values cannot contain line breaks");
       }
       const body = httpBody(i);
       if (body.length > 1e6) throw new Error("body is too large (1 MB max)");
       if (body && (m === "GET" || m === "HEAD")) throw new Error("GET and HEAD requests have no body: put parameters in the URL, or use POST");
-      return { class: m === "GET" || m === "HEAD" ? "web" : "network", summary: `${m} ${u.href}${Object.keys(h).length ? "\nHeaders: " + Object.keys(h).join(", ") : ""}${body ? "\n" + body.slice(0, 800) : ""}` };
+      const conn = apiConn(i, u);
+      return { class: m === "GET" || m === "HEAD" ? "web" : "network", summary: `${m} ${u.href}${Object.keys(h).length ? "\nHeaders: " + Object.keys(h).join(", ") : ""}${conn ? `\nUses the saved key "${conn.name}" (${conn.header} header)` : ""}${body ? "\n" + body.slice(0, 800) : ""}` };
+    }
+    case "list_connections": return { class: "read", summary: "List the connected accounts (names and what each is for; links and keys are never shown)" };
+    case "send_message": if (scope) throw new Error("Messages are not available to parallel workers"); return messageCheck(i); // always asks, in every approval mode
+    case "calendar_events": return calendarCheck(i);
+    case "github": {
+      if (scope) throw new Error("GitHub is not available to parallel workers");
+      const g = ghCheck(i.args, (p) => checkPath(p, cfg));
+      return { class: g.class, summary: g.summary, ...(g.confirm ? { confirm: true } : {}) };
     }
     case "ocr": {
       const p = checkPath(i.path, cfg); if (!OCR_EXT.test(p)) throw new Error("ocr reads pictures (png, jpg, bmp, gif, tiff, webp) and PDFs");
@@ -559,10 +570,20 @@ const HTTP_METHODS = new Set(["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"]);
 const SECRET_HEADER = /authorization|cookie|token|secret|passw|api[-_]?key|^x-key$|session/i;
 const httpUrlOk = async (u) => { if (process.env.OMNIGPT_TEST_ALLOW_LOCAL === "1" && /^http:\/\/127\.0\.0\.1:\d+\//.test(u)) return new URL(u); return checkUrl(u); };
 const httpBody = (i) => i.body === undefined || i.body === null ? "" : typeof i.body === "string" ? i.body : JSON.stringify(i.body);
+// a saved API key (Settings > Accounts) is only ever sent to the address it was saved for
+function apiConn(i, u) {
+  if (i.connection === undefined || i.connection === null || i.connection === "") return null;
+  const c = findConn(i.connection, "api"), o = new URL(c.base).origin;
+  if (u.origin !== o) throw new Error(`The saved key "${c.name}" is only sent to ${o}; this request goes to ${u.origin}, so it was not sent. Use that address, or leave connection out.`);
+  return c;
+}
 async function httpRequest(i) {
   let m = String(i.method || "GET").toUpperCase(), url = await httpUrlOk(String(i.url)), body = httpBody(i);
   const headers = { "user-agent": "OmniGPT/1.0", accept: "application/json, text/plain, */*", ...(i.headers || {}) };
   if (body && typeof i.body !== "string" && !Object.keys(headers).some((k) => k.toLowerCase() === "content-type")) headers["content-type"] = "application/json";
+  const conn = apiConn(i, url), origin = conn ? new URL(conn.base).origin : "", secret = conn ? await reveal(conn) : "";
+  if (conn) { for (const k of Object.keys(headers)) if (k.toLowerCase() === conn.header.toLowerCase()) delete headers[k]; headers[conn.header] = secret; }
+  const R = (s) => (conn ? redact(s, secretParts(secret)) : s);
   const ms = Math.min(Math.max(Number(i.timeout_sec) || 30, 1), 120) * 1000, t0 = Date.now();
   let res;
   for (let hop = 0; ; hop++) {
@@ -570,6 +591,7 @@ async function httpRequest(i) {
     if (!(res.status >= 300 && res.status < 400 && res.headers.get("location"))) break;
     if (hop >= 5) throw new Error("too many redirects");
     url = await httpUrlOk(new URL(res.headers.get("location"), url).href); // every hop is checked again
+    if (conn && url.origin !== origin) delete headers[conn.header]; // never follows a redirect to another host
     if (res.status === 303 || ((res.status === 301 || res.status === 302) && m === "POST")) { m = "GET"; body = ""; }
   }
   const chunks = []; let n = 0, cut = false;
@@ -577,11 +599,11 @@ async function httpRequest(i) {
   const buf = Buffer.concat(chunks), type = res.headers.get("content-type") || "";
   const keep = ["content-type", "content-length", "location", "retry-after", "x-ratelimit-remaining", "x-ratelimit-reset", "ratelimit-remaining", "etag", "last-modified"];
   const head = `HTTP ${res.status} ${res.statusText}  (${m} ${url.href}, ${Date.now() - t0} ms)\n` + keep.filter((k) => res.headers.get(k)).map((k) => `${k}: ${res.headers.get(k)}`).join("\n");
-  if (!buf.length) return head + "\n\n(no body)";
+  if (!buf.length) return R(head + "\n\n(no body)");
   const text = buf.toString("utf8");
-  if (/^(image|audio|video|application\/(octet-stream|pdf|zip))/i.test(type) || buf.subarray(0, 4000).includes(0)) return head + `\n\nBinary content (${fmtB(buf.length)}${cut ? ", more not read" : ""}). Use download_file to save it.`;
+  if (/^(image|audio|video|application\/(octet-stream|pdf|zip))/i.test(type) || buf.subarray(0, 4000).includes(0)) return R(head) + `\n\nBinary content (${fmtB(buf.length)}${cut ? ", more not read" : ""}). Use download_file to save it.`;
   let shown = text; if (/json/i.test(type) || /^\s*[[{]/.test(text)) { try { shown = JSON.stringify(JSON.parse(text), null, 1); } catch {} }
-  return head + `\n\n${shown.length > 20000 ? shown.slice(0, 20000) + `\n…[${shown.length - 20000} more characters]` : shown}${cut ? "\n…[the response is over 2 MB; only the first 2 MB were read]" : ""}`;
+  return R(head + `\n\n${shown.length > 20000 ? shown.slice(0, 20000) + `\n…[${shown.length - 20000} more characters]` : shown}${cut ? "\n…[the response is over 2 MB; only the first 2 MB were read]" : ""}`);
 }
 
 // ---------- analyze_data: copies of the chosen files go into the sandbox as input/, result files come back from output/
@@ -1105,7 +1127,7 @@ export function run(name, input, cfg = loadConfig(), scope, meta) {
     catch (e) { logActivity({ t: Date.now(), chat: meta?.chat || null, turn: meta?.turn || null, tool: name, summary: String(pre.summary || "").slice(0, 600), ok: false, error: String(e.message || e).slice(0, 300) }); throw e; }
     finally { journal(meta, jr); } // a bulk action that partly failed still records what it did
   };
-  if (["run_command", "run_code", "read_file", "read_files", "list_dir", "download_file", "web_search", "web_open", "inspect_file", "find_duplicates", "view_images", "install_tool", "find_files", "search_files", "system_info", "notify", "open_path", "clipboard", "convert_media", "generate_image", "transcribe_audio", "speak", "browser", "start_process", "read_process", "stop_process", "http_request", "ocr"].includes(name)) return go();
+  if (["run_command", "run_code", "read_file", "read_files", "list_dir", "download_file", "web_search", "web_open", "inspect_file", "find_duplicates", "view_images", "install_tool", "find_files", "search_files", "system_info", "notify", "open_path", "clipboard", "convert_media", "generate_image", "transcribe_audio", "speak", "browser", "start_process", "read_process", "stop_process", "http_request", "ocr", "list_connections", "calendar_events"].includes(name)) return go();
   const p = chain.then(go, go); chain = p.catch(() => {}); return p;
 }
 async function runInner(name, input, cfg, jr = []) {
@@ -1211,6 +1233,10 @@ async function runInner(name, input, cfg, jr = []) {
     case "make_document": return makeDocument(i, cfg, jr);
     case "make_chart": return makeChart(i, cfg, jr);
     case "http_request": return httpRequest(i);
+    case "list_connections": return listText();
+    case "send_message": { const r = await sendMessage(i); jr.push({ op: "command", text: `message to "${String(i.connection).slice(0, 60)}"` }); return r; }
+    case "calendar_events": return calendarEvents(i);
+    case "github": return ghRun(i.args, { cwd: cfg.cwd, pathOk: (p) => checkPath(p, cfg), jr });
     case "ocr": return ocrTool(i, cfg, jr);
     case "pdf_tools": return pdfTools(i, cfg, jr);
     case "edit_image": return editImage(i, cfg, jr);

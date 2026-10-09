@@ -74,7 +74,7 @@ try {
   check("long responses are cut", /more characters\]/.test(r) && r.length < 21000);
   r = await R("http_request", { method: "HEAD", url: base + "/json" });
   check("HEAD returns headers only", /^HTTP 200/.test(r) && /\(no body\)/.test(r));
-  check("an Authorization header is refused (keys belong in Settings, Connections)", /secret.*Connections/.test(await refused("http_request", { url: base + "/json", headers: { Authorization: "Bearer abc" } })));
+  check("an Authorization header is refused (keys belong in Settings > Accounts)", /secret.*Settings > Accounts/.test(await refused("http_request", { url: base + "/json", headers: { Authorization: "Bearer abc" } })));
   check("API key and cookie headers are refused", !!(await refused("http_request", { url: base + "/json", headers: { "X-API-Key": "k" } })) && !!(await refused("http_request", { url: base + "/json", headers: { Cookie: "a=b" } })));
   check("private and local addresses are refused", !!(await refused("http_request", { url: "http://192.168.1.1/" })) && !!(await refused("http_request", { url: "http://169.254.169.254/latest" })) && !!(await refused("http_request", { url: "file:///c:/x" })));
   check("a GET with a body is refused", !!(await refused("http_request", { url: base + "/json", body: "x" })));
