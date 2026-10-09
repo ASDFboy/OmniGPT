@@ -24,7 +24,10 @@ export function findBrowser() {
   return null;
 }
 
+// OMNIGPT_TEST_PORT moves every test backend to another port, so two copies of the tests can run at the same time
+export const testPort = (p) => String(process.env.OMNIGPT_TEST_PORT ? Number(process.env.OMNIGPT_TEST_PORT) + (Number(p) % 10) : p);
 export async function openApp({ port = "20171", env: extra = {} } = {}) {
+  port = testPort(port);
   const data = fs.mkdtempSync(path.join(os.tmpdir(), "omnigpt-page-"));
   const base = `http://127.0.0.1:${port}`;
   const env = { ...process.env, OMNIGPT_PORT: port, LOCALAPPDATA: data, OMNIROUTE_URL: "http://127.0.0.1:9", OMNIROUTE_SCRIPT: path.join(data, "no-omniroute.mjs"), ...extra };

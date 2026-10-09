@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const src = ["app", "OmniGPT"].map((d) => path.resolve(here, "..", "..", d)).find((d) => fs.existsSync(path.join(d, "server.mjs")));
-const port = "20159", base = `http://127.0.0.1:${port}`;
+const port = process.env.OMNIGPT_TEST_PORT ? String(Number(process.env.OMNIGPT_TEST_PORT) + 9) : "20159", base = `http://127.0.0.1:${port}`;
 const data = fs.mkdtempSync(path.join(os.tmpdir(), "omnigpt-settingstest-"));
 const env = { ...process.env, OMNIGPT_PORT: port, LOCALAPPDATA: data, OMNIROUTE_URL: "http://127.0.0.1:9", OMNIROUTE_SCRIPT: path.join(data, "no-omniroute.mjs") };
 delete env.OMNIGPT_PARENT_PID;
