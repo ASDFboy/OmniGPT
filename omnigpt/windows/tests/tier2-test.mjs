@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // http_request (against a local test server), make_chart (SVG and PNG), pdf_tools (qpdf; installed with install_tool on
 // Windows when missing) and ocr (the Windows OCR engine; on other systems only the checks that need no Windows).
 // Run: node tier2-test.mjs (exit 0 = all passed)

@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // find_duplicates: identical content is found whatever the names; same size with different content is not a duplicate.
 // Run: node dupes-test.mjs (exit 0 = all passed)
 import fs from "node:fs";

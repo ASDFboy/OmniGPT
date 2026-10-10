@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // The start of each request, in the real page with a fake model where every call takes about 300 ms: the router runs at
 // the same time as the refiner, the agent gets only the tool groups it needs (more_tools adds more), and old messages that
 // no longer fit become a short summary. Run: node flow-test.mjs (exit 0 = all passed)

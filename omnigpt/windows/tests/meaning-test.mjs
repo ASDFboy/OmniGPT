@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Finding things by meaning: embeddings through a stand-in OmniRoute (deterministic word vectors where synonyms share a
 // direction, so "car" matches "automobile"), the disk cache, memories and skills picked by meaning (word overlap when
 // embeddings are off, failing or slow), recall, and search_meaning over files (opt-in, incremental, never outside the

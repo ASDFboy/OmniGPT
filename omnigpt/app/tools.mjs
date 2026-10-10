@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // PC tools for OmniRoute Chat. Every call goes through precheck() (hard rules) before run().
 // Hard rules are a seatbelt, not a sandbox: the reviewer agent and the user's approval are the real gates.
 import fs from "node:fs";

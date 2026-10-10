@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // OmniGPT desktop shell: one native window hosting the UI (WebView2). It starts the Node backend (and, through it,
 // OmniRoute) completely hidden, and stops them when the window closes. Written for the C# 5 compiler in Windows.
 using System;

@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // OmniGPT installer: one exe with the built program inside (payload.zip resource). Installs for the current user only
 // (no administrator rights), adds Start menu and optional desktop shortcuts, and registers an uninstaller in
 // Settings > Apps. Run with /S to install silently (add /launch to reopen OmniGPT afterwards). Written for the C# 5 compiler that ships with Windows.

@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // The agent's tool loop, in the real page with a fake model: old tool output shrinks and read_output brings the rest back,
 // read-only actions run side by side, one safety review covers a whole step (verdicts are remembered, and in "ask" mode the
 // approval shows while the review runs), and moderate or hard work is checked once before it is called done.

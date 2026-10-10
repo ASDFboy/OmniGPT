@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // The browser tool against a small local test site: open, follow links, fill a form, refuse password fields,
 // screenshot, scroll, back, tabs, and refuse addresses it may not visit. Run: node browser-test.mjs
 import fs from "node:fs";

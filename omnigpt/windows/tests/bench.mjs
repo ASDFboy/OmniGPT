@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Everyday-task benchmark: about 30 tasks run through the real OmniGPT page against the OmniRoute you are running.
 // Each task gets its own throwaway folder (a hidden folder in OmniRoute Workspace, deleted afterwards) with prepared files.
 // Agents may only use that folder, approval is "bypass" in a temporary config, learning is off so every task starts the

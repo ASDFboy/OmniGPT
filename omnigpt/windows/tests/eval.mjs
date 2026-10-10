@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Small accuracy check: one free-model answer vs a vote of 3 vs the strong model, on questions with exact answers.
 // Run: node eval.mjs   (needs OMNIROUTE_API_KEY in the environment; makes about 75 model calls, 15 of them to the strong model)
 const KEY = process.env.OMNIROUTE_API_KEY;

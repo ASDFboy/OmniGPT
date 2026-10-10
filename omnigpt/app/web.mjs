@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Read-only text browser for the agents: search the web, open a page, follow its numbered links.
 // Pages are fetched by the backend (never by the agent's own code), with the same address rules as downloads.
 import { checkUrl } from "./tools.mjs";

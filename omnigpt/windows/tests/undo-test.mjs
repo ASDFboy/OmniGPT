@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Undo: changes an agent makes through the real tools are recorded per answer and reversed by undoTurn().
 // Works in a throwaway folder inside the workspace and a throwaway settings folder. On Windows it also checks that
 // deleted files come back from the Recycle Bin and new files go there. Run: node undo-test.mjs (exit 0 = all passed)

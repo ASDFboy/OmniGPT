@@ -1,3 +1,4 @@
+# Built with Claude (Anthropic) - see CREDITS.md
 # Builds OmniGPT-Setup.exe: runs the checks, builds the program, tests the code sandbox, and packs everything
 # into one installer exe. Usage: powershell -ExecutionPolicy Bypass -File build-installer.ps1 [-Out <folder>]
 param([string]$Out = "$PSScriptRoot\release", [string]$Node = "", [string]$Python = "")

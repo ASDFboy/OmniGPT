@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Reads any file for the agents: text, Office and OpenDocument files, PDFs, e-books, archives, images, audio, video,
 // databases and programs. Nothing is executed. Unknown formats get a signature report and a hint to research a tool.
 import fs from "node:fs";

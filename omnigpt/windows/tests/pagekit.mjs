@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Test helper: starts a throwaway OmniGPT backend and opens its page in a headless Edge (Windows) or Chromium
 // (Linux), driven over the DevTools protocol, so tests can run the page's own code with a fake model.
 // const app = await openApp({ port: "20171" }); await app.evaluate("1+1"); await app.close();

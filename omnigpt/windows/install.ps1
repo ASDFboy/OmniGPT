@@ -1,3 +1,4 @@
+# Built with Claude (Anthropic) - see CREDITS.md
 # Installs or updates OmniGPT as a normal program for the current user.
 # Order matters: tests first, then close the running app, then build and replace. Nothing is touched if tests fail.
 param([string]$Dest = "$env:LOCALAPPDATA\Programs\OmniGPT", [switch]$Launch, [switch]$NoShortcuts)

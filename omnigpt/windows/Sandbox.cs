@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // OmniGPT.Sandbox: runs one piece of code (Python or JavaScript) inside a Windows AppContainer.
 // An AppContainer process has no network access and no access to the user's files unless a folder is explicitly granted;
 // a Job Object adds a memory cap and kills the whole process tree on timeout. Written for the C# 5 compiler in Windows.

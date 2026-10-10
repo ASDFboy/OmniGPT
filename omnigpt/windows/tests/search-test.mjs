@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // web_search uses the search providers set up in OmniRoute first, and the private-address rules hold for IPv6-written IPv4.
 // Run: node search-test.mjs   (a stand-in OmniRoute on a local port; no real search is made)
 import fs from "node:fs";

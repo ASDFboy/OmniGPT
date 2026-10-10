@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Everyday tools: find_files, search_files, system_info, open_path, archive, clipboard, notify.
 // Run: node tools-test.mjs (exit 0 = all passed)
 import fs from "node:fs";

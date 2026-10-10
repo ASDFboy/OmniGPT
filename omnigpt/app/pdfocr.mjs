@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // ocr (the OCR engine built into Windows, offline) and pdf_tools (merge, split, rotate, extract pages with qpdf, a
 // free program installed on demand with install_tool winget QPDF.QPDF). Paths are already checked by tools.mjs.
 import fs from "node:fs";

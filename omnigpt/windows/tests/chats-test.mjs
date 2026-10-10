@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Chats are stored one file per chat (kv/chats/<id>.json) with a small index. Checks the move from the old single
 // orc.chats file (backup kept, every chat present, a second start changes nothing, an interrupted move finishes), the chat
 // endpoints (save, open, rename and move, delete, search inside chats, export, bad ids and missing tokens refused), that

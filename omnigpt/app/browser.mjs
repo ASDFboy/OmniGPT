@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // The browser tool: a separate Microsoft Edge (or Chrome) window with its own profile, driven over the DevTools
 // protocol. It never uses the user's normal browser profile, cookies or saved passwords, and never types into password
 // fields (the user types those in the visible window). Only public http(s) pages can be opened.

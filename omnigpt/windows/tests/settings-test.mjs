@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Settings and chats must survive a backend restart while the window stays open (the backend picks a new token on
 // every start). Starts a throwaway backend twice against a temporary settings folder.
 // Run: node settings-test.mjs   (exit code 0 = all passed)
