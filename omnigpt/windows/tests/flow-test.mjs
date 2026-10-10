@@ -4,7 +4,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { openApp } from "./pagekit.mjs";
+import { openApp, src } from "./pagekit.mjs";
 
 let failed = 0;
 const check = (name, ok, extra = "") => { if (!ok) failed++; console.log((ok ? "PASS  " : "FAIL  ") + name + (extra ? "  " + String(extra).replace(/\s+/g, " ") : "")); };
@@ -63,7 +63,9 @@ const FAKE = `(() => {
 
 const route = (o) => J({ complexity: "simple", tools: true, parallel: false, compute: false, web: false, reason: "test", ...o });
 const RENAME = "Rename report.txt to report.md in my workspace";
-const long = (tag, n = 2900) => (tag + " ").repeat(Math.ceil(n / (tag.length + 1))).slice(0, n);
+// messages sized to the page's context budget (2900 characters each when it was 24000), so the same counts drop out
+const BUDGET = Number((/const CTX_BUDGET=(\d+)/.exec(fs.readFileSync(path.join(src, "app.js"), "utf8")) || [, 24000])[1]);
+const long = (tag, n = Math.round(2900 * BUDGET / 24000)) => (tag + " ").repeat(Math.ceil(n / (tag.length + 1))).slice(0, n);
 const pairs = (tag, k) => Array.from({ length: k }, (_, i) => [{ role: "user", content: long(tag + "q" + i) }, { role: "assistant", content: long(tag + "a" + i) }]).flat();
 
 let app;

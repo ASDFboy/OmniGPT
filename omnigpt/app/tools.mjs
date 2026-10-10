@@ -136,7 +136,8 @@ export function insideFolder(name, input, cfg) {
   if (name === "run_command") { // a command that names anything outside the folder goes through normal approval
     const c = String(i.command || ""), quoted = [...c.matchAll(/(["'])([a-z]:[\\/][^"']*)\1/gi)].map((m) => m[2]);
     const named = [...quoted, ...[...c.replace(/(["'])[a-z]:[\\/][^"']*\1/gi, " ").matchAll(/[a-z]:[\\/][^"'\s;|,)]*/gi)].map((m) => m[0])];
-    if (/\.\.[\\/]|\$home|\$env:|\$profile|~[\\/]|(^|[\s"'])\\\\[^\\]|\b(cd|set-location|push-location|pushd)\s+[a-z]:/i.test(c) || named.some((p) => !under(real(p), cfg.folder))) return false;
+    // anything that can name a place without spelling out its path (.., variables, special folders, other drives) counts as outside
+    if (/(^|[^\w.])\.\.($|[^\w.])|\$home|\$env:|\$profile|%\w+%|~[\\/]|(^|[\s"'])\\\\[^\\]|\[environment\]|getfolderpath|\b(cd|chdir|sl|set-location|push-location|pushd)\s+[a-z]:|(^|[\s"'(])[a-z]:(?![\\/])\S/i.test(c) || named.some((p) => !under(real(p), cfg.folder))) return false;
     return "command";
   }
   for (const k of ["path", "source", "destination"]) if (typeof i[k] === "string") ps.push(i[k]);
@@ -186,7 +187,7 @@ const CMD_RULES = [
   [/\b(iex|invoke-expression)\b|\bdownloadstring\b|\bdownloadfile\b.*\b(start|iex)|-enc(odedcommand)?\b|frombase64string|\bcertutil\b.*-(urlcache|decode)|\bbitsadmin\b|\bmshta\b|\bregsvr32\b|\brundll32\b|\bwscript\b|\bcscript\b/i, "obfuscated or download-and-execute code"],
   [/\b(invoke-webrequest|iwr|invoke-restmethod|irm|curl|wget|start-bitstransfer)\b/i, "network downloads must use the download_file tool"],
   [/\b(get-childitem|gci|dir|ls|get-item|gi|get-content|gc|cat|type)\b[^|;]*\benv:|\bprintenv\b|\[environment\]::getenvironmentvariable|\$env:\w*(key|token|secret|pass|omniroute)|\bgetenvironmentvariables\b|(^|[;|&]\s*)set\s*($|[;|&])/i, "reading environment variables"],
-  [/\.ssh|\.aws|\.gnupg|\.azure|\.kube|\.claude|\\appdata\\|omniroute\\data|omniroutechat|protecteddata|id_rsa|id_ed25519|\.pem\b|\.kdbx|\.env\b|cookies|login data|credential|\bcmdkey\b|vaultcmd|get-credential|security\s+find|lsass|mimikatz|sam\b.*system/i, "credential or protected-location access"],
+  [/\.ssh|\.aws|\.gnupg|\.azure|\.kube|\.claude|\\appdata\\|omniroute\\data|\.omniroute\b|omniroutechat|\bhk(cu|ey_current_user|lm|ey_local_machine)\\[^\s;|]*environment\b|protecteddata|id_rsa|id_ed25519|\.pem\b|\.kdbx|\.env\b|cookies|login data|credential|\bcmdkey\b|vaultcmd|get-credential|security\s+find|lsass|mimikatz|sam\b.*system/i, "credential or protected-location access"],
   [/\b(remove-item|rm|del|erase|rd|rmdir|ri)\b[^;|]*(\s|^)(['"]?[a-z]:[\\/]?['"]?(\s|$|[;|&])|['"]?[a-z]:[\\/]\*|[\\/]\*|~(\s|$|[;|&])|\$home(\s|$|[;|&])|\$home[\\/](documents|desktop|downloads)([\\/]?\*)?(\s|$|[;|&])|\$env:(userprofile|systemroot|windir|programfiles))/i, "deleting a drive root or home folder"],
   [/\bstart-process\b[^;|]*\b-verb\s+runas\b|\bnet\s+(user|localgroup)\b|\bnew-localuser\b|\badd-localgroupmember\b|\btakeown\b|\bicacls\b[^;|]*\/(grant|reset|setowner)/i, "privilege or account changes"],
   [/\b(stop-process|taskkill|kill)\b[^;|]*\b(node|omniroute|python|explorer|csrss|winlogon|lsass|msedge)\b/i, "stopping core or app processes"],
@@ -201,14 +202,24 @@ export function checkCommand(cmd, bypass = false) {
 }
 
 // ---------- URL policy (download_file)
+// an IPv4 address written as IPv6 (::ffff:127.0.0.1, ::ffff:7f00:1, NAT64 64:ff9b::7f00:1) reaches the IPv4 host: check it as IPv4
+function v4Of(a) {
+  const m = /^(?:0*:)*?(?:::ffff:|64:ff9b::)(?:0+:)?(.+)$/i.exec(String(a)) || /^::(\d+\.\d+\.\d+\.\d+)$/.exec(String(a));
+  if (!m) return String(a);
+  const t = m[1]; if (net.isIPv4(t)) return t;
+  const h = /^([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i.exec(t); if (!h) return String(a);
+  const x = parseInt(h[1], 16), y = parseInt(h[2], 16);
+  return [x >> 8, x & 255, y >> 8, y & 255].join(".");
+}
 export async function checkUrl(u) {
   const url = new URL(u);
   if (!/^https?:$/.test(url.protocol)) throw new Error("only http(s) URLs are allowed");
   const host = url.hostname.replace(/^\[|\]$/g, "");
   const addrs = net.isIP(host) ? [{ address: host }] : await dns.lookup(host, { all: true });
-  for (const { address: a } of addrs) {
-    if (/^(127\.|10\.|0\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.)/.test(a) || /^(::1?$|fc|fd|fe80)/i.test(a) || /^::ffff:(127|10|192\.168|169\.254)/i.test(a))
-      throw new Error(`URL resolves to a private/local address (${a})`);
+  for (const { address } of addrs) {
+    const a = v4Of(address);
+    if (/^(127\.|10\.|0\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|198\.1[89]\.|22[4-9]\.|2[3-5]\d\.)/.test(a) || /^(::1?$|fc|fd|fe[89ab])/i.test(a))
+      throw new Error(`URL resolves to a private/local address (${address})`);
   }
   return url;
 }
@@ -419,7 +430,7 @@ export async function precheck(name, input, cfg = loadConfig(), scope) {
 }
 
 // ---------- finding, searching, system information, notifications, archives
-const RUN_EXT = /\.(exe|com|bat|cmd|ps1|psm1|psd1|vbs|vbe|js|jse|wsf|wsh|msi|msp|mst|scr|hta|cpl|lnk|url|jar|reg|pif|appx|appxbundle|msix|msixbundle|application|gadget|inf|scf|ws|sct|py|pyw|sh)$/i;
+const RUN_EXT = /\.(exe|com|bat|cmd|ps1|psm1|psd1|vbs|vbe|js|jse|wsf|wsh|msi|msp|mst|scr|hta|cpl|lnk|url|jar|reg|pif|appx|appxbundle|msix|msixbundle|application|gadget|inf|scf|ws|sct|py|pyw|sh|chm|msc|iso|img|vhdx?|appref-ms|settingcontent-ms|xll|xlam|ppam|docm|dotm|xlsm|xltm|pptm|potm|library-ms|search-ms|searchconnector-ms|diagcab|appinstaller|mht|mhtml|hta|psc1|cmdline|website)$/i;
 function globRe(g) {
   let s = "";
   for (let k = 0; k < g.length; k++) {
@@ -1245,7 +1256,7 @@ async function runInner(name, input, cfg, jr = []) {
       const r = await ps(script, { ORC_PKG: pkg }, cfg.cwd, 15 * 60000);
       return `${r.timedOut ? "[timed out after 15 minutes]\n" : ""}${r.out || "(no output)"}\n[exit code ${r.code}]` + (r.code === 0 ? "\nInstalled. run_command finds new programs right away (PATH is refreshed for every command)." : "");
     }
-    case "web_search": return webSearch(i);
+    case "web_search": return webSearch(i, { orFetch });
     case "web_open": return webOpen(i);
     case "download_file": {
       let url = await checkUrl(i.url); const p = checkPath(i.path, cfg);

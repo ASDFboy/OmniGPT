@@ -159,16 +159,18 @@ function turn(label,cls="",T){ const TR=T===undefined?trace:T;
   const live=s=>{if(isFinal||!TR)return;const l=String(s).split("\n").map(x=>x.trim()).filter(Boolean).pop();if(l)TR.line(arrow(label),l)};
   if(!isFinal&&TR)TR.line(arrow(label),"…");
   const t0=Date.now(), meta=el.querySelector(".who i"), th=el.querySelector("details"), thd=th.querySelector("div"), bd=el.querySelector(".body");
-  let route="",tok="",ended=false;
+  let route="",tok="",ended=false,pend=null,raf=0;
   const setMeta=()=>meta.textContent=[route,tok,((Date.now()-t0)/1000).toFixed(1)+"s"].filter(Boolean).join(" · ");
+  // streamed text is drawn at most once per frame: redrawing the whole answer for every few characters froze long answers
+  const paint=()=>{if(raf){cancelAnimationFrame(raf);raf=0}if(pend===null)return;const s=pend;pend=null;bd.innerHTML=md(s);bd.classList.toggle("cursor",!ended);live(s);scroll()};
   return {
     el,
     route:m=>{route=m||"";setMeta()}, usage:u=>{tok=(u.output_tokens||0)+" tok";setMeta()},
     think:s=>{th.hidden=false;th.open=true;thd.textContent+=s;live(thd.textContent);scroll()},
-    text:s=>{bd.innerHTML=md(s);bd.classList.toggle("cursor",!ended);live(s);scroll()},
+    text:s=>{pend=s;if(ended||document.hidden)paint();else if(!raf)raf=requestAnimationFrame(()=>{raf=0;paint()})},
     tool:n=>{const d=document.createElement("div");d.className="tool";d.textContent=n+"()";el.insertBefore(d,bd);return d},
-    end:()=>{ended=true;bd.classList.remove("cursor");th.open=false;setMeta();if(cls.includes("final")&&bd.textContent.trim()&&!el.querySelector(".copy"))el.querySelector(".who").insertAdjacentHTML("beforeend",'<button class="copy">Copy</button>')},
-    error:m=>{bd.classList.remove("cursor");bd.innerHTML=`<div class="err">${esc(m)}</div>`;live("Error: "+m)}
+    end:()=>{paint();ended=true;bd.classList.remove("cursor");th.open=false;setMeta();if(cls.includes("final")&&bd.textContent.trim()&&!el.querySelector(".copy"))el.querySelector(".who").insertAdjacentHTML("beforeend",'<button class="copy">Copy</button>')},
+    error:m=>{pend=null;paint();bd.classList.remove("cursor");bd.innerHTML=`<div class="err">${esc(m)}</div>`;live("Error: "+m)}
   };
 }
 col.addEventListener("click",e=>{
@@ -377,7 +379,7 @@ Facts: use web_search and web_open whenever an answer depends on facts, versions
 
 `+FILES_SYS+projCtx()}
 
-let askChain=Promise.resolve(); // approvals from parallel workers are shown one at a time
+let askChain=Promise.resolve(), UNATTENDED=false, UNATTENDED_WAIT=10*60000; // approvals from parallel workers are shown one at a time; UNATTENDED: a scheduled task is running
 function toolCard(name,input,T){
   const TR=T===undefined?trace:T;
   const el=document.createElement("div"); el.className="turn tooltn";
@@ -392,9 +394,12 @@ function toolCard(name,input,T){
     row.innerHTML=`<button class="btn pri" data-a="y">${esc(lab||"Approve")}</button><button class="btn" data-a="n">Deny</button>`;
     btn=row.firstChild; (TR?TR.body:col).appendChild(row); scroll();
     TR&&TR.auto(true); Brain.busy("user",true); // open the trace so the full action is visible while it waits for approval
-    const stop=()=>{row.remove();btn=null;TR&&TR.auto(false);Brain.busy("user",false);bad(new DOMException("stopped","AbortError"))};
+    const stop=()=>{clearTimeout(tm);row.remove();btn=null;TR&&TR.auto(false);Brain.busy("user",false);bad(new DOMException("stopped","AbortError"))};
+    // a scheduled task runs while nobody may be watching: tell the user, and after 10 minutes without an answer treat it as denied
+    const tm=UNATTENDED?setTimeout(()=>{ctrl.signal.removeEventListener("abort",stop);row.remove();btn=null;TR&&TR.auto(false);Brain.busy("user",false);st="no answer after 10 minutes";paint();ok(false)},UNATTENDED_WAIT):0;
+    if(UNATTENDED)api("/api/run",{name:"notify",input:{title:"OmniGPT needs your approval",message:"A scheduled task wants to run: "+name+". It is skipped if nobody answers within 10 minutes."}}).catch(()=>{});
     ctrl.signal.addEventListener("abort",stop,{once:true});
-    row.onclick=e=>{const a=e.target.dataset.a; if(!a)return; ctrl.signal.removeEventListener("abort",stop); row.remove(); btn=null; TR&&TR.auto(false); Brain.busy("user",false); ok(a==="y")};
+    row.onclick=e=>{const a=e.target.dataset.a; if(!a)return; clearTimeout(tm); ctrl.signal.removeEventListener("abort",stop); row.remove(); btn=null; TR&&TR.auto(false); Brain.busy("user",false); ok(a==="y")};
   });
   return {
     show:s=>{box.textContent=s;scroll();TR&&TR.line("Agent → PC",String(s).split("\n")[0])},
@@ -528,6 +533,9 @@ const PAGE_TOOLS={
     if(!SET().memory)return"Memory is turned off in Settings, so nothing was saved.";
     const M=MEM(),dup=M.find(m=>m.text.toLowerCase()===t.toLowerCase()||overlap(tok(m.text),tok(t))>=Math.max(3,tok(t).size*0.8));
     c.show("Remember: "+t);
+    // a memory goes into every future conversation: after reading pages or files (which can carry planted instructions) the user confirms it
+    if(TURN&&(TURN.untrusted||TURN.readLocal)&&!omni.running&&!await c.ask("Save to memory"))return"The user declined to save this to memory.";
+    if(TURN&&(TURN.untrusted||TURN.readLocal)&&omni.running)return"Not saved: memories cannot be added in autonomous mode after reading pages or files. Mention it in your note instead.";
     if(dup){LS.set("orc.memories",[{...dup,text:t,ts:Date.now()},...M.filter(m=>m.id!==dup.id)]);return"Updated an existing memory: "+t}
     const kind=["user","preference","fact"].includes(i.kind)?i.kind:"fact";
     LS.set("orc.memories",[{id:uid(),text:t,kind,ts:Date.now()},...M].slice(0,500));return"Saved to memory: "+t;
@@ -617,7 +625,8 @@ function riskyAfterWeb(u,pre){
   if(u.name==="http_request"&&!/^(GET|HEAD)$/i.test(String(i.method||"GET")))return true; // sending data out after reading a page could leak it
   return (u.name==="run_command"||u.name==="start_process")&&/\b(remove-item|rm|del|erase|rd|rmdir|ri|move-item|mv|move|ren|rename-item|format|clear-content|set-content|out-file)\b/i.test(String(i.command||""));
 }
-const webFast=(u,pre)=>pre.class==="web"&&(u.name==="web_search"||!/[?#]/.test(String(u.input&&u.input.url)))&&String((u.input&&(u.input.url||u.input.query))||"").length<300; // plain searches and page reads skip the reviewer
+// once the user's own files were read in this request, an address can carry their content out, so it is reviewed like any action
+const webFast=(u,pre)=>pre.class==="web"&&!(TURN&&TURN.readLocal)&&(u.name==="web_search"||!/[?#]/.test(String(u.input&&u.input.url)))&&String((u.input&&(u.input.url||u.input.query))||"").length<300; // plain searches and page reads skip the reviewer
 const insideNote=(pre,q)=>q+(pre.inside==="command"?"\n\n[The user attached the folder "+CHAT_DIR+" and allowed any action inside it and its subfolders. A command that stays inside it is low risk. A command that changes or deletes anything outside it, or touches OmniRoute's data folder, is high risk.]":"");
 const needsReview=(u,pre,cfg)=>pre.ok&&pre.class!=="sandbox"&&!webFast(u,pre)&&pre.inside!==true&&cfg.approval!=="bypass";
 const pcCall=(url,u,scope)=>api(url,{name:u.name,input:u.input,scope,folder:CHAT_DIR,turn:TURN&&TURN.id,chat:chatId});
@@ -632,6 +641,7 @@ async function toolFlow(u,userReq,intent,lead,cfg,T,scope,J={}){
   }
   if(PROJ_RO.test(u.name)){ // in-app, read-only: no approval needed
     const c=toolCard(u.name,u.input,T); c.show(u.name==="read_project_chat"?"Read project chat "+(u.input?.id||""):"List project chats"); c.status("done");Brain.msg(lead,"t:"+u.name);Brain.ok("t:"+u.name);
+    if(TURN)TURN.readLocal=true;
     return{text:await projToolRun(u),err:false};
   }
   const card=toolCard(u.name,u.input,T);
@@ -654,7 +664,7 @@ async function toolFlow(u,userReq,intent,lead,cfg,T,scope,J={}){
   const rvP=pre.inside===true?Promise.resolve({verdict:"attached folder",risk:"low"}):cfg.approval==="bypass"?Promise.resolve({verdict:"unchecked",risk:"low"}):J.rv&&J.pre===pre?J.rv:review(pre,u.name,u.input,insideNote(pre,userReq),intent,lead,T);
   const vText=v=>pre.class+" · "+v.verdict+(v.cached?" (remembered)":""), askLabel=v=>v.verdict==="unsafe"?"Run anyway (reviewer objected)":v.verdict==="unreviewed"?"Approve (not reviewed)":"Approve";
   let go;
-  if(cfg.approval==="ask"&&!pre.inside&&(pre.confirm||pre.class!=="read")){ // the user is asked whatever the verdict is: the card asks now and the verdict joins it when it arrives
+  if(cfg.approval==="ask"&&pre.inside!==true&&(pre.confirm||pre.class!=="read")){ // a command in an attached folder still asks: commands cannot be checked by path // the user is asked whatever the verdict is: the card asks now and the verdict joins it when it arrives
     card.verdict(pre.class+" · reviewing…");
     rvP.then(v=>{card.verdict(vText(v));if(!pre.confirm)card.label(askLabel(v))},()=>{});
     go=await card.ask(pre.confirm?"Allow":"Approve");
@@ -681,6 +691,7 @@ async function toolFlow(u,userReq,intent,lead,cfg,T,scope,J={}){
   const pics=r.ok&&r.output&&typeof r.output==="object"?r.output:null; // view_images: text plus picture blocks
   if(pics)r.output=String(pics.text||"");
   card.status(r.ok?"done":"failed"); card.result(r.ok?r.output:r.error,!r.ok); r.ok?Brain.ok("t:"+u.name):Brain.fail("t:"+u.name); r.ok?TURN.ok++:TURN.fail++;
+  if(r.ok&&pre.class==="read"&&!/^(web_search|web_open|browser|system_info|notify|open_path|read_process|stop_process|list_connections)$/.test(u.name))TURN.readLocal=true;
   if(r.ok&&(u.name==="download_file"||u.name==="browser"||u.name==="http_request"||u.name==="github"))TURN.untrusted=true; // page content can carry instructions meant to trick the agent
   if(/^(start_process|stop_process)$/.test(u.name))refreshJobs();
   if(r.ok&&u.name==="notify")flash(String(u.input?.title||"OmniGPT")+(u.input?.message?": "+u.input.message:""));
@@ -1164,15 +1175,17 @@ const briefed=(q,b)=>q+"\n\n[Clarified brief for the agents. The user's own word
 
 // ---- send
 const OMITTED="[Earlier messages in this conversation were omitted to fit the model's limit.]", SUMHEAD="[Summary of the earlier part of this conversation, shortened to fit the model's limit]\n";
-function fitSplit(msgs,budget=24000){ // the newest messages that fit, and the older ones that do not
+const CTX_BUDGET=80000; // characters of conversation sent with each request (about 20k tokens); older messages are summarized
+const unfold=(L,q,keep)=>q===keep?L:L.map(m=>m.role==="user"&&m.content===q?{...m,content:keep}:m);
+function fitSplit(msgs,budget=CTX_BUDGET){ // the newest messages that fit, and the older ones that do not
   let n=0,keep=[];
   for(let i=msgs.length-1;i>=0;i--){const len=String(msgs[i].content).length;if(keep.length&&n+len>budget)break;n+=len;keep.unshift(msgs[i])}
   if(keep.length&&keep[0].role==="assistant")keep.shift(); // a conversation must start with the user
   return{keep,drop:msgs.slice(0,msgs.length-keep.length)};
 }
-function fitCtx(msgs,budget=24000){const{keep,drop}=fitSplit(msgs,budget);return drop.length?[{role:"user",content:OMITTED},{role:"assistant",content:"Understood."},...keep]:keep}
+function fitCtx(msgs,budget=CTX_BUDGET){const{keep,drop}=fitSplit(msgs,budget);return drop.length?[{role:"user",content:OMITTED},{role:"assistant",content:"Understood."},...keep]:keep}
 // The same, but the dropped messages become a short running summary. Any failure or a slow model gives the plain note above.
-async function fitCtxA(msgs,budget=24000){
+async function fitCtxA(msgs,budget=CTX_BUDGET){
   const{keep,drop}=fitSplit(msgs,budget);if(!drop.length)return keep;
   let s="";try{s=await summarize(drop)}catch(e){if(e&&e.name==="AbortError")throw e}
   return[{role:"user",content:s?SUMHEAD+s:OMITTED},{role:"assistant",content:"Understood."},...keep];
@@ -1220,13 +1233,13 @@ async function send(){
   if(!col.querySelector(".msg")) col.innerHTML="";
   const shown=q+(A.length?"\n"+A.map(a=>"Attached: "+a.path).join("\n"):"");
   q=q+attachText(A);
-  if(CHAT_DIR)q+=await folderText();
+  const qKeep=q; if(CHAT_DIR)q+=await folderText(); // the folder listing goes with this request only; history keeps the message without it
   attachments=[];renderChips();input.value="";input.style.height="auto";
   const u=document.createElement("div");u.className="msg";u.innerHTML=`<div class="user">${esc(shown)}</div>`;col.appendChild(u);linkPaths(u);syncConvo();
   if(omni.on){omniBegin(q);return}
   turnFeedback(q); // a correction counts against the memories, models and recipes used last time; anything else keeps the last answer as good
-  CUR_Q=q;DELEGATES=0;TURN={id:uid(),untrusted:false,tok:0,ok:0,fail:0,written:[],t0:Date.now(),attached:A.length>0,att:A.map(a=>String(a.path).toLowerCase()),images:A.some(a=>a.image)};TASK={request:q,plan:"",criteria:[],tests:"",decisions:[]};MEM_USED=[];trace=mkTrace();scroll();Brain.turn();
-  saveChat(typed,[...history,{role:"user",content:q}]); // the question is on disk even if the window closes mid-answer
+  CUR_Q=q;DELEGATES=0;TURN={id:uid(),untrusted:false,readLocal:A.length>0,tok:0,ok:0,fail:0,written:[],t0:Date.now(),attached:A.length>0,att:A.map(a=>String(a.path).toLowerCase()),images:A.some(a=>a.image)};TASK={request:q,plan:"",criteria:[],tests:"",decisions:[]};MEM_USED=[];trace=mkTrace();scroll();Brain.turn();
+  saveChat(typed,[...history,{role:"user",content:qKeep}]); // the question is on disk even if the window closes mid-answer
   busy=true;ctrl=new AbortController();sendBtn.innerHTML=ico("stop");sendBtn.classList.add("stop");curProject=projectOf();
   SEM.clear();const semP=prepMeaning(q).catch(()=>{}); // memories and skills by meaning (at most ~1.5 s), ready before the first prompt that uses them
   const all=[...history,{role:"user",content:q}]; let ctx=fitCtx(all); // the summarized version replaces it below
@@ -1248,9 +1261,9 @@ async function send(){
       const ui=turn("Answer","final"); ui.text(String(final).replace(/\n\n\[Actions this turn:[^\]]*\]$/,"")); ui.end();
     }
     try{await finishFiles(final,q)}catch(e){}
-    history=[...ctx,{role:"assistant",content:final||"(no answer)"}];done=true;Brain.msg(Brain.last,"output");Brain.ok("output");Brain.files(TURN.files);await addUndo(TURN.id);learn(q,String(final||""),TURN.ok>0&&TURN.fail===0).catch(()=>{});endTurn(final);
+    history=[...unfold(ctx,q,qKeep),{role:"assistant",content:final||"(no answer)"}];done=true;Brain.msg(Brain.last,"output");Brain.ok("output");Brain.files(TURN.files);await addUndo(TURN.id);learn(q,String(final||""),TURN.ok>0&&TURN.fail===0).catch(()=>{});endTurn(final);
   }catch(e){if(e&&e.name!=="AbortError"){memFeedback(MEM_USED,false);Brain.fail(Brain.last);const n=turn("Error","final");n.end();n.error(e.message||String(e))}}
-  if(!done)history=[...ctx,{role:"assistant",content:"(stopped before finishing)"}];
+  if(!done)history=[...unfold(ctx,q,qKeep),{role:"assistant",content:"(stopped before finishing)"}];
   busy=false;ctrl=null;sendBtn.innerHTML=ico("send");sendBtn.classList.remove("stop");syncSend();if(trace){trace.finish();trace=null}scroll();saveChat(typed);
 }
 sendBtn.onclick=()=>busy&&!omni.running?ctrl&&ctrl.abort():send();
@@ -1597,7 +1610,7 @@ async function runTask(t){
   omni.on=false; // a scheduled task is an ordinary single run, even while OMNI mode is selected
   newChat(); sel=t.project?{kind:"project",id:t.project}:null; pendingTitle="Scheduled · "+t.name;
   $("#pc").checked=!!t.pc; input.value=t.prompt;
-  await send();
+  UNATTENDED=true; try{await send()}finally{UNATTENDED=false}
   pendingTitle=null; $("#pc").checked=prevPc; input.value=draft; omni.on=prevOmni;
 }
 let polling=false, lastAct=Date.now();
@@ -1849,9 +1862,10 @@ function omniAsk(){
   return "The original request is complete and you are improving it. Ideas not done yet:\n"+omni.ideas.map((x,i)=>(i+1)+". "+x).join("\n")+"\nPick the most valuable idea (or a clearly better one), implement it, check that it works, and report. Start your note with DID: <the idea>.";
 }
 const omniWait=s=>new Promise(r=>{const t0=Date.now(),iv=setInterval(()=>{if(omni.stop||omni.steer.length||Date.now()-t0>s*1000||(ctrl&&ctrl.signal.aborted)){clearInterval(iv);r()}},400)});
+function freeTiers(){for(const t in TIERS)TIERS[t].splice(0,TIERS[t].length,...(PROFILES.free[t]||PROFILES.free.fast))}
 async function omniBegin(q){
   busy=true;ctrl=new AbortController();omni.running=true;omni.stop=false;omni.fails=0;omni.cycle=0;omni.improve=false;FREE_ONLY=$("#omforever").checked;$("#omforever").disabled=true;
-  if(FREE_ONLY&&!["free","unfiltered"].includes(SET().mode)){omni.savedTiers=JSON.parse(JSON.stringify(TIERS));for(const t in TIERS)TIERS[t].splice(0,TIERS[t].length,...(PROFILES.free[t]||PROFILES.free.fast))} // running indefinitely never uses paid models
+  if(FREE_ONLY&&!["free","unfiltered"].includes(SET().mode)){omni.savedTiers=JSON.parse(JSON.stringify(TIERS));freeTiers()} // running indefinitely never uses paid models
   omni.goal=omni.goal?omni.goal+"\n\nLatest instruction from the user: "+q:q;
   curProject=projectOf();CUR_Q=omni.goal;TASK=null;omStat();SEM.clear();await Promise.all([prepMeaning(CUR_Q),prepMeaning(q)]);
   try{
@@ -1932,6 +1946,7 @@ function applySettings(){
   MAXPAR=Math.max(2,Math.min(6,Number(s.workers)||4));
   for(const t in TIERS){const v=(s.models||{})[t];TIERS[t].splice(0,TIERS[t].length,...(v&&v.length?v:DEFTIERS[t]))}
   const prof=PROFILES[s.mode]; if(prof)for(const t in TIERS)TIERS[t].splice(0,TIERS[t].length,...(prof[t]||prof.fast));
+  if(typeof omni!=="undefined"&&omni.savedTiers){omni.savedTiers=JSON.parse(JSON.stringify(TIERS));freeTiers()} // a settings change while OMNI runs indefinitely must not bring paid models back
   $("#modelabel").textContent=(MODES[s.mode]||MODES.default)[0];
 }
 const setSet=(k,v)=>{if(!KVOK)PRESET[k]=v;LS.set("orc.settings",{...SET(),[k]:v});applySettings()};
@@ -2130,7 +2145,7 @@ $("#s-body").addEventListener("change",async e=>{
   else if(c==="approval"){
     if(t.value==="auto"&&!await ask({title:"Enable auto-run?",text:"The reviewer model approves low-risk actions without asking you. Reviewers can be wrong. Deletes still ask.",ok:"Enable"})){t.value=CFG.approval;return}
     if(t.value==="highonly"&&!await ask({title:"Only stop high-risk actions?",text:"Low and medium risk actions, including deletes to the Recycle Bin, run without asking. An action rated high risk is not run; the agent is asked to write a safer one, and you are asked only if it keeps failing. Reviewers can be wrong.",ok:"Enable"})){t.value=CFG.approval;return}
-    if(t.value==="bypass"&&!await ask({title:"Bypass all checks?",text:"No reviewer and no approval prompts: every action runs immediately, including deleting, overwriting, installing and running any code or command. Only protections for your secrets and drive-level damage (formatting, wiping a drive or home folder, shutdown) stay on, and agents still can only use the allowed folders.",ok:"Bypass"})){t.value=CFG.approval;return}
+    if(t.value==="bypass"&&!await ask({title:"Bypass all checks?",text:"No reviewer and no approval prompts: every action runs immediately, including deleting, overwriting, installing and running any code or command. Only a few pattern checks stay on: known secret locations, formatting or wiping a drive or the home folder, and shutdown. The file tools stay inside the allowed folders, but commands can reach any folder your Windows account can, so a mistaken or tricked command can delete or change files anywhere in your user folder.",ok:"Bypass"})){t.value=CFG.approval;return}
     CFG.approval=t.value;await saveCfg();bpStat()}
   else if(c==="cwd"){CFG.cwd=t.value.trim();await saveCfg()}
   else if(c==="omnirouteDataDir"){CFG.omnirouteDataDir=t.value.trim();await api("/api/config",{approval:CFG.approval,cwd:CFG.cwd,roots:CFG.roots,omnirouteDataDir:CFG.omnirouteDataDir})}
