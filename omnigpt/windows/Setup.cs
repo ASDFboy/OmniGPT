@@ -127,7 +127,7 @@ static class Setup
         {
             k.SetValue("DisplayName", "OmniGPT");
             k.SetValue("DisplayVersion", Version);
-            k.SetValue("Publisher", "OmniGPT");
+            k.SetValue("Publisher", "ASDFboy and Claude (Anthropic)");
             k.SetValue("DisplayIcon", exe + ",0");
             k.SetValue("InstallLocation", Dest);
             k.SetValue("UninstallString", "cmd.exe /c \"" + un + "\"");
