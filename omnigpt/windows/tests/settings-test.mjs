@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Settings and chats must survive a backend restart while the window stays open (the backend picks a new token on
 // every start). Starts a throwaway backend twice against a temporary settings folder.
 // Run: node settings-test.mjs   (exit code 0 = all passed)
@@ -9,7 +10,7 @@ import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const src = ["app", "OmniGPT"].map((d) => path.resolve(here, "..", "..", d)).find((d) => fs.existsSync(path.join(d, "server.mjs")));
-const port = "20159", base = `http://127.0.0.1:${port}`;
+const port = process.env.OMNIGPT_TEST_PORT ? String(Number(process.env.OMNIGPT_TEST_PORT) + 9) : "20159", base = `http://127.0.0.1:${port}`;
 const data = fs.mkdtempSync(path.join(os.tmpdir(), "omnigpt-settingstest-"));
 const env = { ...process.env, OMNIGPT_PORT: port, LOCALAPPDATA: data, OMNIROUTE_URL: "http://127.0.0.1:9", OMNIROUTE_SCRIPT: path.join(data, "no-omniroute.mjs") };
 delete env.OMNIGPT_PARENT_PID;
@@ -17,7 +18,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let failed = 0;
 const check = (name, ok, extra = "") => { if (!ok) failed++; console.log((ok ? "PASS  " : "FAIL  ") + name + (extra ? "  " + extra : "")); };
 
-const html = fs.readFileSync(path.join(src, "index.html"), "utf8");
+const html = fs.readFileSync(path.join(src, "index.html"), "utf8") + fs.readFileSync(path.join(src, "app.js"), "utf8");
 const tokenRe = /TOKEN0="([0-9a-f]{16,})"/; // the same pattern the page uses to pick up a new token
 check("page re-reads the token when the backend refuses it", html.includes("renewToken") && html.includes(String(tokenRe)));
 check("settings changed while loading are kept", /if\(!KVOK\)PRESET\[k\]=v/.test(html));

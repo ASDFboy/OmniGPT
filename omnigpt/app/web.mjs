@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Read-only text browser for the agents: search the web, open a page, follow its numbered links.
 // Pages are fetched by the backend (never by the agent's own code), with the same address rules as downloads.
 import { checkUrl } from "./tools.mjs";
@@ -22,7 +23,7 @@ async function get(u0) {
   if (type && !/text\/|json|xml|html/.test(type)) throw new Error("not a text page (" + type + "); use download_file if the user wants the file");
   const rd = res.body.getReader(), chunks = []; let n = 0;
   for (;;) { const { done, value } = await rd.read(); if (done) break; n += value.length; chunks.push(value); if (n > 2e6) { rd.cancel(); break; } }
-  return { url, type, body: Buffer.concat(chunks).toString("utf8") };
+  return { url, type, status: res.status, body: Buffer.concat(chunks).toString("utf8") };
 }
 
 export function pageText(html, base) {
@@ -50,9 +51,28 @@ export async function webOpen(i) {
     + (links.length ? "\n\nLinks (open one with web_open):\n" + links.slice(0, 20).map((l, k) => `[${k + 1}] ${l.text} - ${l.href.slice(0, 140)}`).join("\n") : "");
 }
 
-export async function webSearch(i) {
+// Search: the search providers set up in OmniRoute first (Brave, Tavily, SearXNG...), then DuckDuckGo's HTML page, which blocks
+// after a few quick searches (HTTP 202 with a bot check) and then stays blocked for minutes.
+let ddgBlockedUntil = 0;
+const fmt = (q, L) => `Search results for "${q}":\n\n` + L.slice(0, 8).map((r, k) => `${k + 1}. ${plain(r.title || r.url)}\n   ${r.url}\n   ${plain(r.snippet || "")}`).join("\n\n");
+export async function webSearch(i, { orFetch } = {}) {
   const q = String(i.query || "").trim(); if (!q) throw new Error("query is required");
+  let orErr = "";
+  if (orFetch) {
+    try {
+      const r = await orFetch("/v1/search", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query: q, max_results: 8 }), timeout: 20000 });
+      const j = await r.json().catch(() => ({}));
+      const L = (Array.isArray(j.results) ? j.results : []).filter((x) => x && /^https?:/.test(String(x.url || "")));
+      if (r.ok && L.length) return fmt(q, L);
+      orErr = r.ok ? "no results" : j.error?.message || "HTTP " + r.status;
+    } catch (e) { orErr = String(e.message || e).slice(0, 120); }
+  }
+  if (Date.now() < ddgBlockedUntil) throw new Error(`web search is unavailable right now (OmniRoute search: ${orErr || "not set up"}; DuckDuckGo is blocking automated searches for a few minutes). Add a free search provider (for example Brave Search, Tavily or SearXNG) in the OmniRoute console, or open a known site with web_open.`);
   const r = await get("https://html.duckduckgo.com/html/?q=" + encodeURIComponent(q));
+  if (r.status === 202 || /anomaly|challenge-form/i.test(r.body) && !/class="result__a"/.test(r.body)) {
+    ddgBlockedUntil = Date.now() + 3 * 60000;
+    throw new Error(`web search is unavailable right now (OmniRoute search: ${orErr || "not set up"}; DuckDuckGo answered with a bot check). Add a free search provider (for example Brave Search, Tavily or SearXNG) in the OmniRoute console, or open a known site with web_open.`);
+  }
   const out = [], re = /<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>([\s\S]*?)(?=<a[^>]*class="result__a"|$)/g; let m;
   while ((m = re.exec(r.body)) && out.length < 8) {
     let href = dec(m[1]); const u = /[?&]uddg=([^&]+)/.exec(href);

@@ -194,12 +194,74 @@ on the right shows which models are talking.
   install it with `pip`.
 * **Attach a folder** (folder icon): the agents may do anything inside that folder and its subfolders without asking.
 * **Files in answers:** file names in answers open File Explorer; created files appear as cards with previews.
-* **Web:** agents search and read web pages when a question needs current information.
+* **Web:** with **Search the web first** (Settings, Agents and safety; on by default) agents look facts up online
+  instead of answering from memory, and list their sources.
+* **Pictures and videos:** agents look at images themselves (**view images**; videos need ffmpeg, which they install
+  when needed) and sort or describe them by what they show, never by file name.
+* **Missing tools:** when a job needs a program OmniGPT does not have, the agent searches for a free one and installs it
+  with winget, pip or npm (**install tool**), then uses it.
+* **Background jobs:** agents can start programs that keep running, such as a development server, a long build or a
+  watcher (**start process**). While one runs, the top bar shows "1 background job": click it to see each job's
+  command and latest output, and **Stop** it. At most 8 run at once, environment variables that look like keys or
+  passwords are left out of them, and they all stop when you close OmniGPT.
+* **Charts:** agents draw bar, line, pie and scatter charts as PNG or SVG files, from numbers or a CSV file
+  (**make chart**). Charts that would mislead (more than 8 series, a pie with negative values) are refused with a
+  reason; a pie with more than 8 slices groups the smallest into "Other".
+* **PDF tools:** merge PDFs, copy out or rotate pages, split a PDF into smaller files, or show its page count
+  (**pdf tools**). The originals are never changed; the results are new files that **Undo** removes. This uses qpdf, a
+  free program: the first time, the agent installs it with winget, which goes through approval like any other install.
+* **Text from pictures and scans (OCR):** agents read the text in photos, screenshots and scanned PDF pages with the
+  OCR engine built into Windows, offline (**ocr**). It needs an OCR language in Windows: **Settings > Time & language >
+  Language & region**, add a language with "Optical character recognition". OCR can misread characters, so check
+  numbers that matter.
+* **Data analysis:** agents work out totals, averages and tables from your spreadsheets and data files by running
+  Python (or JavaScript) in the isolated sandbox (**analyze data**). The sandbox gets copies of up to 20 files from your
+  allowed folders (each Excel sheet also as a CSV file), never the originals. It has no network, can run for at most
+  60 seconds, and has only Python's standard library (no pandas or matplotlib; charts are drawn with **make chart**).
+  The files it produces are saved to a new folder under **Analysis results** in the working folder, and **Undo**
+  removes them.
+* **Web APIs:** agents can call public web APIs and read their answers (**http request**). Local and private network
+  addresses are refused. Keys are never typed into the chat: a request that carries a key, password or cookie in its
+  headers is refused. Sending data to an API (anything other than reading) goes through approval like a change.
+* **Accounts (Settings, Accounts):** connect free accounts once; the links and keys you paste are encrypted for your
+  Windows user and never shown to the AI (Settings only shows names, addresses and a masked hint). Each account has
+  **Test** (it never sends a message) and **Remove**.
+  * **Discord or Slack channel:** paste an incoming-webhook link (Discord: channel settings, Integrations, Webhooks,
+    Copy Webhook URL; Slack: an Incoming Webhook for a channel). Agents post with **send message**, which always asks
+    you first, in every approval mode, and shows the exact text. Mentions such as @everyone never ping anyone.
+  * **Calendar:** paste an ICS link (Google Calendar: Settings, your calendar, Integrate calendar, Secret address in
+    iCal format; Outlook: Settings, Calendar, Shared calendars, Publish a calendar, ICS link). Agents read events with
+    **calendar events** (today and the next 14 days unless asked otherwise, repeats and time zones worked out). It is
+    read-only: agents cannot add events this way.
+  * **Web API key:** an https address, the header name (for example Authorization or X-API-Key) and the key. Agents
+    use it by name with **http request**; it is only ever sent to that address, never to another site after a
+    redirect, and hidden if the API echoes it back.
+  * **GitHub:** uses the free GitHub CLI (agents install it with your approval: winget GitHub.cli). **Connect** opens a
+    window where you sign in with your browser; OmniGPT stores nothing. Agents can list and read repositories, issues,
+    pull requests, workflow runs and releases (**github**); creating, commenting, closing, merging and reviewing always
+    ask first. Sign-in, secrets, keys and settings commands are never run.
+* **Checklist:** on long jobs the agent keeps a checklist in the conversation, under the reasoning line
+  ("Checklist · 2 of 5 done"), and ticks items off as it works.
+* **Helpers:** the agent can hand a self-contained part of the job to a helper agent. Each helper has its own lane in
+  the reasoning and in the brain graph, works only from the instructions it was given, cannot ask you anything, and
+  goes through the same safety checks. At most 6 helpers per request.
+* **Memory:** ask OmniGPT to remember or forget something and the agent does it (**remember**, **recall**,
+  **forget**). Passwords, keys and tokens are never saved. Forgetting needs a specific memory: a request that matches
+  more than 5 memories removes nothing. Everything remembered is listed in Settings, **Memory**, where you can delete
+  entries or turn memory off.
 * **OMNI mode:** click the OmniGPT name at the top. Give it a goal and it keeps working on its own; send messages to
   steer it, press Stop to finish. "Run indefinitely" keeps improving the result with free models until you stop it.
 * **OmniRoute console** (bottom left): the OmniRoute dashboard inside the app. "Back to OmniGPT" returns.
-* **Projects and folders** in the sidebar organise chats; right-click a chat to rename, move or delete it.
-* **Settings:** theme, accent color, text size, memory, skills, models, approvals, attached folders, data export.
+* **Projects and folders** in the sidebar organise chats; right-click a chat to rename, move, delete it, or
+  **Export as Markdown**. The **Search chats** box finds chats by title or anything said in them.
+* **Undo:** when an answer changed files on your PC, an **Undo N changes** button appears under it (click twice).
+  It restores overwritten files, moves files back, removes files and folders the agent created (to the Recycle Bin)
+  and brings deleted files back from the Recycle Bin. Commands the agent ran cannot be undone and are listed.
+* **Usage:** the top bar shows this conversation's model calls, tokens and, when OmniRoute shares its prices, the cost.
+* **Activity:** Settings, **Activity** lists every action agents took on your PC, newest first, with a link to the chat.
+* **Brain graph** (right side): the models, memories, skills, tools and files taking part in the conversation.
+* **Settings:** theme, accent color, text size, memory, skills, models, approvals, steps per task, token budget,
+  attached folders, data export.
 
 ## 11. Safety and approvals
 
@@ -214,11 +276,21 @@ Settings, **Agents and safety**, **Approval**:
 
 Always active, whatever the setting: agents can only touch your **allowed folders**; they cannot read credential files,
 environment variables or OmniRoute's data folder; deletes go to the Recycle Bin; code checks run in an isolated
-sandbox with no network and no access to your files.
+sandbox with no network and no access to your files (data analysis gets copies of the files it was given, never the
+originals); drives, your user folder and its main personal folders (Documents, Desktop, Downloads, Pictures, Music,
+Videos, OneDrive) can never be deleted.
+
+Even with **Bypass all checks**, once an agent has read a web page, called a web API or downloaded something in a
+request, deletes, moves or writes of more than 10 files, destructive commands (also as background jobs) and sending
+data to a web API ask first (a web page can try to trick the agent).
+
+Limits, under **Agents and safety**: **Steps per task** (Auto = 40 actions, no limit when bypassing) and **Token budget
+per request** (off by default). An agent that repeats the same action or keeps failing is warned and then stopped.
 
 ## 12. Updates
 
 When a newer version is published on the Releases page, OmniGPT shows a small notice in the bottom-right corner.
+**Install now** downloads the installer, checks it against the release's SHA-256, installs it and reopens OmniGPT.
 Turn it off in Settings, General, **Update notifications**. Settings, About, **Check for updates** checks by hand.
 
 ## 13. Where your data lives, and uninstalling
@@ -226,9 +298,12 @@ Turn it off in Settings, General, **Update notifications**. Settings, About, **C
 | What | Where |
 |---|---|
 | The program | `%LOCALAPPDATA%\Programs\OmniGPT` |
-| Chats, settings, memories, skills, saved key | `%LOCALAPPDATA%\OmniRouteChat` |
+| Chats, settings, memories, skills, saved key, undo journal, activity log | `%LOCALAPPDATA%\OmniRouteChat` |
+| Connected accounts (links and keys encrypted for your Windows user) | `%LOCALAPPDATA%\OmniRouteChat\connections.json` |
+| Backups of files agents overwrote | `%LOCALAPPDATA%\OmniRouteChat\backups` |
 | Logs, sandbox runs, window data | `%LOCALAPPDATA%\OmniGPT` |
 | Attached files | `Documents\OmniRoute Workspace\Attachments` |
+| Data analysis results | `Analysis results` in the working folder (by default `Documents\OmniRoute Workspace\Analysis results`) |
 | OmniRoute's data (provider keys) | `%USERPROFILE%\.omniroute` (or your `DATA_DIR`) |
 
 Uninstall from **Settings, Apps** in Windows (OmniGPT), or run `Uninstall OmniGPT.cmd` in the program folder. Your chats
@@ -247,6 +322,9 @@ and settings are kept; delete the folders above to remove them too. Remove OmniR
 | "OmniGPT could not start" | Read `%LOCALAPPDATA%\OmniGPT\server.log`. |
 | My providers disappeared after starting OmniGPT | OmniGPT started OmniRoute with its default folder. Set your custom folder in Settings, Connection, OmniRoute data folder, and restart OmniGPT. |
 | File conversions fail | Install Python 3 and tick "Add python.exe to PATH". |
+| OCR says Windows has no OCR language installed | Windows **Settings > Time & language > Language & region**: add a language with "Optical character recognition", then try again. |
+| PDF tools say qpdf is not installed | Let the agent install it, or run `winget install --id QPDF.QPDF -e` in PowerShell. |
+| A background job keeps running | Click "N background jobs" in the top bar and press **Stop**. Closing OmniGPT stops every job. |
 
 ## 15. Building from source
 
@@ -259,28 +337,41 @@ cd OmniGPT\omnigpt\windows
 powershell -ExecutionPolicy Bypass -File .\build-installer.ps1
 ```
 
-This runs the checks (`tests\preflight.mjs`: safety rules, file readers, folder rules, and more), builds the program,
-tries to break out of the code sandbox (`tests\sandbox-test.mjs`), and writes `release\OmniGPT-Setup.exe`.
+This runs the checks (`tests\preflight.mjs`: the syntax of every backend module, safety rules, file readers, folder
+rules, the tool tests, and more), builds the program (it ships every backend module, `app\*.mjs`), tries to break out
+of the code sandbox (`tests\sandbox-test.mjs`, which also runs data analysis end to end), and writes
+`release\OmniGPT-Setup.exe`.
 `install.ps1` builds and installs directly without making an installer.
 
 Layout:
 
 ```
 omnigpt/
-  app/        the OmniGPT web app and its local backend (Node): index.html, server.mjs, tools.mjs, web.mjs, files.mjs
+  app/        the OmniGPT web app (index.html, style.css, brain.js, app.js) and its local backend (Node):
+              server.mjs, tools.mjs (PC tools, safety rules, undo journal), jobs.mjs (background jobs),
+              charts.mjs, pdfocr.mjs (OCR and PDF tools), render.mjs, browser.mjs, docs.mjs, web.mjs, files.mjs,
+              zip.mjs
   windows/    the Windows host (OmniGPT.cs), code sandbox (Sandbox.cs), installer (Setup.cs), build scripts, tests
 ```
 
 To run the OmniRoute dashboard from this fork (with the OmniGPT look built in), follow
 [README.omniroute.md](README.omniroute.md) (`npm install`, `npm run build`, `npm start`).
 
+**Automatic builds:** every change under `omnigpt/` runs the checks and builds the installer on GitHub
+(`.github/workflows/omnigpt.yml`). Open the run under **Actions** and download the `OmniGPT-Setup` artifact.
+
 **Publishing a release (maintainers):** set the new version in `omnigpt/app/server.mjs` (`VERSION`) and
-`omnigpt/windows/Setup.cs` (`Version`), build the installer, then
-`gh release create omnigpt-vX.Y.Z omnigpt/windows/release/OmniGPT-Setup.exe`. The update check only looks at tags named
+`omnigpt/windows/Setup.cs` (`Version`), build the installer (locally or from the Actions artifact), then
+`gh release create omnigpt-vX.Y.Z omnigpt/windows/release/OmniGPT-Setup.exe omnigpt/windows/release/OmniGPT-Setup.exe.sha256`
+(the `.sha256` file is needed for **Install now**). The update check only looks at tags named
 `omnigpt-vX.Y.Z`.
 
 ---
 
 OmniGPT is by **ASDFboy** ([@ASDFboy](https://github.com/ASDFboy)) and **Claude** (Anthropic).
+
+OmniGPT was designed and built with [Claude](https://claude.ai), an AI assistant made by Anthropic (see
+[omnigpt/CREDITS.md](omnigpt/CREDITS.md)).
+
 OmniRoute is by [diegosouzapw](https://github.com/diegosouzapw/OmniRoute); its original README is
 [README.omniroute.md](README.omniroute.md). MIT License (see [LICENSE](LICENSE)).
