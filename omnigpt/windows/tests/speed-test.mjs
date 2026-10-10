@@ -10,6 +10,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const src = ["app", "OmniGPT"].map((d) => path.resolve(here, "..", "..", d)).find((d) => fs.existsSync(path.join(d, "server.mjs")));
 process.env.LOCALAPPDATA = fs.mkdtempSync(path.join(os.tmpdir(), "omnigpt-speedtest-"));
+process.env.OMNIGPT_PS_WORKER = "1"; // the worker is opt-in in the app; this test is what proves it before it can become the default
 process.env.OMNIGPT_PS_IDLE_MS = "2500"; process.env.OMNIGPT_RENDER_IDLE_MS = "2500";
 const win = process.platform === "win32";
 const { findBrowser } = await import("./pagekit.mjs");
@@ -59,7 +60,7 @@ try {
     r = await q("Get-Item ./does-not-exist-xyz; [IO.File]::ReadAllText('does-not-exist.txt'); 'after'");
     check("errors that only end one statement let the script go on", r.code === 0 && /after\n$/.test(r.out), JSON.stringify(r).slice(0, 200));
     r = await q("'before'; throw 'boom'; 'after'");
-    check("a thrown error ends the script with code 1", r.code === 1 && /^before\n/.test(r.out) && /boom/.test(r.err) && !/after/.test(r.out), JSON.stringify(r).slice(0, 200));
+    check("a thrown error ends the script with code 1", r.code === 1 && /^before\r?\n/.test(r.out) && /boom/.test(r.err) && !/^after\r?$/m.test(r.out) /* PowerShell's error text quotes the source line, so "after" only counts as its own output line */, JSON.stringify(r).slice(0, 200));
     r = await q("'x'; exit 5; 'never'");
     check("exit 5 ends the call with code 5", r.code === 5 && r.out === "x\n", JSON.stringify(r));
     r = await q("function Stop-Here { exit 9 }; Stop-Here; 'never'");

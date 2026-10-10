@@ -84,6 +84,12 @@ catch (e) { check("learning: scores per kind of task, recipes, benchmark harness
 // 1b19. chats: one file per chat, the move from the old single file, search, export, project chat tools, idle brain graph
 try { execFileSync(process.execPath, [path.join(here, "chats-test.mjs")], { stdio: "pipe", timeout: 240000 }); check("chat storage", true); }
 catch (e) { check("chat storage", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
+// 1b19b. web search through OmniRoute's providers; IPv6-written private addresses; attached-folder command escapes; key locations
+try { execFileSync(process.execPath, [path.join(here, "search-test.mjs")], { stdio: "pipe", timeout: 60000 }); check("web search, private addresses, folder escapes", true); }
+catch (e) { check("web search, private addresses, folder escapes", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
+// 1b19c. safety: attached-folder commands ask, web addresses after a private read ask, memories after reads ask, streamed text drawn per frame, scheduled approvals time out
+try { execFileSync(process.execPath, [path.join(here, "safety-test.mjs")], { stdio: "pipe", timeout: 120000 }); check("safety: approvals after private reads, streaming, scheduled waits", true); }
+catch (e) { check("safety: approvals after private reads, streaming, scheduled waits", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
 // 1b20. speed: one PowerShell kept open for the app's own scripts (Windows), one browser for chart pictures and PDFs
 try { const out = execFileSync(process.execPath, [path.join(here, "speed-test.mjs")], { stdio: "pipe", timeout: 300000 }).toString(); check("shared PowerShell worker and drawing browser", true, out.split("\n").filter((l) => l.startsWith("TIMING")).map((l) => l.slice(8)).join("; ")); }
 catch (e) { check("shared PowerShell worker and drawing browser", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }

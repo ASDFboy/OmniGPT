@@ -94,7 +94,90 @@ function epub(z) {
 function pdfString(s) {
   return s.replace(/\\([nrtbf()\\]|[0-7]{1,3})/g, (m, c) => ({ n: "\n", r: "\r", t: "\t", b: "", f: "", "(": "(", ")": ")", "\\": "\\" }[c] ?? String.fromCharCode(parseInt(c, 8))));
 }
+// Objects by number, including those packed in object streams (/ObjStm), with stream data inflated.
+function pdfObjects(buf) {
+  const raw = buf.toString("latin1"), objs = new Map();
+  const inflate = (d) => { try { return zlib.inflateSync(d); } catch { try { return zlib.inflateRawSync(d.subarray(2)); } catch { return null; } } };
+  const re = /(\d+)\s+\d+\s+obj\b/g; let m;
+  while ((m = re.exec(raw))) {
+    const s = m.index + m[0].length, e = raw.indexOf("endobj", s); if (e < 0) break;
+    let dict = raw.slice(s, e), data = null; const k = dict.search(/\bstream\r?\n/);
+    if (k >= 0) {
+      let a = s + k + 6; if (raw[a] === "\r") a++; if (raw[a] === "\n") a++;
+      const z = raw.lastIndexOf("endstream", e); dict = raw.slice(s, s + k);
+      const d = buf.subarray(a, z > a ? z : e);
+      data = /\/FlateDecode/.test(dict) ? inflate(d) : /\/Filter/.test(dict) ? null : d;
+    }
+    objs.set(+m[1], { dict, data }); re.lastIndex = e;
+  }
+  for (const o of [...objs.values()]) if (/\/Type\s*\/ObjStm/.test(o.dict) && o.data) {
+    const t = o.data.toString("latin1"), first = +(/\/First\s+(\d+)/.exec(o.dict) || [])[1], n = +(/\/N\s+(\d+)/.exec(o.dict) || [])[1];
+    if (!(first > 0) || !(n > 0)) continue;
+    const nums = t.slice(0, first).trim().split(/\s+/).map(Number);
+    for (let i = 0; i < n; i++) { const id = nums[2 * i], end = i + 1 < n ? first + nums[2 * i + 3] : t.length; if (!objs.has(id)) objs.set(id, { dict: t.slice(first + nums[2 * i + 1], end), data: null }); }
+  }
+  return objs;
+}
+const u16 = (h) => { h = h.replace(/\s/g, ""); if (h.length < 4) return h ? String.fromCharCode(parseInt(h, 16)) : ""; let s = ""; for (let i = 0; i + 4 <= h.length; i += 4) s += String.fromCharCode(parseInt(h.slice(i, i + 4), 16)); return s; };
+// a ToUnicode CMap: character code -> text, and how many bytes one code takes
+function cmapOf(t) {
+  const map = new Map(), cs = /begincodespacerange\s*<([0-9a-f]+)>/i.exec(t); let w = cs ? cs[1].length / 2 : 0;
+  for (const b of t.matchAll(/beginbfchar([\s\S]*?)endbfchar/g)) for (const p of b[1].matchAll(/<([0-9a-f]+)>\s*<([0-9a-f\s]*)>/gi)) { w = w || p[1].length / 2; map.set(parseInt(p[1], 16), u16(p[2])); }
+  for (const b of t.matchAll(/beginbfrange([\s\S]*?)endbfrange/g)) for (const p of b[1].matchAll(/<([0-9a-f]+)>\s*<([0-9a-f]+)>\s*(?:<([0-9a-f\s]*)>|\[([^\]]*)\])/gi)) {
+    w = w || p[1].length / 2; const lo = parseInt(p[1], 16), hi = parseInt(p[2], 16); if (hi < lo || hi - lo > 65535) continue;
+    if (p[3] !== undefined) { const base = u16(p[3]); if (!base) continue; const head = base.slice(0, -1), last = base.charCodeAt(base.length - 1); for (let c = lo; c <= hi; c++) map.set(c, head + String.fromCharCode(last + c - lo)); }
+    else [...p[4].matchAll(/<([0-9a-f\s]*)>/gi)].forEach((x, i) => map.set(lo + i, u16(x[1])));
+  }
+  return map.size ? { map, w: w || 1 } : null;
+}
+// text from the page tree, page by page, decoding each font through its ToUnicode map when it has one
+function pdfPages(buf) {
+  const objs = pdfObjects(buf), get = (id) => objs.get(id) || { dict: "", data: null };
+  const ref = (s, k) => { const m = new RegExp("/" + k + "\\s+(\\d+)\\s+\\d+\\s+R").exec(s); return m ? +m[1] : null; };
+  const cmaps = new Map(), fontMap = (id) => { if (!cmaps.has(id)) { const tu = ref(get(id).dict, "ToUnicode"), d = tu != null && get(tu).data; cmaps.set(id, d ? cmapOf(d.toString("latin1")) : null); } return cmaps.get(id); };
+  const pages = [], seen = new Set();
+  const walk = (id, depth) => { if (seen.has(id) || depth > 30) return; seen.add(id); const d = get(id).dict;
+    if (/\/Type\s*\/Pages\b/.test(d)) { const k = /\/Kids\s*\[([^\]]*)\]/.exec(d); if (k) for (const r of k[1].matchAll(/(\d+)\s+\d+\s+R/g)) walk(+r[1], depth + 1); }
+    else if (/\/Type\s*\/Page\b/.test(d)) pages.push(id); };
+  for (const [id, o] of objs) if (/\/Type\s*\/Pages\b/.test(o.dict) && !/\/Parent\s/.test(o.dict)) walk(id, 0);
+  const fontsOf = (pd) => {
+    for (let d = pd, n = 0; d && n < 30; d = (ref(d, "Parent") != null ? get(ref(d, "Parent")).dict : null), n++) {
+      let res = d; const r = ref(d, "Resources"); if (r != null) res = get(r).dict;
+      const fr = ref(res, "Font"), fd = fr != null ? get(fr).dict : (/\/Font\s*<<([\s\S]*?)>>/.exec(res) || [])[1];
+      if (fd) { const F = {}; for (const m of fd.matchAll(/\/([^\s\/<>\[\]()]+)\s+(\d+)\s+\d+\s+R/g)) F[m[1]] = fontMap(+m[2]); return F; }
+    }
+    return {};
+  };
+  const out = [];
+  for (const pid of pages) {
+    const pd = get(pid).dict, F = fontsOf(pd), cm = /\/Contents\s*\[([^\]]*)\]/.exec(pd), one = ref(pd, "Contents");
+    let ids = cm ? [...cm[1].matchAll(/(\d+)\s+\d+\s+R/g)].map((x) => +x[1]) : one != null ? [one] : [];
+    if (ids.length === 1 && !get(ids[0]).data && /^\s*\[/.test(get(ids[0]).dict)) ids = [...get(ids[0]).dict.matchAll(/(\d+)\s+\d+\s+R/g)].map((x) => +x[1]); // contents given as an array object
+    const s = ids.map((i) => (get(i).data || Buffer.alloc(0)).toString("latin1")).join("\n");
+    let font = null, line = ""; const lines = [];
+    const bytesOf = (tok) => tok[0] === "<" ? Buffer.from(tok.slice(1, -1).replace(/\s/g, "").padEnd(Math.ceil(tok.replace(/[<>\s]/g, "").length / 2) * 2, "0"), "hex").toString("latin1") : pdfString(tok.slice(1, -1));
+    const dec = (b) => { if (!font) return b; let t = ""; for (let i = 0; i + font.w <= b.length; i += font.w) { let c = 0; for (let k = 0; k < font.w; k++) c = c * 256 + b.charCodeAt(i + k); t += font.map.get(c) ?? ""; } return t; };
+    const brk = () => { if (line.trim()) lines.push(line); line = ""; };
+    const STR = String.raw`\((?:\\[\s\S]|[^\\)])*\)|<[0-9a-fA-F\s]*>`;
+    const re = new RegExp(String.raw`\/([^\s\/\[\]()<>]+)\s+[-\d.]+\s+Tf|(${STR})\s*(?:Tj|'|")|\[((?:\\[\s\S]|\((?:\\[\s\S]|[^\\)])*\)|[^\]])*)\]\s*TJ|(-?[\d.]+)\s+(-?[\d.]+)\s+T[dD]\b|\b(T\*|Tm|ET)\b`, "g");
+    for (const t of s.matchAll(re)) {
+      if (t[1]) font = F[t[1]] || null;
+      else if (t[2]) line += dec(bytesOf(t[2]));
+      else if (t[3] !== undefined) for (const p of t[3].matchAll(new RegExp(`${STR}|(-?\\d+\\.?\\d*)`, "g"))) line += p[1] !== undefined ? (+p[1] < -200 ? " " : "") : dec(bytesOf(p[0]));
+      else if (t[5] !== undefined) { if (Math.abs(+t[5]) < 0.01) line += " "; else brk(); }
+      else brk();
+    }
+    brk(); out.push(lines.join("\n"));
+  }
+  return { pages: pages.length, text: out.join("\n\n").replace(/[^\S\n]+/g, " ").replace(/\n{3,}/g, "\n\n").trim() };
+}
 function pdf(buf) {
+  let best = null; try { best = pdfPages(buf); } catch {}
+  const old = pdfLegacy(buf);
+  if (!best || old.text.replace(/\s/g, "").length > best.text.replace(/\s/g, "").length * 1.2) return { pages: Math.max(old.pages, best ? best.pages : 0), text: old.text };
+  return { pages: best.pages || old.pages, text: best.text };
+}
+function pdfLegacy(buf) {
   const raw = buf.toString("latin1"), pages = (raw.match(/\/Type\s*\/Page[^s]/g) || []).length, out = [];
   const re = /<<([\s\S]*?)>>\s*stream\r?\n/g; let m;
   while ((m = re.exec(raw))) {
@@ -187,7 +270,7 @@ export function inspect(abs, offset = 0, raw = false) {
       else { kind = ext === "jar" ? "Java archive (jar)" : "ZIP archive"; text = `${z.entries.length} entries:\n` + z.entries.slice(0, 150).map((e) => `${e.name}  ${kb(e.size)}`).join("\n"); hint = "To unpack it, use run_command: Expand-Archive -Path <file> -DestinationPath <folder>."; }
     } else if (kind === "pdf") {
       const p = pdf(buf); kind = "PDF document"; info = `Pages: ${p.pages}`; text = p.text;
-      if (text.length < 20) hint = "No text layer could be read (the PDF may be scanned, encrypted, or use embedded font encodings). " + RESEARCH("pdf").replace("OmniGPT has no built-in reader for this format. ", "") + " (pypdf or pdfminer.six for text; an OCR tool for scans.)";
+      if (text.length < 20) hint = "No text layer could be read (the PDF may be scanned, encrypted, or use embedded font encodings). First try the ocr tool on it (built into Windows, no install). If that also fails: " + RESEARCH("pdf").replace("OmniGPT has no built-in reader for this format. ", "") + " (pypdf or pdfminer.six for text; an OCR tool for scans.)";
     } else if (["png", "jpeg", "gif", "bmp", "webp", "ico"].includes(kind)) {
       const d = image(buf, kind); kind = kind.toUpperCase() + " image"; info = d.width ? `Dimensions: ${d.width} x ${d.height} px` : "";
       hint = "The image content itself is shown to a vision model when the user attaches it. To edit or convert images, research and install a library such as Pillow.";
@@ -219,4 +302,4 @@ export function inspect(abs, offset = 0, raw = false) {
 }
 
 export const MIME = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp", bmp: "image/bmp", ico: "image/x-icon", svg: "image/svg+xml", pdf: "application/pdf", mp3: "audio/mpeg", wav: "audio/wav", ogg: "audio/ogg", flac: "audio/flac", m4a: "audio/mp4", mp4: "video/mp4", webm: "video/webm", mov: "video/quicktime" };
-export const RUNNABLE = /\.(exe|com|bat|cmd|ps1|psm1|vbs|vbe|js|jse|wsf|wsh|msi|msp|scr|hta|cpl|lnk|jar|reg|url|pif|appx|msix|py|pyw)$/i;
+export const RUNNABLE = /\.(exe|com|bat|cmd|ps1|psm1|vbs|vbe|js|jse|wsf|wsh|msi|msp|scr|hta|cpl|lnk|jar|reg|url|pif|appx|msix|py|pyw|psd1|msi|mst|gadget|inf|scf|ws|sct|sh|chm|msc|iso|img|vhdx?|appref-ms|application|settingcontent-ms|xll|xlam|ppam|docm|dotm|xlsm|xltm|pptm|potm|library-ms|search-ms|searchconnector-ms|diagcab|appinstaller|appxbundle|msixbundle|mht|mhtml|psc1|website)$/i;
