@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Account connections (Settings > Accounts): Discord and Slack webhooks, calendar (ICS) links and API keys, saved for the
 // Windows user with DPAPI, and GitHub through the free GitHub CLI, which keeps its own sign-in. Secrets are decrypted only
 // inside the backend: nothing that goes back to the page or to the model contains one.

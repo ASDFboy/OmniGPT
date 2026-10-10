@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // OmniGPT page: the brain graph. Loaded as a classic script after the inline token script in index.html;
 // top-level names are shared between brain.js and app.js.
 // BRAIN-START

@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Documents, images, media and OmniRoute media tools. OmniRoute is replaced by a small stand-in server.
 // Run: node media-test.mjs (exit 0 = all passed)
 import fs from "node:fs";

@@ -1,3 +1,4 @@
+/* Built with Claude (Anthropic) - see CREDITS.md */
 /* OmniGPT page styles (index.html) */
 :root{--bg:#f4f4f3;--panel:#ebebea;--card:#fbfbfa;--soft:#efefee;--fg:#262626;--mut:#7f7f7f;--line:#dcdcda;--inv:#262626;--invfg:#f4f4f3;
 --ui:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;--read:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;--mono:"Cascadia Mono",Consolas,monospace;--w:720px;color-scheme:light dark}

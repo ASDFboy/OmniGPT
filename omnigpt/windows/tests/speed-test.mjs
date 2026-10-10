@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Speed: the shared PowerShell worker (Windows, or anywhere with OMNIGPT_POWERSHELL pointing to pwsh) and the shared
 // browser that draws chart PNGs and prints PDFs (every system with Edge or Chromium). Prints the timings.
 // Run: node speed-test.mjs (exit 0 = all passed)

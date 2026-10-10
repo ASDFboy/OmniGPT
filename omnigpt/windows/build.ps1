@@ -1,3 +1,4 @@
+# Built with Claude (Anthropic) - see CREDITS.md
 # Builds the OmniGPT program into .\dist (does NOT touch the installed copy).
 # Needs only what Windows already has (the .NET Framework C# compiler), Node.js, and optionally Python 3 for the code sandbox.
 # The WebView2 libraries are taken from the NuGet cache, or downloaded once from nuget.org.

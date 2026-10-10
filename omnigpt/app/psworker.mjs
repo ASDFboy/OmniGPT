@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // PowerShell for the backend. ps() starts a new powershell.exe for every call: run_command, install_tool and speak use it.
 // psq() sends the app's own short scripts (notifications, clipboard, Recycle Bin, pictures, OCR, DPAPI...) to one hidden
 // PowerShell that stays open, because starting powershell.exe costs about half a second every time. Calls run one at a

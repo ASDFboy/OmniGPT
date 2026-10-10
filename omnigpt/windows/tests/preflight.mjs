@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Checks that must pass before the installed OmniGPT is replaced. Exit code 0 = safe to install.
 import fs from "node:fs";
 import os from "node:os";

@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Finding things by meaning: text -> vectors through the user's own OmniRoute (POST /v1/embeddings), with a small disk
 // cache (model + sha256 of the text -> an 8-bit vector) so the same memory, skill or question is never embedded twice.
 // Nothing runs in the background: the cache is loaded on first use and dropped from memory again after a few idle minutes.

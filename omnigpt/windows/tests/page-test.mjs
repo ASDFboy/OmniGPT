@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // The tools that run inside the page (remember / recall / forget, todo, delegate), tested in the real page with a fake
 // model: the page's stream() is replaced by a script, everything else (agent loop, tool cards, approvals, the backend)
 // is the real code. Run: node page-test.mjs (exit 0 = all passed)

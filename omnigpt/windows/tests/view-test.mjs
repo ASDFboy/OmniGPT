@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // view_images returns real pictures the model can see (videos: 3 frames when ffmpeg exists), and install_tool only
 // accepts plain package names. Run: node view-test.mjs (exit 0 = all passed)
 import fs from "node:fs";

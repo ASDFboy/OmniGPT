@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Background jobs: start_process / read_process / stop_process. Starts small Node programs as jobs, waits for their
 // output, stops them, and checks the safety rules. Run: node jobs-test.mjs (exit 0 = all passed)
 import fs from "node:fs";

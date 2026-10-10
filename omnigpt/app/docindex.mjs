@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // search_meaning: finds passages in the user's documents by meaning. Text is cut into ~1000-character passages, turned into
 // vectors through OmniRoute (embed.mjs) and kept in %LOCALAPPDATA%\OmniRouteChat\index with each file's time and size, so
 // a later search only reads new or changed files. Nothing watches the disk: the index is brought up to date when the tool

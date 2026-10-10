@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Draws HTML pages to PNG and prints them to PDF with Edge (or Chrome) in the background, through the DevTools protocol.
 // (The browser's --screenshot switch cannot be used: in the current headless mode it cuts off the bottom of the page.)
 // One browser is kept open for 3 minutes after the last page (OMNIGPT_RENDER_IDLE_MS) instead of starting one per page;

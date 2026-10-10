@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Minimal zip writer and reader (no zip64: entries and archives up to 4 GB). Used by the archive tool and to build
 // Office files (docx, xlsx, pptx are zip packages of XML).
 import zlib from "node:zlib";

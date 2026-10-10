@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Approval and safety rules in the real page with a fake model: commands in an attached folder still ask in "ask" mode, web
 // addresses are reviewed once the user's files were read, memories from pages or files need a yes, "run indefinitely" stays
 // on free models through settings changes, streamed text is drawn once per frame, and unattended approvals time out.

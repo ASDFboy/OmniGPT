@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Background jobs: long-running commands (dev servers, builds, watchers) started by an agent with start_process.
 // Their output is kept in memory (the most recent 400,000 characters per job) so read_process can return what is new.
 // Every job is listed in the app, can be stopped from there, and is stopped when OmniGPT closes.

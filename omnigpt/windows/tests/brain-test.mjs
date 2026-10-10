@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Brain graph: runs app/brain.js against a stand-in canvas (strict like a real one: non-finite numbers and negative radii
 // throw) and checks that every visible node is drawn with a text label, whatever the graph is fed, and that frames are
 // only drawn while the picture changes (fake clock, timers, focus, visibility, resize and theme events).

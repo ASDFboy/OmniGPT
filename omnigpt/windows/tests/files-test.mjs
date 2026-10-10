@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Builds real sample files of many formats and checks that OmniGPT's file reader understands each one.
 // Run: node files-test.mjs [folder]   (the folder is kept so the samples can be reused for end-to-end tests)
 import fs from "node:fs";

@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Document builder for make_document: Markdown (and tables / slide lists) to HTML, Word (.docx), Excel (.xlsx) and
 // PowerPoint (.pptx), written directly as Office Open XML packages. No Office installation is needed.
 import { zipBuild } from "./zip.mjs";

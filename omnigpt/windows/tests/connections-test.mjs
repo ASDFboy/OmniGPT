@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Account connections: saved links and keys never reach the page or the model (DPAPI on Windows), send_message always
 // asks and posts the right JSON to Discord and Slack, calendars (ICS) are read with repeats and time zones, http_request
 // adds a saved key only for its own address, and the github tool runs only allowed gh commands (a fake gh stands in).

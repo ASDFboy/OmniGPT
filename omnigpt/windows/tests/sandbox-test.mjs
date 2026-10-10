@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Tries to escape the code sandbox. Every attack must FAIL. Usage: node sandbox-test.mjs <installRoot>
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";

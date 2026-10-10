@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // make_chart: bar, line, pie and scatter charts drawn as SVG (no libraries). PNG files are rendered from the SVG by
 // Edge in the background (tools.mjs). Colours follow one fixed, colour-blind-checked order; marks are thin, the grid is
 // recessive, text is never in a series colour, and two or more series always get a legend.

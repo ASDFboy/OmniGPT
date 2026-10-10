@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Learning from results, in the real page with a fake model: per-kind model scores (verified answers, corrections, Undo,
 // failed actions, empty replies; decay; ranking) and recipes (saved after verified success without contents, offered for a
 // similar request, dropped after a failure), plus the benchmark harness in its scripted mode.
