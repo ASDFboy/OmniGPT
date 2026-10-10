@@ -368,6 +368,8 @@ To run the OmniRoute dashboard from this fork (with the OmniGPT look built in), 
 
 ---
 
+OmniGPT is by **ASDFboy** ([@ASDFboy](https://github.com/ASDFboy)) and **Claude** (Anthropic).
+
 OmniGPT was designed and built with [Claude](https://claude.ai), an AI assistant made by Anthropic (see
 [omnigpt/CREDITS.md](omnigpt/CREDITS.md)).
 
