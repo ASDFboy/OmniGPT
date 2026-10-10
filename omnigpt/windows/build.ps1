@@ -1,3 +1,4 @@
+# Built with Claude (Anthropic) - see CREDITS.md
 # Builds the OmniGPT program into .\dist (does NOT touch the installed copy).
 # Needs only what Windows already has (the .NET Framework C# compiler), Node.js, and optionally Python 3 for the code sandbox.
 # The WebView2 libraries are taken from the NuGet cache, or downloaded once from nuget.org.
@@ -26,7 +27,7 @@ function Find-WebView2Sdk {
 $pkg = Find-WebView2Sdk
 $sdkCore = "$pkg\lib\net462"; $sdkLoader = "$pkg\runtimes\win-x64\native"
 if (-not (Test-Path "$sdkCore\Microsoft.Web.WebView2.Core.dll")) { $sdkCore = $pkg; $sdkLoader = $pkg } # a plain folder of DLLs passed with -WebView2Sdk
-foreach ($p in @($csc, "$sdkCore\Microsoft.Web.WebView2.Core.dll", "$sdkCore\Microsoft.Web.WebView2.WinForms.dll", "$sdkLoader\WebView2Loader.dll", $Node, "$src\index.html", "$src\server.mjs", "$src\tools.mjs", "$src\web.mjs", "$src\files.mjs", "$src\console-theme.css")) {
+foreach ($p in @($csc, "$sdkCore\Microsoft.Web.WebView2.Core.dll", "$sdkCore\Microsoft.Web.WebView2.WinForms.dll", "$sdkLoader\WebView2Loader.dll", $Node, "$src\index.html", "$src\app.js", "$src\brain.js", "$src\style.css", "$src\server.mjs", "$src\tools.mjs", "$src\web.mjs", "$src\files.mjs", "$src\zip.mjs", "$src\docs.mjs", "$src\browser.mjs", "$src\jobs.mjs", "$src\console-theme.css")) {
   if (-not (Test-Path $p)) { throw "Missing required file: $p" }
 }
 New-Item -ItemType Directory -Force $Out, "$Out\app", "$Out\runtime" | Out-Null
@@ -64,7 +65,8 @@ Copy-Item "$sdkCore\Microsoft.Web.WebView2.Core.dll", "$sdkCore\Microsoft.Web.We
 if ($LASTEXITCODE -ne 0) { throw "Compilation failed" }
 
 # 3. the web app and the Node runtime it runs on
-Copy-Item "$src\index.html", "$src\server.mjs", "$src\tools.mjs", "$src\web.mjs", "$src\files.mjs", "$src\console-theme.css" "$Out\app" -Force
+# every backend module (*.mjs) is shipped, so a new module can never be left out of the installer
+Copy-Item (@("$src\index.html", "$src\app.js", "$src\brain.js", "$src\style.css", "$src\console-theme.css") + @(Get-ChildItem "$src\*.mjs" | ForEach-Object { $_.FullName })) "$Out\app" -Force
 if (-not (Test-Path "$Out\runtime\node.exe") -or (Get-Item "$Out\runtime\node.exe").Length -ne (Get-Item $Node).Length) {
   Copy-Item $Node "$Out\runtime\node.exe" -Force
 }

@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Checks the attached-folder rules. preflight.mjs runs this with LOCALAPPDATA pointed at a temporary folder,
 // so the user's real configuration is never changed.
 import fs from "node:fs";

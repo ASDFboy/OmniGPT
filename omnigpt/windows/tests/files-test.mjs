@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Builds real sample files of many formats and checks that OmniGPT's file reader understands each one.
 // Run: node files-test.mjs [folder]   (the folder is kept so the samples can be reused for end-to-end tests)
 import fs from "node:fs";
@@ -44,6 +45,18 @@ function pdfDoc(text, compress) {
   parts.push(Buffer.from(`xref\n0 6\n0000000000 65535 f \n${offs.map((o) => String(o).padStart(10, "0") + " 00000 n \n").join("")}trailer << /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`));
   return Buffer.concat(parts);
 }
+// a PDF like Word, Chrome or Apache FOP make: two-byte glyph codes in hex strings, text only through the font's ToUnicode map
+function cidPdf(text) {
+  const chars = [...new Set(text)], code = (c) => (chars.indexOf(c) + 3).toString(16).padStart(4, "0");
+  const hex = (s) => "<" + [...s].map(code).join("") + ">";
+  const content = zlib.deflateSync(Buffer.from(`BT /F1 12 Tf 72 720 Td ${hex(text.slice(0, 5))} Tj [${hex(text.slice(5))}] TJ ET`));
+  const cmap = zlib.deflateSync(Buffer.from(`/CIDInit /ProcSet findresource begin 12 dict begin begincmap 1 begincodespacerange <0000> <FFFF> endcodespacerange ${chars.length} beginbfchar ${chars.map((c) => `<${code(c)}> <${c.charCodeAt(0).toString(16).padStart(4, "0")}>`).join(" ")} endbfchar endcmap end end`));
+  const objs = [`<< /Type /Catalog /Pages 2 0 R >>`, `<< /Type /Pages /Kids [3 0 R] /Count 1 >>`, `<< /Type /Page /Parent 2 0 R /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>`, content, `<< /Type /Font /Subtype /Type0 /BaseFont /ABCDEF+Arial /Encoding /Identity-H /ToUnicode 6 0 R >>`, cmap];
+  const parts = [Buffer.from("%PDF-1.7\n")];
+  objs.forEach((o, i) => parts.push(Buffer.isBuffer(o) ? Buffer.concat([Buffer.from(`${i + 1} 0 obj\n<< /Length ${o.length} /Filter /FlateDecode >>\nstream\n`), o, Buffer.from("\nendstream\nendobj\n")]) : Buffer.from(`${i + 1} 0 obj\n${o}\nendobj\n`)));
+  parts.push(Buffer.from("trailer << /Root 1 0 R >>\n%%EOF\n"));
+  return Buffer.concat(parts);
+}
 function tar(files) {
   const out = [];
   for (const [name, content] of files) { const d = Buffer.from(content), h = Buffer.alloc(512); h.write(name, 0); h.write("0000644\0", 100); h.write("0000000\0", 108); h.write("0000000\0", 116); h.write(d.length.toString(8).padStart(11, "0") + "\0", 124); h.write("00000000000\0", 136); h.write("        ", 148); h.write("0", 156); h.write("ustar\0", 257); h.write("00", 263);
@@ -76,7 +89,7 @@ const cases = [
   ["book.epub", zip([["mimetype", "application/epub+zip"], ["META-INF/container.xml", "<container/>"], ["OEBPS/ch1.xhtml", `<html><body><p>${MARK}</p></body></html>`]]), MARK],
   ["bundle.zip", zip([["folder/inner-" + MARK + ".txt", "x"], ["b.txt", "y"]]), MARK],
   ["lib.jar", zip([["META-INF/MANIFEST.MF", "Main-Class: X"], ["X-" + MARK + ".class", "x"]]), MARK],
-  ["plain.pdf", pdfDoc(`Hello ${MARK}`, false), MARK], ["compressed.pdf", pdfDoc(`Packed ${MARK}`, true), MARK],
+  ["plain.pdf", pdfDoc(`Hello ${MARK}`, false), MARK], ["compressed.pdf", pdfDoc(`Packed ${MARK}`, true), MARK], ["cid-fonts.pdf", cidPdf(`Font ${MARK}`), MARK],
   ["photo.png", png(64, 48, [10, 200, 30]), "64 x 48"],
   ["pixel.jpg", Buffer.from("/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=", "base64"), "1 x 1"],
   ["anim.gif", Buffer.concat([Buffer.from("GIF89a"), Buffer.from([20, 0, 10, 0, 0, 0, 0]), Buffer.from([0x3b])]), "20 x 10"],

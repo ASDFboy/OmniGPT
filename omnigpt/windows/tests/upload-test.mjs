@@ -1,3 +1,4 @@
+// Built with Claude (Anthropic) - see CREDITS.md
 // Uploads every sample file to a running OmniGPT backend and checks what the agents will be told about it.
 // Run: node upload-test.mjs <port> <samples folder>
 import fs from "node:fs";
