@@ -9,7 +9,7 @@ import os from "node:os";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { Readable } from "node:stream";
-import { loadConfig, saveConfig, precheck, run, resolveScope, runSandboxRaw, sandboxInfo, checkPath, grantFolder, ungrantFolder, folderConfig, insideFolder, undoTurn, undoInfo, readActivity, setOmniRoute, listJobs, stopJob, stopAllJobs } from "./tools.mjs";
+import { loadConfig, saveConfig, precheck, run, resolveScope, runSandboxRaw, sandboxInfo, checkPath, verifyFile, grantFolder, ungrantFolder, folderConfig, insideFolder, undoTurn, undoInfo, readActivity, setOmniRoute, listJobs, stopJob, stopAllJobs } from "./tools.mjs";
 import { inspect, MIME, RUNNABLE } from "./files.mjs";
 import { embedApi, embedModels, meaningSettings, isLocalModel } from "./embed.mjs";
 import { indexInfo, clearIndexQueued } from "./docindex.mjs";
@@ -22,7 +22,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const OR = process.env.OMNIROUTE_URL || "http://127.0.0.1:20128";
 const PORT = Number(process.env.OMNIGPT_PORT || 20129); // a different port lets a development copy run beside the installed app
 const TOKEN = crypto.randomBytes(24).toString("hex"); // per launch; only the served page knows it
-export const VERSION = "1.0.3";
+export const VERSION = "1.0.4";
 const REPO = "ASDFboy/OmniGPT"; // GitHub repository whose releases are checked for updates
 const CHAT_DIR_ = path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"), "OmniRouteChat");
 const KEYFILE = path.join(CHAT_DIR_, "omniroute-key.txt"); // the key can also be saved from Settings instead of an environment variable
@@ -316,6 +316,10 @@ http.createServer(async (req, res) => {
     if (req.method === "POST" && req.url === "/api/fileinfo") {
       const b = JSON.parse(await readBody(req));
       return json(res, 200, (b.paths || []).slice(0, 30).map((p) => { const abs = absOf(p); try { const st = fs.statSync(abs), ext = path.extname(abs).slice(1).toLowerCase(); return { path: abs, exists: true, isDir: st.isDirectory(), size: st.size, mtime: st.mtimeMs, ext, mime: MIME[ext] || "", runnable: RUNNABLE.test(abs) }; } catch { return { path: abs, exists: false }; } }));
+    }
+    if (req.method === "POST" && req.url === "/api/verify") { // what is really on disk for the files an agent says it made
+      const b = JSON.parse(await readBody(req)), cfg = loadConfig();
+      return json(res, 200, (b.paths || []).slice(0, 15).map((p) => verifyFile(p, cfg)));
     }
     if (req.method === "POST" && req.url === "/api/changed") { // files in the working folder created or changed since a time
       const since = Number(JSON.parse(await readBody(req)).since) || Date.now(), cfg = loadConfig(), found = []; let seen = 0;

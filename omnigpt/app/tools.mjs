@@ -8,7 +8,7 @@ import os from "node:os";
 import crypto from "node:crypto";
 import dns from "node:dns/promises";
 import net from "node:net";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import { pipeline } from "node:stream/promises";
@@ -1279,4 +1279,20 @@ async function runInner(name, input, cfg, jr = []) {
       return `Downloaded ${n} bytes to ${p}. The file was NOT opened or executed.`;
     }
   }
+}
+
+// ---------- verify: facts the program checks itself about files an agent says it made (no model involved)
+const MAGIC = { pdf: "%PDF", docx: "PK", xlsx: "PK", pptx: "PK", zip: "PK", png: "PNG", jpg: "ÿØ", jpeg: "ÿØ", gif: "GIF8" };
+export function verifyFile(p, cfg) {
+  let abs; try { abs = checkPath(p, cfg); } catch { return { path: String(p), checked: false, note: "outside the allowed folders; not checked" }; }
+  let st; try { st = fs.statSync(abs); } catch { return { path: abs, checked: true, ok: false, note: "does not exist" }; }
+  if (st.isDirectory()) return { path: abs, checked: true, ok: true, note: "folder exists" };
+  if (!st.size) return { path: abs, checked: true, ok: false, note: "exists but is empty (0 bytes)" };
+  const ext = path.extname(abs).slice(1).toLowerCase(), size = st.size + " bytes";
+  try {
+    if (MAGIC[ext]) { const fd = fs.openSync(abs, "r"), b = Buffer.alloc(8); fs.readSync(fd, b, 0, 8, 0); fs.closeSync(fd); if (!b.toString("latin1").startsWith(MAGIC[ext])) return { path: abs, checked: true, ok: false, note: `is not a valid .${ext} file (wrong file header)` }; }
+    else if (ext === "json" && st.size < 5e6) JSON.parse(fs.readFileSync(abs, "utf8").replace(/^﻿/, ""));
+    else if (/^(js|mjs|cjs)$/.test(ext) && st.size < 5e6) { const r = spawnSync(process.execPath, ["--check", abs], { timeout: 8000, encoding: "utf8", windowsHide: true }); if (r.status) return { path: abs, checked: true, ok: false, note: "has a syntax error: " + String(r.stderr || "").split("\n").find((l) => /Error/.test(l))?.slice(0, 160) }; }
+  } catch (e) { return { path: abs, checked: true, ok: false, note: `is not valid ${ext.toUpperCase()}: ${String(e.message).slice(0, 120)}` }; }
+  return { path: abs, checked: true, ok: true, note: "exists, " + size };
 }
