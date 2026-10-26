@@ -177,7 +177,7 @@ function turn(label,cls="",T){ const TR=T===undefined?trace:T;
 col.addEventListener("click",e=>{
   const cp=e.target.closest(".cpy"); if(cp){navigator.clipboard.writeText(cp.closest(".cb").querySelector("code").innerText);cp.textContent="Copied";setTimeout(()=>cp.textContent="Copy",1200);return}
   const tl=e.target.closest(".tline"); if(tl)tl.closest(".trace").classList.toggle("open");
-  if(e.target.classList.contains("copy")){navigator.clipboard.writeText(e.target.closest(".turn").querySelector(".body").innerText);e.target.textContent="Copied";setTimeout(()=>e.target.textContent="Copy",1200)}});
+  if(e.target.classList.contains("copy")){navigator.clipboard.writeText(e.target.closest(".turn").querySelector(".body").innerText);e.target.textContent="Copied";bump("copied");setTimeout(()=>e.target.textContent="Copy",1200)}});
 let lastRunUi=null;
 async function run(label,args,cls,out,T){
   const ui=turn(label,cls,T); lastRunUi=ui;
@@ -235,11 +235,14 @@ async function runAny(models,label,mk,cls,out,T){
 const TIERS={router:["groq/openai/gpt-oss-120b","gemini/gemini-3.1-flash-lite"],fast:["groq/openai/gpt-oss-120b","gemini/gemini-3.1-flash-lite"],strong:["claude-first"],reviewer:["gemini/gemini-3.1-flash-lite","groq/openai/gpt-oss-120b","groq/openai/gpt-oss-20b"],vision:["gemini/gemini-3.1-flash-lite","claude-first"]};
 const pick=(list,not)=>list.find(m=>m!==not)||list[0];
 const PLAN={trivial:{rounds:0,tier:"fast"},simple:{rounds:1,tier:"fast"},moderate:{rounds:2,tier:"fast"},hard:{rounds:3,tier:"strong"}};
-const ROUTER_SYS=`Classify the user's request for a router. Reply with ONLY JSON: {"complexity":"trivial|simple|moderate|hard","tools":true|false,"groups":["tool groups"],"parallel":true|false,"compute":true|false,"web":true|false,"done_when":["short checkable statements"],"reason":"under 8 words"}.
+const ROUTER_SYS=`Classify the user's request for a router. Reply with ONLY JSON: {"complexity":"trivial|simple|moderate|hard","tools":true|false,"groups":["tool groups"],"parallel":true|false,"compute":true|false,"web":true|false,"done_when":["short checkable statements"],"stakes":"low|high","goal":"one line","ask":"","reason":"under 8 words"}.
 complexity: trivial = greeting, thanks, or a one-fact/one-calculation answer. simple = a short explanation, a short creative piece, or ONE small action. moderate = several steps, a comparison, a proof, or a medium script. hard = design, debugging, refactoring a project, or work spanning many files.
 tools = true if answering requires touching the user's computer: reading, writing, moving, deleting or downloading files, running commands, or using its clipboard, scheduled tasks or the user's connected accounts (Discord, Slack, calendars, GitHub). Pure knowledge questions and writing text in the chat are false, even when about code.
 groups = when tools is true, every tool group the work needs. Reading, listing and searching files, asking the user, memory and notifications are always there, so never list them. files = create, write, edit, rename, move, copy or delete files and folders, zip or unzip, find duplicates. web = search the web, open pages, download, call web APIs, use a real browser. code = run commands, scripts or programs, install software, analyze data files, background programs. docs = make Word, Excel, PowerPoint, PDF or chart files, PDF tools, read scanned text (OCR). media = look at, edit or convert pictures, audio or video, create images, transcribe or speak. accounts = Discord or Slack messages, connected calendars, GitHub. schedule = reminders and scheduled tasks. helpers = hand big independent sub-tasks to helper agents. clipboard = the Windows clipboard. When unsure whether a group is needed, include it. [] when reading is enough.
 done_when = for moderate and hard requests, and for any request that creates, changes or finds something: 2 to 4 short, concrete statements that must be true when the work is finished, written from the request alone before any work starts (for example "report.md exists and has a section per topic", "the answer gives the total in euros", "the tests pass"). Each one must be something that can be checked by looking at a file or at the answer. Empty list for trivial and simple questions.
+stakes = high when a mistake would be hard to undo or costly, whatever the difficulty: deleting, overwriting or moving the user's files, changing many files at once, sending messages or email, installing software, running commands that change the system, changing settings or accounts, spending money. Otherwise low (reading, searching, explaining and writing new files are low).
+goal = for moderate and hard requests, one line on what the user is most likely really trying to achieve ("wants the quarterly numbers in a form they can email"), not a repeat of the request. Empty for trivial and simple ones.
+ask = empty almost always. Only when the request is genuinely ambiguous in a way that changes the result AND a wrong guess would waste real work or be hard to undo (stakes high or hard work), one short question that settles it. Never ask about things the files or context can answer.
 parallel = true whenever the work has 2 or more pieces that can be done at the same time without waiting for each other: several topics, items or options to research or compare, several files, components or document sections, multi-part questions, building something and testing or documenting it. When in doubt on a moderate or hard request, choose true. False for one small action on one thing, strictly sequential steps, or changes to one tightly coupled codebase (debugging, refactoring) where the parts depend on each other's decisions.
 compute = true if the answer depends on arithmetic, counting, statistics, number puzzles or unit/date calculations, OR the user asks to run, test, check or debug specific code. Plain explanations, and writing new code without being asked to run it, are false.
 web = __WEBRULE__
@@ -261,7 +264,7 @@ Examples:
 const WEB_NARROW="true if answering needs current or outside information: news, prices, versions, recent events, documentation, facts a model may not know, or the user says search, look up, find online or gives a URL. Settled general knowledge is false.";
 const WEB_WIDE="true whenever the answer states facts that could be wrong or out of date: products, versions, prices, people, places, events, statistics, recommendations, health, law, documentation, how specific software or services work, or anything the user wants found or checked, and when a task needs a tool or method the agent may have to look up. False only for greetings, pure math, writing or rewriting text, brainstorming, and questions answered entirely by the user's own files or this conversation.";
 // the router's "done when" statements: kept for moderate and hard work only, short, at most 4 (trivial and simple questions need no checklist)
-const doneWhen=(a,cx)=>/^(moderate|hard)$/.test(cx)&&Array.isArray(a)?a.map(x=>String(x||"").trim().slice(0,200)).filter(Boolean).slice(0,4):[];
+const doneWhen=(a,cx,stakes)=>(/^(moderate|hard)$/.test(cx)||stakes==="high")&&Array.isArray(a)?a.map(x=>String(x||"").trim().slice(0,200)).filter(Boolean).slice(0,4):[];
 async function classify(q){
   const sys=ROUTER_SYS.replace("__WEBRULE__",SET().webfirst===false?WEB_NARROW:WEB_WIDE);
   for(const m of rank(TIERS.router)){
@@ -271,7 +274,9 @@ async function classify(q){
       const t=await stream({model:m,system:sys,timeout:45000,messages:[{role:"user",content:q.slice(0,4000)}]},quiet,true);
       const j=jx(t); if(!PLAN[j.complexity])throw new Error("bad");
       const groups=normGroups(j.groups); // missing or unreadable: the agent gets every tool
-      ui.end(); ui.text("Complexity: "+j.complexity+(j.tools?" · needs PC tools"+(groups?" ("+["core",...groups].join(", ")+")":""):"")+(j.parallel?" · parallelizable":"")+(j.web?" · needs the web":"")+(j.reason?" — "+j.reason:"")+(doneWhen(j.done_when,j.complexity).length?"\nDone when: "+doneWhen(j.done_when,j.complexity).join("; "):"")); return {cx:j.complexity,tools:!!j.tools,parallel:!!j.parallel,compute:!!j.compute,web:!!j.web,groups,crit:doneWhen(j.done_when,j.complexity)};
+      ui.end(); ui.text("Complexity: "+j.complexity+(j.tools?" · needs PC tools"+(groups?" ("+["core",...groups].join(", ")+")":""):"")+(j.parallel?" · parallelizable":"")+(j.web?" · needs the web":"")+(j.stakes==="high"?" · high stakes":"")+(j.reason?" — "+j.reason:"")+(j.goal&&/^(moderate|hard)$/.test(j.complexity)?"\nLikely goal: "+String(j.goal).slice(0,160):"")+(doneWhen(j.done_when,j.complexity,j.stakes).length?"\nDone when: "+doneWhen(j.done_when,j.complexity,j.stakes).join("; "):""));
+      const stakes=j.stakes==="high"?"high":"low", deep=/^(moderate|hard)$/.test(j.complexity)||stakes==="high";
+      return {cx:j.complexity,tools:!!j.tools,parallel:!!j.parallel,compute:!!j.compute,web:!!j.web,groups,crit:doneWhen(j.done_when,j.complexity,stakes),stakes,goal:deep?String(j.goal||"").slice(0,160):"",ask:deep?String(j.ask||"").replace(/\s+/g," ").trim().slice(0,200):""};
     }catch(e){ if(e&&e.name==="AbortError")throw e; ui.error("Router "+m+" failed; trying next"); }
   }
   const c=/\b(bug|debug|architect|refactor|prove|design|optimi[sz]e|implement)\b/i.test(q);
@@ -662,7 +667,7 @@ async function toolFlow(u,userReq,intent,lead,cfg,T,scope,J={}){
   if(webFast(u,pre)){
     card.status("running…");Brain.msg(lead,"t:"+u.name);
     const r=await pcCall("/api/run",u,scope);
-    card.status(r.ok?"done":"failed");card.result(r.ok?r.output:r.error,!r.ok);r.ok?Brain.ok("t:"+u.name):Brain.fail("t:"+u.name);if(r.ok&&TURN)TURN.untrusted=true;
+    card.status(r.ok?"done":"failed");card.result(r.ok?r.output:r.error,!r.ok);r.ok?Brain.ok("t:"+u.name):Brain.fail("t:"+u.name);if(r.ok&&TURN)TURN.untrusted=true;noteSource(u,r);
     return r.ok?{text:outText(r.output,"web_content"),err:false,sum}:{text:"Error: "+r.error,err:true,sum};
   }
   const rvP=pre.inside===true?Promise.resolve({verdict:"attached folder",risk:"low"}):cfg.approval==="bypass"?Promise.resolve({verdict:"unchecked",risk:"low"}):J.rv&&J.pre===pre?J.rv:review(pre,u.name,u.input,insideNote(pre,userReq),intent,lead,T);
@@ -695,6 +700,7 @@ async function toolFlow(u,userReq,intent,lead,cfg,T,scope,J={}){
   const pics=r.ok&&r.output&&typeof r.output==="object"?r.output:null; // view_images: text plus picture blocks
   if(pics)r.output=String(pics.text||"");
   card.status(r.ok?"done":"failed"); card.result(r.ok?r.output:r.error,!r.ok); r.ok?Brain.ok("t:"+u.name):Brain.fail("t:"+u.name); r.ok?TURN.ok++:TURN.fail++;
+  noteSource(u,r);
   if(r.ok&&pre.class==="read"&&!/^(web_search|web_open|browser|system_info|notify|open_path|read_process|stop_process|list_connections)$/.test(u.name))TURN.readLocal=true;
   if(r.ok&&(u.name==="download_file"||u.name==="browser"||u.name==="http_request"||u.name==="github"))TURN.untrusted=true; // page content can carry instructions meant to trick the agent
   if(/^(start_process|stop_process)$/.test(u.name))refreshJobs();
@@ -743,10 +749,157 @@ col.addEventListener("click",async e=>{
   if(!b.dataset.sure){b.dataset.sure="1";const t=b.textContent;b.textContent="Click again to undo";setTimeout(()=>{if(b.isConnected&&b.dataset.sure){delete b.dataset.sure;b.textContent=t}},4000);return}
   b.disabled=true;b.textContent="Undoing…";
   const r=await api("/api/undo",{turn:b.dataset.undo,folder:CHAT_DIR}).catch(e=>({ok:false,error:String(e)}));
-  const box=b.parentNode; if(r.ok)undoFeedback({...b.dataset});
+  const box=b.parentNode; if(r.ok){undoFeedback({...b.dataset});mindUndo()}
   box.innerHTML=r.ok?`<details><summary>Undone: ${r.done} change${r.done===1?"":"s"}${r.skipped?", "+r.skipped+" skipped":""}</summary><pre>${esc(r.report)}</pre></details>`:`<span class="mut">Undo failed: ${esc(r.error||"unknown error")}</span>`;
   if(chatId)saveChat("");
 });
+// ================= mind: ways of being smarter, not wider (settings: "mind": false turns all of it off) =================
+// Small, local and mostly plain code: what the user said earlier, what worked before, what each model gets wrong, and what went badly.
+const MIND_ON=()=>SET().mind!==false;
+const dice=(a,b)=>a.size&&b.size?2*overlap(a,b)/(a.size+b.size):0;
+const hostOf=u=>{try{return new URL(String(u)).hostname.replace(/^www\./,"")}catch{return String(u||"").slice(0,40)}};
+const baseOf=p=>String(p||"").split(/[\\/]/).pop();
+const lastAnswer=()=>{const m=[...history].reverse().find(x=>x.role==="assistant");return m?String(typeof m.content==="string"?m.content:"").replace(/\s*\[Actions this turn:[^\]]*\]\s*$/,"").replace(/\s+/g," ").slice(0,200):""};
+
+// 1. where the answer came from: pages opened and files read in this request, shown under the answer
+function noteSource(u,r){
+  if(!MIND_ON()||!r||!r.ok||!TURN)return; const i=u.input||{}, S=TURN.src||(TURN.src=[]);
+  if(u.name==="web_open"||u.name==="download_file")S.push(["web",hostOf(i.url)]);
+  else if(u.name==="web_search")S.push(["web","search: "+String(i.query||"").slice(0,40)]);
+  else if(/^(read_file|read_files|inspect_file)$/.test(u.name))for(const p of [].concat(i.paths||i.path||[]).slice(0,6))S.push(["file",baseOf(p)]);
+}
+function sourcesLine(){
+  const s=MIND_ON()&&TURN&&TURN.src; if(!s||!s.length)return "";
+  const w=[...new Set(s.filter(x=>x[0]==="web").map(x=>x[1]))].slice(0,5), f=[...new Set(s.filter(x=>x[0]==="file").map(x=>x[1]))].slice(0,5);
+  return [w.length?"web: "+w.join(", "):"",f.length?"files: "+f.join(", "):""].filter(Boolean).join(" · ");
+}
+
+// 3. what the user asked for earlier in this chat stays in force (kept per chat; checked at the end like "done when")
+let LEDGER=[];
+const RULEY=/\b(always|never|don'?t|do not|must|make sure|keep (it|them|the|each|every)|no more than|at most|at least|under \d|only use|from now on|remember to|stick to|i want (it|you|them|the)|should be|without (any|the)|in (english|spanish|french|german|portuguese|italian))\b/i;
+const ledgerFrom=q=>String(q).split(/(?<=[.!\n])\s+/).map(s=>s.trim()).filter(s=>s.length>=8&&s.length<=200&&!/\?\s*$/.test(s)&&RULEY.test(s)&&!SECRET.test(s)).slice(0,3);
+function ledgerAdd(q){if(!MIND_ON())return;for(const s of ledgerFrom(q)){const t=tok(s);if(LEDGER.some(x=>dice(tok(x),t)>=.7))continue;LEDGER.push(s)}LEDGER=LEDGER.slice(-8)}
+
+// 4. what the program knows about this user's work: files made for them lately and the kinds they work with
+const WORLD=()=>LS.get("orc.world")||{made:[],types:{}};
+function worldNote(){
+  const w=MIND_ON()&&TURN&&TURN.written||[]; if(!w.length)return; const W=WORLD(), types={...W.types};
+  for(const p of w){const e=(String(p).match(/\.([A-Za-z0-9]{1,5})$/)||[])[1];if(e)types[e.toLowerCase()]=(types[e.toLowerCase()]||0)+1}
+  LS.set("orc.world",{made:[...w.map(p=>({p,ts:Date.now()})),...W.made.filter(m=>!w.includes(m.p))].slice(0,25),types});
+}
+function worldLine(){
+  const W=WORLD(); if(!W.made.length)return "";
+  const top=Object.entries(W.types).sort((a,b)=>b[1]-a[1]).slice(0,3).map(x=>"."+x[0]).join(", ");
+  return "Files made for this user lately (newest first): "+W.made.slice(0,6).map(m=>m.p).join("; ")+(top?". They mostly work with "+top+" files.":".");
+}
+
+// 5. an error that was later solved is remembered with what worked, and shown the next time the same error appears
+const FIXKEY=t=>String(t).replace(/^Error:\s*/i,"").replace(/[A-Za-z]:\\[^\s"'<>|]*/g,"<path>").replace(/\d+/g,"#").replace(/\s+/g," ").trim().slice(0,90);
+const fixOf=u=>{const i=u.input||{};return u.name==="run_command"?String(i.command||"").slice(0,160):JSON.stringify(Object.fromEntries(Object.entries(i).map(([k,v])=>[k,typeof v==="string"?v.slice(0,60):v]))).slice(0,220)};
+function fixSave(tool,key,fix){
+  if(SECRET.test(fix))return; let L=LS.get("orc.fixes")||[]; const i=L.findIndex(x=>x.tool===tool&&x.key===key), rec={tool,key,fix,ts:Date.now(),n:(i>=0?L[i].n:0)+1};
+  LS.set("orc.fixes",[rec,...L.filter((_,j)=>j!==i)].slice(0,100));
+}
+function fixHint(u,text){
+  if(!MIND_ON())return ""; const k=FIXKEY(text), f=(LS.get("orc.fixes")||[]).find(x=>x.tool===u.name&&x.key===k); if(!f)return "";
+  return f.fix?"\n\n(OmniGPT remembers: this error happened before and then this worked: "+f.fix+")":"\n\n(OmniGPT remembers: this exact error happened before and was never solved; try a different approach.)";
+}
+function fixTrack(u,res){
+  if(!MIND_ON()||!TURN)return;
+  if(res.err){const k=FIXKEY(res.text),e=TURN.lastErr;TURN.lastErr={name:u.name,key:k,n:e&&e.name===u.name&&e.key===k?e.n+1:1};return}
+  const e=TURN.lastErr; if(e&&e.name===u.name){TURN.lastErr=null;fixSave(e.name,e.key,fixOf(u))}
+}
+function fixFinish(){const e=MIND_ON()&&TURN&&TURN.lastErr; if(e&&e.n>=2&&!(LS.get("orc.fixes")||[]).some(x=>x.tool===e.name&&x.key===e.key&&x.fix))fixSave(e.name,e.key,"")}
+
+// 6. "have I answered this before?": the closest earlier request (not from private files or web pages) is offered as a starting point
+const PAST=()=>LS.get("orc.past")||[];
+function pastRecord(q,a){
+  if(!MIND_ON()||String(q).length<15||!String(a).trim()||TURN.readLocal||TURN.untrusted||TURN.attached)return;
+  const qq=String(q).slice(0,300), ans=String(a).replace(/\s*\[Actions this turn:[^\]]*\]\s*$/,"").replace(/\s+/g," ").slice(0,300);
+  LS.set("orc.past",[{q:qq,a:ans,ts:Date.now()},...PAST().filter(x=>x.q.toLowerCase()!==qq.toLowerCase())].slice(0,300));
+}
+function pastFind(q){const t=tok(q); if(t.size<3)return null; let best=null,bs=0; for(const p of PAST()){const s=dice(t,tok(p.q));if(s>bs){bs=s;best=p}} return bs>=.55?best:null}
+
+// 7. before risky or hard work: three ways it could go wrong, each turned into something the final check must rule out
+async function premortem(q){
+  if(!TASK||!MIND_ON())return;
+  for(const m of rank(TIERS.fast)){
+    try{
+      const j=jx(await stream({model:m,system:'You review a plan before it starts. Reply with ONLY JSON: {"risks":[{"risk":"how this could go wrong","check":"how to tell afterwards that it did not"}]}. At most 3 risks, specific to this request and likely, not generic.',timeout:30000,noBrain:true,messages:[{role:"user",content:q.slice(0,3000)}]},QUIET,true));
+      const R=(j&&Array.isArray(j.risks)?j.risks:[]).slice(0,3).filter(x=>x&&String(x.check||"").trim());
+      if(R.length){TASK.criteria=[...TASK.criteria,...R.map(x=>String(x.check).trim().slice(0,160))].slice(0,9);TASK.decisions.push("Pre-mortem: "+R.map(x=>String(x.risk||"").slice(0,100)).join("; "));const n=turn("Pre-mortem");n.end();n.text("What could go wrong: "+R.map(x=>String(x.risk||"").slice(0,100)).join("; "))}
+      return;
+    }catch(e){if(e&&e.name==="AbortError")throw e}
+  }
+}
+
+// 8. when drafts disagree, the disputed points are computed or checked in the sandbox and the strong model sees the evidence
+async function settleByCode(q,conflicts){
+  if(!MIND_ON()||!SBX.available||!conflicts||!conflicts.length)return "";
+  for(const m of rank(TIERS.strong)){
+    try{
+      const t=String(await stream({model:m,system:"Smaller models disagree about the points below. Write ONE short Python script that settles them by computing or checking, and prints one short line of evidence per point. Reply with only the code in a fenced block.",timeout:60000,noBrain:true,messages:[{role:"user",content:"Request:\n"+q.slice(0,2000)+"\n\nDisputed points:\n- "+conflicts.join("\n- ")}]},QUIET,true));
+      const mm=/```(?:python|py)?\n([\s\S]*?)```/i.exec(t); if(!mm)continue;
+      const r=await api("/api/sandbox",{language:"python",code:mm[1],timeout:10}), out=String(r&&r.stdout||"").trim();
+      return out&&!runFailed(r)?"Evidence from running code:\n"+out.slice(0,1500):"";
+    }catch(e){if(e&&e.name==="AbortError")throw e}
+  }
+  return "";
+}
+
+// 9. what each model tends to get wrong (naming files it never made, forgetting parts, empty replies) becomes a reminder only that model gets
+const HAB=()=>LS.get("orc.habits")||{};
+function habit(m,k){
+  if(!MIND_ON()||!m)return; const H=HAB(), h=H[m]||{runs:0,ghost:0,missed:0,silent:0}; h[k]=(h[k]||0)+1;
+  if(h.runs>60)for(const x in h)h[x]=Math.floor(h[x]/2); H[m]=h; LS.set("orc.habits",H);
+}
+const NUDGE={ghost:"Never say a file exists or was created unless a tool result in this request shows it; open or list it before you mention it.",missed:"Before your final answer, go through the request point by point and make sure each point was done with a tool result, not only said.",silent:"Always finish with a written reply, even a one-line summary, never an empty message."};
+function habitNote(m){const h=MIND_ON()&&HAB()[m]; if(!h||h.runs<3)return ""; const L=Object.keys(NUDGE).filter(k=>h[k]/h.runs>=.3).map(k=>NUDGE[k]); return L.length?"\n\nKnown habits of this model to correct: "+L.join(" "):""}
+
+// 10 + 11. what goes badly (a correction, an undo, a failed check) is noted, counted, and studied while the app is idle
+const bump=k=>{if(MIND_ON()){const s=LS.get("orc.signals")||{};s[k]=(s[k]||0)+1;LS.set("orc.signals",s)}};
+const EPI=()=>LS.get("orc.episodes")||[];
+function episode(why,q,note=""){if(MIND_ON())LS.set("orc.episodes",[...EPI(),{ts:Date.now(),why,q:String(q).slice(0,300),note:String(note).slice(0,200),done:false}].slice(-30))}
+function mindUndo(){
+  bump("undone");episode("undo",CUR_Q||"");
+  learn("(The user undid every change you made for this request: \""+String(CUR_Q||"").slice(0,300)+"\". Learn what to avoid or to ask about first, as a short preference.)","",false).catch(()=>{});
+}
+function mindEnd(q,answer,corrected){
+  if(!MIND_ON()||!TURN||!TURN.id)return;
+  if(corrected){bump("corrected");episode("correction",q)}
+  if(TASK&&TASK.verdict==="problems")episode("check",q,"the final check found problems or missing files");
+  ledgerAdd(q);pastRecord(q,answer);worldNote();fixFinish();
+}
+let LASTACT=Date.now(); for(const ev of ["keydown","pointerdown"])addEventListener(ev,()=>{LASTACT=Date.now()},true);
+const STUDY_SYS=`You help a personal assistant learn from moments where it fell short. You get a numbered list: each has a reason (correction = the user corrected an answer, undo = the user undid its changes, check = its own final check found problems) and the request. Write at most 3 short, reusable rules for the assistant that would have prevented these, each under 160 characters, specific to this user's way of working, not generic advice. If nothing reusable can be learned, return an empty list. Reply with ONLY JSON: {"rules":["..."]}.`;
+const studyDue=()=>MIND_ON()&&SET().learn&&SET().memory&&!busy&&!omni.running&&Date.now()-LASTACT>=10*60000&&Date.now()-(LS.get("orc.studyAt")||0)>=3600000&&EPI().some(e=>!e.done);
+async function study(){
+  const E=EPI().filter(e=>!e.done).slice(0,6); if(!E.length)return false;
+  const msg=E.map((e,i)=>(i+1)+". ["+e.why+"] "+e.q+(e.note?" — "+e.note:"")).join("\n");
+  for(const m of rank(TIERS.fast)){
+    try{
+      const j=jx(await stream({model:m,system:STUDY_SYS,timeout:45000,noBrain:true,messages:[{role:"user",content:msg}]},QUIET,true));
+      applyLearned({memories:(j&&Array.isArray(j.rules)?j.rules:[]).slice(0,3).map(t=>({text:String(t),kind:"preference"}))});
+      LS.set("orc.episodes",EPI().map(e=>E.some(x=>x.ts===e.ts)?{...e,done:true}:e));LS.set("orc.studyAt",Date.now());return true;
+    }catch(e){if(e&&e.name==="AbortError")throw e}
+  }
+  return false;
+}
+setInterval(()=>{if(studyDue())study().catch(()=>{})},60000);
+
+// everything above, as one block that joins the context of nearly every prompt
+function mindCtx(){
+  if(!MIND_ON())return ""; const p=[], deep=TASK&&(/^(moderate|hard)$/.test(TASK.cx||"")||TASK.web);
+  if(TASK&&TASK.goal)p.push("Likely goal behind the request: "+TASK.goal+" (serve this goal, not only the literal words).");
+  if(TASK&&TASK.ask&&$("#pc").checked)p.push("Ambiguity noticed: if the files and context cannot settle it, ask the user this one question with ask_user before acting: "+TASK.ask);
+  if(TASK&&TASK.stakes==="high")p.push("HIGH STAKES: a mistake here is hard to undo. Look at what is there before changing anything, change the minimum, and say exactly what you changed.");
+  if(LEDGER.length)p.push("Requirements the user stated earlier in this chat (they still apply):\n"+LEDGER.map(x=>"- "+x).join("\n"));
+  const w=worldLine(); if(w)p.push(w);
+  if(TURN&&TURN.past)p.push("You answered a similar request before: \""+TURN.past.q+"\" -> \""+TURN.past.a+"\". Reuse it if it is still right; check again if the facts may have changed.");
+  if(deep)p.push("Say how sure you are: mark a fact that did not come from a tool result in this request and could be wrong or out of date with (unverified). Settled general knowledge needs no mark.");
+  return p.length?"\n\nMIND NOTES:\n"+p.join("\n"):"";
+}
+
 // ---- usage
 let USAGE={calls:0,in:0,out:0,cost:0,unpriced:0}, PRICES={};
 F("/api/pricing").then(r=>r.json()).then(j=>{if(j.ok)PRICES=j.pricing||{}}).catch(()=>{});
@@ -815,7 +968,8 @@ Otherwise reply with PROBLEMS: and a short numbered list (at most 5 points, unde
 // Facts measured by code, not reported by the model: do the files the agent made (or the answer names) exist, and are they valid?
 const FILE_IN_TEXT=/[A-Za-z]:\\[^\n"<>|*?`]*?\.[A-Za-z0-9]{1,8}(?=$|[\s(,;)`]|\.(?:\s|$))/g;
 async function verifyWork(q,answer){
-  const made=(TURN&&TURN.written||[]), named=(String(answer).match(FILE_IN_TEXT)||[]).filter(p=>!String(q).toLowerCase().includes(p.toLowerCase())); // paths the user typed are theirs, not claims
+  const claimed=p=>String(answer).split("\n").some(l=>l.includes(p)&&/\b(creat|sav(e|ed|ing)\b|wrote|writ(ten|ing)\b|generat|export|produc|built|updat|added|is ready|are ready)/i.test(l)); // only "I made X" is a claim: an example path or a place to look is not
+  const made=(TURN&&TURN.written||[]), named=(String(answer).match(FILE_IN_TEXT)||[]).filter(p=>!String(q).toLowerCase().includes(p.toLowerCase())&&claimed(p)); // paths the user typed are theirs, not claims
   const paths=[...new Set([...made,...named].map(p=>p.trim()))].slice(0,15); if(!paths.length)return{lines:[],problems:[]};
   let res; try{res=await api("/api/verify",{paths})}catch{return{lines:[],problems:[]}}
   if(!Array.isArray(res))return{lines:[],problems:[]};
@@ -850,11 +1004,11 @@ async function agent(q,ctx,leads,o={}){
     const out={};
     seenPictures(msgs); // pictures the model has already looked at are replaced by a note, so they are not sent again every step
     if((shrinkOld(msgs)||cut)&&!offered.has("read_output"))extra.push(TOOLS.find(t=>t.name==="read_output")); // long older outputs shrink to their start
-    const mkA=m=>({model:m,system:sys,messages:msgs,tools:extra.length?[...tools,...extra.filter(x=>!tools.some(t=>t.name===x.name))]:tools});
+    const mkA=m=>({model:m,system:sys+habitNote(m),messages:msgs,tools:extra.length?[...tools,...extra.filter(x=>!tools.some(t=>t.name===x.name))]:tools});
     const r=step===0?await answerWith(cur,"Agent",mkA,"",out,T,q):await runAny(cur,"Agent",mkA,"",out,T);
     const uses=(out.content||[]).filter(b=>b.type==="tool_use");
     if(!uses.length&&!String(r.text||"").trim()){ // an empty reply is never accepted as the answer
-      empties++;silent.push(r.model);if(out.stop)stops.push(out.stop);
+      empties++;silent.push(r.model);habit(r.model,"silent");if(out.stop)stops.push(out.stop);
       if(empties<=3&&step<max){ // ask again, each time starting with a model that has not gone silent
         const all=[...leads,...TIERS.vision,...TIERS.fast,...TIERS.strong,...TIERS.reviewer].filter((m,i,a)=>a.indexOf(m)===i);
         cur=[...all.filter(m=>!silent.includes(m)),...all.filter(m=>silent.includes(m))];
@@ -870,8 +1024,10 @@ async function agent(q,ctx,leads,o={}){
       const lastT=[...col.querySelectorAll(".turn")].pop(); // this reply's turn, before the self-check adds its own
       // the top-level agent of a moderate or hard request that changed something gets its work checked once before it is done
       // read-only work is checked too, but only when it has "done when" statements to be compared with (otherwise there is nothing to hold it to)
-      if(!T&&!checked&&(changed||(done.length&&TASK&&TASK.criteria.length))&&step<max-1&&TASK&&/^(moderate|hard)$/.test(TASK.cx||"")&&!(o.stopping&&o.stopping())){
+      if(!T)habit(r.model,"runs");
+      if(!T&&!checked&&(changed||(done.length&&TASK&&TASK.criteria.length))&&step<max-1&&TASK&&(/^(moderate|hard)$/.test(TASK.cx||"")||TASK.stakes==="high")&&!(o.stopping&&o.stopping())){
         checked=true; const facts=await verifyWork(q,r.text); let v=await selfCheck(q,r.text,done,r.model,T,facts);
+        if(facts.problems.some(p=>/does not exist/.test(p)))habit(r.model,"ghost"); else if(v&&!v.pass)habit(r.model,"missed"); // what each model tends to get wrong, so it can be reminded
         if(!v&&facts.problems.length)v={pass:false,problems:"Checked by the program, not by a model:\n"+facts.problems.map((p,i)=>(i+1)+". "+p).join("\n")}; // the AI checker could not run, but the program's own facts still count
         TASK.verdict=v?(v.pass?"pass":"problems"):"unchecked";
         if(v&&!v.pass){msgs.push({role:"assistant",content:out.content&&out.content.length?out.content:[{type:"text",text:r.text}]});msgs.push({role:"user",content:"Before your answer goes to the user, a check of your work found these problems:\n"+v.problems+"\n\nFix them now with your tools; look at what is actually there first. The check is automatic and read your tool output, so act only on points the user's request really needs; if a point is mistaken, asks for something else, or cannot be done, say so. Then give your final summary again."});continue}
@@ -885,7 +1041,8 @@ async function agent(q,ctx,leads,o={}){
         final+="\n\n(Note from OmniGPT: no images were actually opened with view_images in this request, so statements about what they look like are not based on viewing them.)";
       if(!T){ // the top-level agent's last message is the visible answer: move it out of the trace
         const t=lastT;
-        if(t){t.classList.add("final");col.appendChild(t);if(trace)trace.n--;if(r.text.trim()&&!t.querySelector(".copy"))t.querySelector(".who").insertAdjacentHTML("beforeend",'<button class="copy">Copy</button>')}
+        if(t){const sl=sourcesLine();if(sl&&!t.querySelector(".srcs"))t.insertAdjacentHTML("beforeend",'<div class="srcs mut" style="font-size:12px;margin-top:6px">Sources: '+esc(sl)+'</div>');
+          t.classList.add("final");col.appendChild(t);if(trace)trace.n--;if(r.text.trim()&&!t.querySelector(".copy"))t.querySelector(".who").insertAdjacentHTML("beforeend",'<button class="copy">Copy</button>')}
       }
       break}
     if(step===max){const n=turn("Plan","",T);n.end();n.text("Stopped after "+max+" steps.");final=(r.text?r.text+"\n\n":"")+"(Stopped after "+max+" steps. Say \"continue\" to keep going, or raise \"Steps per task\" in Settings.)";break}
@@ -897,6 +1054,8 @@ async function agent(q,ctx,leads,o={}){
     // a model can name a tool it was not given (for example a read-only helper calling write_file): stepTools never runs it
     const R=await stepTools(uses,q,r.text,r.model,cfg,T,o.scope,offered), results=[];
     uses.forEach((u,k)=>{const res=R[k];
+      if(!T)fixTrack(u,res); // an error that is later solved is remembered together with what worked
+      if(res.err&&!T)res.text+=fixHint(u,res.text); // and one that was solved before comes with the answer
       actions.push(u.name+(res.err?" (not done)":""));if(!res.err)recStep(u);
       results.push({type:"tool_result",tool_use_id:u.id,content:res.blocks?[{type:"text",text:res.text},...res.blocks]:res.text,is_error:res.err});
       failRun=res.err?failRun+1:0; if(res.chg)changed++; if(OUT_MARK.test(res.text))cut=true;
@@ -1040,8 +1199,8 @@ async function agreement(q,samples){
 }
 // The strong model is a tie-breaker: it sees the disagreeing drafts and writes the final answer.
 async function tieBreak(q,ctx,samples,conflicts,notes){
-  const last=ctx[ctx.length-1];
-  const extra="\n\n---\nDrafts from smaller models, which disagree:\n"+samples.map((s,i)=>"### Draft "+(i+1)+"\n"+String(s.text).slice(0,3500)).join("\n\n")+"\n\nDisagreements:\n- "+conflicts.join("\n- ")+(notes?"\n\nTest results:\n"+notes:"");
+  const last=ctx[ctx.length-1], ev=await settleByCode(q,conflicts); // the disputed points are run or computed, not just argued about
+  const extra="\n\n---\nDrafts from smaller models, which disagree:\n"+samples.map((s,i)=>"### Draft "+(i+1)+"\n"+String(s.text).slice(0,3500)).join("\n\n")+"\n\nDisagreements:\n- "+conflicts.join("\n- ")+(notes?"\n\nTest results:\n"+notes:"")+(ev?"\n\n"+ev:"");
   try{
     return (await runAny(rank(TIERS.strong),"Strong model · tie-break",m=>({model:m,system:"Smaller models drafted answers to the user's request and they disagree. Work out what is actually correct, then write the final answer to the user directly. Do not mention the drafts."+projCtx(),messages:[...ctx.slice(0,-1),{role:"user",content:String(last.content)+extra}]}),"")).text;
   }catch(e){if(e&&e.name==="AbortError")throw e;return null}
@@ -1092,9 +1251,10 @@ async function textPipeline(q,ctx,cx){
 }
 // cls: the router's answer, when send() already started it next to the refiner
 async function auto(q,ctx,cls){
-  let {cx,tools,parallel,compute,web,groups,crit}=await (cls||classify(q)), plan=PLAN[cx];
-  if(TASK)TASK.cx=cx; // the agent loop checks the work of moderate and hard requests before it is done
-  if(TASK&&crit&&crit.length&&!TASK.criteria.length){TASK.criteria=crit;TASK.decisions.push("Done when: "+crit.join("; "))} // written before any work: the check compares the result with these, not with what the agent remembers doing
+  let {cx,tools,parallel,compute,web,groups,crit,stakes,goal,ask}=await (cls||classify(q)), plan=PLAN[cx];
+  if(TASK){TASK.cx=cx;TASK.web=!!web;TASK.stakes=stakes||"low";TASK.goal=goal||"";TASK.ask=ask||""} // the agent loop checks the work of moderate and hard requests (and any high-stakes one) before it is done
+  if(TASK&&crit&&crit.length&&!TASK.criteria.length){TASK.criteria=[...crit,...LEDGER.slice(-3)];TASK.decisions.push("Done when: "+TASK.criteria.join("; "))} // written before any work: the check compares the result with these, not with what the agent remembers doing; what the user asked for earlier in this chat counts too
+  if(TASK&&tools&&(cx==="hard"||TASK.stakes==="high"))await premortem(q); // one cheap look at how it could go wrong, turned into extra checks
   if(/\b(images?|pictures?|photos?|pics?|videos?|gifs?|screenshots?|look(s|ed)? like|visual(ly)?)\b/i.test(q))TURN.images=true; // vision-capable models first
   if(TURN.attached){tools=true;parallel=false}
   if(CHAT_DIR){tools=true;parallel=false} // work in one folder is tightly coupled: one agent, no lanes
@@ -1113,7 +1273,7 @@ async function auto(q,ctx,cls){
   const gNote=L=>L.pool?"; tools: "+Object.keys(TOOL_GROUPS).filter(g=>L.some(t=>GROUP_OF(t.name)===g)).join(", "):"";
   const opts=L=>L.pool?{tools:L,system:cfg=>agentSystem(cfg)+MORE_SYS}:{tools:L};
   const solo=()=>{
-    const pcOn=tools&&$("#pc").checked, leadsC=[...(TURN.images?TIERS.vision:[]),...TIERS.fast,...TIERS.strong].filter((m,i,a)=>a.indexOf(m)===i);
+    const pcOn=tools&&$("#pc").checked, leadsC=[...(TURN.images?TIERS.vision:[]),...(TASK&&TASK.stakes==="high"?[...TIERS.strong,...TIERS.fast]:[...TIERS.fast,...TIERS.strong])].filter((m,i,a)=>a.indexOf(m)===i);
     const RC=TOOLS.find(t=>t.name==="run_code"), L=pcOn?pcTools():[...(web?WEB_TOOLS:[]),...(sbx?[RC]:[]),...(curProject?PROJ_TOOLS:[])];
     const n=turn("Plan");n.end();n.text(cx+": "+(web?"web research":"calculation")+", lead "+leadsC[0]+(web?"; searches and reads pages":"")+(sbx?"; scripts run in the sandbox":"")+gNote(L));
     Brain.plan([leadsC[0],...(sbx?["sandbox"]:[]),...(pcOn?["guard"]:[])]);
@@ -1261,8 +1421,9 @@ async function send(){
   attachments=[];renderChips();input.value="";input.style.height="auto";
   const u=document.createElement("div");u.className="msg";u.innerHTML=`<div class="user">${esc(shown)}</div>`;col.appendChild(u);linkPaths(u);syncConvo();
   if(omni.on){omniBegin(q);return}
+  const corrected=MIND_ON()&&CORRECTION.test(q)&&history.length>=2, prevA=corrected?lastAnswer():"";
   turnFeedback(q); // a correction counts against the memories, models and recipes used last time; anything else keeps the last answer as good
-  CUR_Q=q;DELEGATES=0;TURN={id:uid(),untrusted:false,readLocal:A.length>0,tok:0,ok:0,fail:0,written:[],t0:Date.now(),attached:A.length>0,att:A.map(a=>String(a.path).toLowerCase()),images:A.some(a=>a.image)};TASK={request:q,plan:"",criteria:[],tests:"",decisions:[]};MEM_USED=[];trace=mkTrace();scroll();Brain.turn();
+  CUR_Q=q;DELEGATES=0;TURN={id:uid(),untrusted:false,readLocal:A.length>0,tok:0,ok:0,fail:0,written:[],t0:Date.now(),attached:A.length>0,att:A.map(a=>String(a.path).toLowerCase()),images:A.some(a=>a.image)};TASK={request:q,plan:"",criteria:[],tests:"",decisions:[]};TURN.past=MIND_ON()?pastFind(q):null;MEM_USED=[];trace=mkTrace();scroll();Brain.turn();
   saveChat(typed,[...history,{role:"user",content:qKeep}]); // the question is on disk even if the window closes mid-answer
   busy=true;ctrl=new AbortController();sendBtn.innerHTML=ico("stop");sendBtn.classList.add("stop");curProject=projectOf();
   SEM.clear();const semP=prepMeaning(q).catch(()=>{}); // memories and skills by meaning (at most ~1.5 s), ready before the first prompt that uses them
@@ -1285,7 +1446,7 @@ async function send(){
       const ui=turn("Answer","final"); ui.text(String(final).replace(/\n\n\[Actions this turn:[^\]]*\]$/,"")); ui.end();
     }
     try{await finishFiles(final,q)}catch(e){}
-    history=[...unfold(ctx,q,qKeep),{role:"assistant",content:final||"(no answer)"}];done=true;Brain.msg(Brain.last,"output");Brain.ok("output");Brain.files(TURN.files);await addUndo(TURN.id);learn(q,String(final||""),TURN.ok>0&&TURN.fail===0).catch(()=>{});recordCase(q,String(final||""));endTurn(final);
+    history=[...unfold(ctx,q,qKeep),{role:"assistant",content:final||"(no answer)"}];done=true;Brain.msg(Brain.last,"output");Brain.ok("output");Brain.files(TURN.files);await addUndo(TURN.id);learn(corrected?"(The user is correcting your previous answer"+(prevA?", which began: \""+prevA+"\"":"")+". Learn what they want instead, as a short preference.) "+q:q,String(final||""),TURN.ok>0&&TURN.fail===0).catch(()=>{});recordCase(q,String(final||""));mindEnd(q,String(final||""),corrected);endTurn(final);
   }catch(e){if(e&&e.name!=="AbortError"){memFeedback(MEM_USED,false);Brain.fail(Brain.last);const n=turn("Error","final");n.end();n.error(e.message||String(e))}}
   if(!done)history=[...unfold(ctx,q,qKeep),{role:"assistant",content:"(stopped before finishing)"}];
   busy=false;ctrl=null;sendBtn.innerHTML=ico("send");sendBtn.classList.remove("stop");syncSend();if(trace){trace.finish();trace=null}scroll();saveChat(typed);
@@ -1484,7 +1645,7 @@ function projectOf(){const c=chatId&&DB.chats().find(c=>c.id===chatId);if(c)retu
 const lastAns=c=>String([...(c.history||[])].reverse().find(m=>m.role==="assistant")?.content||"").replace(/\s+/g," ");
 const chatText=c=>(c.history||[]).map(m=>(m.role==="user"?"USER: ":"ASSISTANT: ")+String(m.content)).join("\n\n").slice(0,12000);
 // What the agents know about the other conversations in the current project
-const projCtx=()=>userCtx(CUR_Q)+taskCtx()+projCtx0();
+const projCtx=()=>userCtx(CUR_Q)+taskCtx()+projCtx0()+mindCtx();
 function projCtx0(){
   if(!curProject)return "";
   const P=DB.projects().find(p=>p.id===curProject); if(!P)return "";
@@ -1507,7 +1668,7 @@ function saveChat(q,hist){
   if(!history_.length)return;
   if(!chatId)chatId=Date.now()+"";
   const old=CHATS.find(c=>c.id===chatId);
-  const rec={id:chatId,title:old?.title||pendingTitle||q.slice(0,40),html:col.innerHTML,history:history_,graph:Brain.snapshot(),usage:USAGE,dir:CHAT_DIR,mode:SET().mode||"default",ts:Date.now(),
+  const rec={id:chatId,title:old?.title||pendingTitle||q.slice(0,40),html:col.innerHTML,history:history_,graph:Brain.snapshot(),usage:USAGE,dir:CHAT_DIR,ledger:LEDGER,mode:SET().mode||"default",ts:Date.now(),
     folder:old?old.folder:(sel?.kind==="folder"?sel.id:null),project:old?old.project:(sel?.kind==="project"?sel.id:null)};
   CHATS=[idxOf(rec),...CHATS.filter(c=>c.id!==chatId)];chatOp({t:"save",rec}); // only this chat is written
   SRCH.stale=true; // a search shown right now is run again
@@ -1549,7 +1710,7 @@ function delGrp(kind,id){
 async function openChat(id){
   const n=++openN,c=await chatGet(id); if(n!==openN||busy)return; // a later click or a new chat wins
   if(!c){flash("That chat could not be opened. Try again in a moment.");return}
-  omni.goal="";omni.notes=[];omni.steer=[];chatId=id;history=c.history||[];col.innerHTML=c.html||"";hydrate(col);CHAT_DIR=c.dir||null;renderChips();if(c.mode&&MODES[c.mode]&&c.mode!==SET().mode)setSet("mode",c.mode); // a conversation keeps the mode it was using
+  omni.goal="";omni.notes=[];omni.steer=[];chatId=id;history=c.history||[];LEDGER=Array.isArray(c.ledger)?c.ledger.slice(-8):[];col.innerHTML=c.html||"";hydrate(col);CHAT_DIR=c.dir||null;renderChips();if(c.mode&&MODES[c.mode]&&c.mode!==SET().mode)setSet("mode",c.mode); // a conversation keeps the mode it was using
   sel=c.folder?{kind:"folder",id:c.folder}:c.project?{kind:"project",id:c.project}:null;
   renderChats();scroll();syncConvo();Brain.reset();Brain.restore(c.graph);USAGE={calls:0,in:0,out:0,cost:0,unpriced:0,...(c.usage||{})};showUsage();
 }
@@ -1569,7 +1730,7 @@ async function exportChat(id){
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([md],{type:"text/markdown"}));a.download=(c.title.replace(/[<>:"/\\|?*\x00-\x1f]+/g," ").trim().slice(0,80)||"chat")+".md";
   document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
 }
-function newChat(){if(busy)return;openN++;omni.goal="";omni.notes=[];omni.steer=[];CHAT_DIR=null;chatId=null;history=[];attachments=[];renderChips();empty();syncConvo();Brain.reset();USAGE={calls:0,in:0,out:0,cost:0,unpriced:0};showUsage();renderChats()}
+function newChat(){if(busy)return;openN++;LEDGER=[];omni.goal="";omni.notes=[];omni.steer=[];CHAT_DIR=null;chatId=null;history=[];attachments=[];renderChips();empty();syncConvo();Brain.reset();USAGE={calls:0,in:0,out:0,cost:0,unpriced:0};showUsage();renderChats()}
 $("#new").onclick=newChat;
 $("#newf").onclick=async()=>{const n=await ask({title:"New folder",value:"",ok:"Create"});if(n&&n.trim()){const f={id:uid(),name:n.trim(),project:sel?.kind==="project"?sel.id:null};upd("orc.folders",L=>[...L,f])}};
 $("#newp").onclick=async()=>{const n=await ask({title:"New project",value:"",ok:"Create"});if(n&&n.trim())upd("orc.projects",L=>[...L,{id:uid(),name:n.trim()}])};
