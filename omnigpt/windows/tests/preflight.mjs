@@ -97,6 +97,9 @@ catch (e) { check("verification: files measured by code, done-when, personal tes
 // 1b19e. mind: stakes, goal, sources, ledger, remembered fixes, past answers, pre-mortem, habits, learning from corrections, idle study
 try { execFileSync(process.execPath, [path.join(here, "mind-test.mjs")], { stdio: "pipe", timeout: 240000 }); check("mind: stakes, ledger, fixes, past answers, habits, study", true); }
 catch (e) { check("mind: stakes, ledger, fixes, past answers, habits, study", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
+// 1b19f. OmniRoute starting: a message waits for it, and the backend starts it again when it died
+try { execFileSync(process.execPath, [path.join(here, "start-test.mjs")], { stdio: "pipe", timeout: 120000 }); check("OmniRoute start: waiting and restarting", true); }
+catch (e) { check("OmniRoute start: waiting and restarting", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
 // 1b20. speed: one PowerShell kept open for the app's own scripts (Windows), one browser for chart pictures and PDFs
 try { const out = execFileSync(process.execPath, [path.join(here, "speed-test.mjs")], { stdio: "pipe", timeout: 300000 }).toString(); check("shared PowerShell worker and drawing browser", true, out.split("\n").filter((l) => l.startsWith("TIMING")).map((l) => l.slice(8)).join("; ")); }
 catch (e) { check("shared PowerShell worker and drawing browser", false, String(e.stdout).split("\n").filter((l) => l.startsWith("FAIL")).join("; ").slice(0, 700)); }
