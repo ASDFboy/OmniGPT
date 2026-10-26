@@ -22,7 +22,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const OR = process.env.OMNIROUTE_URL || "http://127.0.0.1:20128";
 const PORT = Number(process.env.OMNIGPT_PORT || 20129); // a different port lets a development copy run beside the installed app
 const TOKEN = crypto.randomBytes(24).toString("hex"); // per launch; only the served page knows it
-export const VERSION = "1.0.5";
+export const VERSION = "1.0.6";
 const REPO = "ASDFboy/OmniGPT"; // GitHub repository whose releases are checked for updates
 const CHAT_DIR_ = path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"), "OmniRouteChat");
 const KEYFILE = path.join(CHAT_DIR_, "omniroute-key.txt"); // the key can also be saved from Settings instead of an environment variable
@@ -110,6 +110,12 @@ async function ensureOmniRoute() {
   omniChild = spawn(process.execPath, [script, "serve", "--no-tray", "--log", "--ready-timeout", "180000"], { windowsHide: true, stdio: "ignore", env });
   omniChild.on("exit", () => { omniChild = null; });
 }
+// If OmniRoute stops answering for a minute (it crashed, or its own restarts ran out) and we have no child of ours still starting it, start it again.
+let orDown = 0;
+setInterval(async () => {
+  if (await orUp()) { orDown = 0; return; }
+  if (++orDown >= 3 && !omniChild) { orDown = 0; ensureOmniRoute(); }
+}, Number(process.env.OMNIGPT_WATCH_MS) || 20000).unref();
 const killTree = (c) => { try { if (c && c.pid) spawn("taskkill", ["/pid", String(c.pid), "/t", "/f"], { windowsHide: true, stdio: "ignore" }); } catch {} };
 function shutdown() { stopAllJobs(); stopPs(); stopRender(); killTree(omniChild); setTimeout(() => process.exit(0), 300); } // background jobs, the PowerShell worker and the drawing browser end with the app
 for (const sig of ["SIGINT", "SIGTERM", "SIGBREAK"]) process.on(sig, shutdown);
