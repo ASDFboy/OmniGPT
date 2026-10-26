@@ -74,6 +74,17 @@ async function status(){
     return s.omniroute&&s.key;
   }catch{return false}
 }
+// A message sent while OmniRoute is still starting (the first start after a reboot can take minutes) waits for it instead of failing.
+let readyWaiting=false;
+async function readyWait(timeoutMs=180000,stepMs=2000){
+  const t0=Date.now();
+  while(Date.now()-t0<timeoutMs){
+    if(await status())return true;
+    $("#note").textContent="Waiting for OmniRoute to finish starting… "+Math.round((Date.now()-t0)/1000)+" s (your message will be sent when it is ready)";
+    await new Promise(r=>setTimeout(r,stepMs));
+  }
+  return false;
+}
 async function models(){try{const r=await (await F("/api/models")).json();$("#models").innerHTML=(r.data||[]).map(m=>m.id).sort().map(i=>`<option value="${esc(i)}">`).join("")}catch{}}
 
 // ---- model health: failures, stalls and slow starts count against a model. The penalty halves every
@@ -1411,6 +1422,11 @@ async function send(){
   let q=input.value.trim();
   if(omni.on&&omni.running){if(q){omniSteer(q);input.value="";input.style.height="auto";syncSend()}return}
   if((!q&&!attachments.length)||busy)return;
+  if(STATUS.key&&!STATUS.omniroute){ // OmniRoute is still starting: keep the message in the box and send it when it answers
+    if(readyWaiting)return; readyWaiting=true; const ok=await readyWait(); readyWaiting=false;
+    if(!ok){$("#note").textContent="OmniRoute did not start within 3 minutes. Open the OmniRoute console from the sidebar, or restart OmniGPT.";return}
+    $("#note").textContent="";
+  }
   if(attachments.some(a=>a.uploading)){$("#note").textContent="Waiting for the attachments to finish uploading.";return}
   const A=attachments.slice();
   const typed=q||attachments[0].name;
