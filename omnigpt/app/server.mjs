@@ -9,7 +9,7 @@ import os from "node:os";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { Readable } from "node:stream";
-import { loadConfig, saveConfig, precheck, run, resolveScope, runSandboxRaw, sandboxInfo, checkPath, grantFolder, ungrantFolder, folderConfig, insideFolder, undoTurn, undoInfo, readActivity, setOmniRoute, listJobs, stopJob, stopAllJobs } from "./tools.mjs";
+import { loadConfig, saveConfig, precheck, run, resolveScope, runSandboxRaw, sandboxInfo, checkPath, verifyFile, grantFolder, ungrantFolder, folderConfig, insideFolder, undoTurn, undoInfo, readActivity, setOmniRoute, listJobs, stopJob, stopAllJobs } from "./tools.mjs";
 import { inspect, MIME, RUNNABLE } from "./files.mjs";
 import { embedApi, embedModels, meaningSettings, isLocalModel } from "./embed.mjs";
 import { indexInfo, clearIndexQueued } from "./docindex.mjs";
@@ -316,6 +316,10 @@ http.createServer(async (req, res) => {
     if (req.method === "POST" && req.url === "/api/fileinfo") {
       const b = JSON.parse(await readBody(req));
       return json(res, 200, (b.paths || []).slice(0, 30).map((p) => { const abs = absOf(p); try { const st = fs.statSync(abs), ext = path.extname(abs).slice(1).toLowerCase(); return { path: abs, exists: true, isDir: st.isDirectory(), size: st.size, mtime: st.mtimeMs, ext, mime: MIME[ext] || "", runnable: RUNNABLE.test(abs) }; } catch { return { path: abs, exists: false }; } }));
+    }
+    if (req.method === "POST" && req.url === "/api/verify") { // what is really on disk for the files an agent says it made
+      const b = JSON.parse(await readBody(req)), cfg = loadConfig();
+      return json(res, 200, (b.paths || []).slice(0, 15).map((p) => verifyFile(p, cfg)));
     }
     if (req.method === "POST" && req.url === "/api/changed") { // files in the working folder created or changed since a time
       const since = Number(JSON.parse(await readBody(req)).since) || Date.now(), cfg = loadConfig(), found = []; let seen = 0;
