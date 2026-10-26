@@ -65,11 +65,17 @@ try {
 
   // a file the answer names that is not there: the program finds it, the agent gets a fix round, and the answer says so if it is still wrong
   const missing = path.join(W, "report.md");
+  const rd = { tools: [{ name: "read_file", input: { path: path.join(W, "notes.txt") } }] };
   await E(`go("make report.md", [{ tools: [{ name: "read_file", input: { path: ${J(path.join(W, "notes.txt"))} } }] }, { text: ${J("I created " + missing + " for you.")} }, { text: "PASS" }, { text: ${J("Done, " + missing + " is ready.")} }], ["report.md exists"])`);
   await until("__done");
   const r1 = String(await E("__res")), vd = await E("TASK.verdict");
   check("a claimed file that does not exist is caught even when the AI checker says PASS", vd === "problems" || vd === "fixed", vd);
   check("after the fix round the answer says honestly that it is still missing", /Note from OmniGPT/.test(r1) && /report\.md/.test(r1), r1);
+
+  // an example path or a place to look is not a claim that a file was made
+  await E(`go("explain", [${J(rd)}, { text: ${J("For example, a file like " + path.join(W, "sample-not-made.md") + " would work.")} }, { text: "PASS" }], ["it explained"])`);
+  await until("__done");
+  check("a path mentioned as an example does not force a fix round", (await E("TASK.verdict")) === "pass", await E("TASK.verdict"));
 
   // an agent that admits it could not do it after the fix round is not given a false-claim note
   await E(`go("make report.md", [{ tools: [{ name: "read_file", input: { path: ${J(path.join(W, "notes.txt"))} } }] }, { text: ${J("I created " + missing + " for you.")} }, { text: "PASS" }, { text: "Sorry, I could not create it." }], ["report.md exists"])`);
@@ -77,7 +83,7 @@ try {
   check("an honest admission after the fix round gets no note", !/Note from OmniGPT/.test(String(await E("__res"))));
 
   // an existing file passes, and the check says the file was verified
-  await E(`go("show notes", [{ tools: [{ name: "read_file", input: { path: ${J(path.join(W, "notes.txt"))} } }] }, { text: ${J("It is in " + path.join(W, "notes.txt") + ".")} }, { text: "PASS" }], ["the answer names the note file"])`);
+  await E(`go("show notes", [{ tools: [{ name: "read_file", input: { path: ${J(path.join(W, "notes.txt"))} } }] }, { text: ${J("I saved it to " + path.join(W, "notes.txt") + ".")} }, { text: "PASS" }], ["the answer names the note file"])`);
   await until("__done");
   check("an existing file passes and is marked verified on disk", (await E("TASK.verdict")) === "pass" && /verified on disk/.test(await E("document.body.textContent")));
 

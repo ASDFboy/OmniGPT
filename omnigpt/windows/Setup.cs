@@ -14,7 +14,7 @@ using Microsoft.Win32;
 
 static class Setup
 {
-    public const string Version = "1.0.4";
+    public const string Version = "1.0.5";
     public static readonly string Dest = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "OmniGPT");
     const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\OmniGPT";
 
