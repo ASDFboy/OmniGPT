@@ -1,4 +1,4 @@
-// Built with Claude (Anthropic) - see CREDITS.md
+// OmniGPT by ASDFboy - see CREDITS.md
 // The "mind" section of the page, in the real page with a fake model: stakes, likely goal and a clarifying question from the router,
 // sources under answers, the requirements ledger (kept per chat), what the program knows about the user's work, remembered error fixes,
 // "have I answered this before", the pre-mortem, evidence from code for disagreements, per-model habit reminders, learning from

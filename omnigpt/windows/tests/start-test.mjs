@@ -1,4 +1,4 @@
-// Built with Claude (Anthropic) - see CREDITS.md
+// OmniGPT by ASDFboy - see CREDITS.md
 // OmniRoute starting and stopping: (1) a message sent while OmniRoute is still starting waits for it, and gives up with a clear
 // message after the timeout; (2) the backend starts OmniRoute again when it died, and leaves it alone while it is up.
 // Uses a tiny stand-in for OmniRoute (a script that answers every request and writes its process id to a file).

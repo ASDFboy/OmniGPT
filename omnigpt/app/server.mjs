@@ -1,4 +1,4 @@
-// Built with Claude (Anthropic) - see CREDITS.md
+// OmniGPT by ASDFboy - see CREDITS.md
 // Local shell for OmniRoute Chat. Serves the UI, proxies to OmniRoute (adding the API key from the
 // OMNIROUTE_API_KEY env var so the page never sees it), and executes reviewed PC tools.
 import http from "node:http";

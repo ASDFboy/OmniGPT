@@ -1,4 +1,4 @@
-// Built with Claude (Anthropic) - see CREDITS.md
+// OmniGPT by ASDFboy - see CREDITS.md
 // Checking work against reality: (1) the program's own file checks (verifyFile), (2) in the real page with a fake model: the router's
 // "done when" statements, a claimed file that does not exist forcing a fix round and an honest note, an existing file passing, and
 // the personal test set (recordCase), (3) replay.mjs's pick() and compare().

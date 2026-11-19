@@ -1,4 +1,4 @@
-// Built with Claude (Anthropic) - see CREDITS.md
+// OmniGPT by ASDFboy - see CREDITS.md
 // Your own test set. OmniGPT keeps the requests you really made that had written "done when" statements and never touched
 // your files (%LOCALAPPDATA%\OmniRouteChat\kv\orc.cases.json, on this PC only). This script asks each one again, through the
 // real OmniGPT page against the OmniRoute you are running, lets a strong model judge the answer against the saved statements,

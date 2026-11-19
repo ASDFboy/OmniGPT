@@ -368,10 +368,7 @@ To run the OmniRoute dashboard from this fork (with the OmniGPT look built in), 
 
 ---
 
-OmniGPT is by **ASDFboy** ([@ASDFboy](https://github.com/ASDFboy)) and **Claude** (Anthropic).
-
-OmniGPT was designed and built with [Claude](https://claude.ai), an AI assistant made by Anthropic (see
-[omnigpt/CREDITS.md](omnigpt/CREDITS.md)).
+OmniGPT is by **ASDFboy** ([@ASDFboy](https://github.com/ASDFboy)) (see [omnigpt/CREDITS.md](omnigpt/CREDITS.md)).
 
 OmniRoute is by [diegosouzapw](https://github.com/diegosouzapw/OmniRoute); its original README is
 [README.omniroute.md](README.omniroute.md). MIT License (see [LICENSE](LICENSE)).
